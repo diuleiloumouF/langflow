@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import contextlib
-from typing import TYPE_CHECKING, Any
+import json
+from typing import Any
+from uuid import UUID
 
 from lfx.base.models.model_metadata import get_provider_param_mapping
 from lfx.base.models.model_utils import replace_with_live_models
@@ -12,9 +14,6 @@ from lfx.utils.async_helpers import run_until_complete
 from .class_registry import EMBEDDING_PROVIDER_CLASS_MAPPING
 from .credentials import _fetch_enabled_providers_for_user, _get_model_status
 from .provider_queries import MODELS_DETAILED, model_provider_metadata
-
-if TYPE_CHECKING:
-    from uuid import UUID
 
 
 def get_unified_models_detailed(
@@ -235,6 +234,10 @@ def get_language_model_options(
 
             options.append(option)
 
+    if user_id:
+        with contextlib.suppress(Exception):
+            options.extend(run_until_complete(_get_custom_openai_model_options(user_id, model_type="llm")))
+
     return options
 
 
@@ -362,6 +365,10 @@ def get_embedding_model_options(
 
             options.append(option)
 
+    if user_id:
+        with contextlib.suppress(Exception):
+            options.extend(run_until_complete(_get_custom_openai_model_options(user_id, model_type="embeddings")))
+
     return options
 
 
@@ -448,3 +455,129 @@ def normalize_model_names_to_dicts(
             )
 
     return result
+
+
+async def _get_custom_openai_model_options(
+    user_id: UUID | str,
+    *,
+    model_type: str,
+) -> list[dict[str, Any]]:
+    from lfx.services.deps import get_variable_service, session_scope
+
+    variable_service = get_variable_service()
+    if variable_service is None:
+        return []
+
+    normalized_user_id = user_id if not isinstance(user_id, str) else UUID(user_id)
+    configs_var_name = "__custom_openai_compatible_models__"
+
+    async with session_scope() as session:
+        try:
+            raw_configs = await variable_service.get_variable(
+                user_id=normalized_user_id,
+                name=configs_var_name,
+                field="",
+                session=session,
+            )
+        except ValueError:
+            return []
+
+        if not raw_configs:
+            return []
+
+        try:
+            parsed_configs = json.loads(raw_configs)
+        except (TypeError, json.JSONDecodeError):
+            return []
+
+        if not isinstance(parsed_configs, list):
+            return []
+
+        disabled_models, explicitly_enabled_models = await _get_model_status(normalized_user_id)
+        options: list[dict[str, Any]] = []
+
+        for config in parsed_configs:
+            if not isinstance(config, dict):
+                continue
+
+            config_model_type = str(config.get("model_type", "")).strip().lower()
+            if config_model_type != model_type:
+                continue
+
+            model_id = str(config.get("id", "")).strip()
+            model_name = str(config.get("model_name", "")).strip()
+            display_name = str(config.get("display_name", "")).strip()
+            base_url = str(config.get("base_url", "")).strip()
+            is_default = bool(config.get("enabled_by_default", False))
+
+            if not model_id or not model_name or not base_url:
+                continue
+
+            if model_id in disabled_models:
+                continue
+            if not is_default and model_id not in explicitly_enabled_models:
+                continue
+
+            try:
+                api_key = await variable_service.get_variable(
+                    user_id=normalized_user_id,
+                    name=f"__custom_openai_model__::{model_id}::api_key",
+                    field="",
+                    session=session,
+                )
+            except ValueError:
+                api_key = ""
+
+            if not api_key:
+                continue
+
+            if model_type == "llm":
+                metadata = {
+                    "default": is_default,
+                    "context_length": 128000,
+                    "model_type": "llm",
+                    "is_custom_openai_compatible": True,
+                    "custom_openai_model_id": model_id,
+                    "display_name": display_name,
+                    "custom_openai_base_url": base_url,
+                    "custom_openai_api_key": api_key,
+                    "model_class": "ChatOpenAI",
+                    "model_name_param": "model",
+                    "api_key_param": "api_key",
+                    "max_tokens_field_name": "max_tokens",
+                }
+            else:
+                metadata = {
+                    "default": is_default,
+                    "model_type": "embeddings",
+                    "display_name": display_name,
+                    "is_custom_openai_compatible": True,
+                    "custom_openai_model_id": model_id,
+                    "custom_openai_base_url": base_url,
+                    "custom_openai_api_key": api_key,
+                    "embedding_class": "OpenAIEmbeddings",
+                    "param_mapping": {
+                        "model": "model",
+                        "api_key": "api_key",
+                        "api_base": "base_url",
+                        "dimensions": "dimensions",
+                        "chunk_size": "chunk_size",
+                        "request_timeout": "timeout",
+                        "max_retries": "max_retries",
+                        "show_progress_bar": "show_progress_bar",
+                        "model_kwargs": "model_kwargs",
+                    },
+                }
+
+            options.append(
+                {
+                    "id": model_id,
+                    "name": model_name,
+                    "icon": "OpenAI",
+                    "category": "Custom OpenAI Compatible",
+                    "provider": "Custom OpenAI Compatible",
+                    "metadata": metadata,
+                }
+            )
+
+        return options

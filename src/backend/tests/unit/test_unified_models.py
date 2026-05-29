@@ -106,6 +106,40 @@ def test_google_embedding_options_map_dimensions_to_output_dimensionality(mock_g
     assert google_embedding["metadata"]["param_mapping"]["dimensions"] == "output_dimensionality"
 
 
+@pytest.mark.usefixtures("active_user")
+@pytest.mark.asyncio
+async def test_custom_openai_models_are_included_in_language_model_options(
+    client,
+    logged_in_headers,
+    active_user,
+):
+    payload = {
+        "model_name": "gpt-4o-mini",
+        "display_name": "Proxy GPT-4o Mini",
+        "base_url": "https://proxy.example/v1",
+        "api_key": "sk-custom-proxy-123456",
+        "model_type": "llm",
+        "enabled_by_default": True,
+    }
+
+    response = await client.post(
+        "api/v1/models/custom-openai-models",
+        json=payload,
+        headers=logged_in_headers,
+    )
+    assert response.status_code == 200
+    created = response.json()
+
+    from lfx.base.models.unified_models import get_language_model_options
+
+    options = get_language_model_options(user_id=str(active_user.id))
+    custom_option = next(option for option in options if option.get("id") == created["id"])
+
+    assert custom_option["provider"] == "Custom OpenAI Compatible"
+    assert custom_option["metadata"]["display_name"] == "Proxy GPT-4o Mini"
+    assert custom_option["metadata"]["custom_openai_base_url"] == "https://proxy.example/v1"
+
+
 def test_update_model_options_with_custom_field_name():
     """Test that update_model_options_in_build_config works with custom field names."""
     # Create mock component

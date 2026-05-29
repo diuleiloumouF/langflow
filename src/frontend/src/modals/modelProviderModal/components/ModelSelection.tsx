@@ -7,7 +7,7 @@ import { cn } from "@/utils/utils";
 
 export interface ModelProviderSelectionProps {
   availableModels: Model[];
-  onModelToggle: (modelName: string, enabled: boolean) => void;
+  onModelToggle: (modelId: string, enabled: boolean) => void;
   modelType: "llm" | "embeddings" | "all";
   providerName?: string;
   isEnabledModel?: boolean;
@@ -16,7 +16,7 @@ export interface ModelProviderSelectionProps {
 interface ModelRowProps {
   model: Model;
   enabled: boolean;
-  onToggle: (modelName: string, enabled: boolean) => void;
+  onToggle: (modelId: string, enabled: boolean) => void;
   testIdPrefix: string;
   isEnabledModel?: boolean;
 }
@@ -38,15 +38,19 @@ const ModelRow = ({
       <span
         className={cn("text-sm", { "text-muted-foreground": !isEnabledModel })}
       >
-        {model.model_name}
+        {model.metadata?.display_name || model.model_name}
       </span>
     </div>
     {isEnabledModel && (
       <Switch
         checked={enabled}
-        onCheckedChange={(checked) => onToggle(model.model_name, checked)}
-        data-testid={`${testIdPrefix}-toggle-${model.model_name}`}
-        aria-label={`${enabled ? "Disable" : "Enable"} ${model.model_name}`}
+        onCheckedChange={(checked) =>
+          onToggle(model.id || model.model_name, checked)
+        }
+        data-testid={`${testIdPrefix}-toggle-${model.id || model.model_name}`}
+        aria-label={`${enabled ? "Disable" : "Enable"} ${
+          model.metadata?.display_name || model.model_name
+        }`}
         stopPropagation
       />
     )}
@@ -66,9 +70,13 @@ const ModelSelection = ({
 }: ModelProviderSelectionProps) => {
   const { data: enabledModelsData } = useGetEnabledModels();
 
-  const isModelEnabled = (modelName: string): boolean => {
+  const isModelEnabled = (model: Model): boolean => {
     if (!providerName || !enabledModelsData?.enabled_models) return false;
-    return enabledModelsData.enabled_models[providerName]?.[modelName] ?? false;
+    return (
+      enabledModelsData.enabled_models[providerName]?.[
+        model.id || model.model_name
+      ] ?? false
+    );
   };
 
   const llmModels = availableModels.filter(
@@ -92,9 +100,9 @@ const ModelSelection = ({
         <div className="flex flex-col gap-2 pt-4">
           {models.map((model) => (
             <ModelRow
-              key={model.model_name}
+              key={model.id || model.model_name}
               model={model}
-              enabled={isModelEnabled(model.model_name)}
+              enabled={isModelEnabled(model)}
               onToggle={onModelToggle}
               testIdPrefix={testIdPrefix}
               isEnabledModel={isEnabledModel}

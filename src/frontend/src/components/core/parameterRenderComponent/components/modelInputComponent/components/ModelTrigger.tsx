@@ -4,7 +4,7 @@ import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import { Button } from "@/components/ui/button";
 import { PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/utils/utils";
-import { ModelOption, SelectedModel } from "../types";
+import { getModelOptionLabel, ModelOption, SelectedModel } from "../types";
 
 interface ModelTriggerProps {
   open: boolean;
@@ -100,7 +100,9 @@ const ModelTrigger = ({
                     !selectedModel?.name && "text-muted-foreground",
                   )}
                 >
-                  {selectedModel?.name || "Select a model"}
+                  {selectedModel
+                    ? getModelOptionLabel(selectedModel)
+                    : "Select a model"}
                 </div>
               )}
             </span>

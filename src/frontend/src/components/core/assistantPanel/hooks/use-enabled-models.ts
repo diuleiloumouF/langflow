@@ -5,7 +5,11 @@ import { useGetModelProviders } from "@/controllers/API/queries/models/use-get-m
 interface FilteredProvider {
   provider: string;
   icon: string;
-  models: Array<{ model_name: string }>;
+  models: Array<{
+    id?: string;
+    model_name: string;
+    metadata?: Record<string, unknown>;
+  }>;
 }
 
 interface UseEnabledModelsReturn {
@@ -30,8 +34,8 @@ export function useEnabledModels(): UseEnabledModelsReturn {
           icon: provider.icon || "Bot",
           models: provider.models.filter(
             (model) =>
-              providerEnabledModels[model.model_name] === true &&
-              !model.model_name.includes("embedding"),
+              providerEnabledModels[model.id || model.model_name] === true &&
+              model.metadata?.model_type !== "embeddings",
           ),
         };
       })

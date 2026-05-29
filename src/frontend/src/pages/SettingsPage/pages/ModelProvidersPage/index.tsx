@@ -1,5 +1,6 @@
 import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import ModelProvidersContent from "@/modals/modelProviderModal/components/ModelProvidersContent";
+import CustomOpenAIModelsCard from "./components/CustomOpenAIModelsCard";
 
 export default function ModelProvidersPage() {
   return (
@@ -21,6 +22,7 @@ export default function ModelProvidersPage() {
           </p>
         </div>
       </div>
+      <CustomOpenAIModelsCard />
       <div className="flex w-full h-[calc(100vh-305px)] border rounded-lg overflow-hidden">
         <ModelProvidersContent modelType="all" />
       </div>

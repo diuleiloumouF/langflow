@@ -4,6 +4,7 @@
 # Variables
 FRONTEND_DIR = src/frontend
 NPM = npm
+FRONTEND_START_FLAGS ?= --host 0.0.0.0
 
 .PHONY: install_frontend install_frontendci install_frontendc frontend_deps_check build_frontend run_frontend frontend frontendc format_frontend tests_frontend test_frontend test_frontend_watch test_frontend_coverage test_frontend_verbose test_frontend_ci test_frontend_clean test_frontend_file test_frontend_pattern test_frontend_snapshots test_frontend_config test_frontend_bail test_frontend_silent test_frontend_coverage_open help_frontend storybook storybook_build storybook_network
 

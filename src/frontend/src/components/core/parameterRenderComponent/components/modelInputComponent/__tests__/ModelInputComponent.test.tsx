@@ -589,7 +589,7 @@ describe("ModelInputComponent", () => {
       await user.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByTestId("gpt-4-option")).toBeInTheDocument();
+        expect(screen.getAllByTestId("gpt-4-option").length).toBeGreaterThan(0);
       });
       expect(
         screen.queryByTestId("gpt-3.5-turbo-option"),
@@ -647,7 +647,7 @@ describe("ModelInputComponent", () => {
       await user.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByTestId("gpt-4-option")).toBeInTheDocument();
+        expect(screen.getAllByTestId("gpt-4-option").length).toBeGreaterThan(0);
       });
       // Augmented entries from providersData × enabled_models must be visible.
       expect(screen.getByTestId("gpt-4o-option")).toBeInTheDocument();
@@ -789,6 +789,110 @@ describe("ModelInputComponent", () => {
       expect(
         screen.queryByTestId(`${defaultProps.id}-configure`),
       ).not.toBeInTheDocument();
+    });
+
+    it("prefers matching the selected model by id when names collide", async () => {
+      const mockedUseGetEnabledModels = useGetEnabledModels as jest.Mock;
+      const mockedUseGetModelProviders = useGetModelProviders as jest.Mock;
+
+      mockedUseGetModelProviders.mockReturnValue({
+        data: [
+          {
+            provider: "OpenAI",
+            is_enabled: true,
+            is_configured: true,
+            icon: "OpenAI",
+            models: [
+              {
+                id: "builtin-gpt-4o",
+                model_name: "gpt-4o",
+                metadata: { model_type: "llm" },
+              },
+            ],
+          },
+          {
+            provider: "Custom OpenAI Compatible",
+            is_enabled: true,
+            is_configured: true,
+            icon: "OpenAI",
+            models: [
+              {
+                id: "custom-gpt-4o",
+                model_name: "gpt-4o",
+                metadata: {
+                  model_type: "llm",
+                  display_name: "My Proxy GPT-4o",
+                },
+              },
+            ],
+          },
+        ],
+        isLoading: false,
+      });
+      mockedUseGetEnabledModels.mockReturnValue({
+        data: {
+          enabled_models: {
+            OpenAI: { "builtin-gpt-4o": true },
+            "Custom OpenAI Compatible": { "custom-gpt-4o": true },
+          },
+        },
+        isLoading: false,
+      });
+
+      renderWithQueryClient(
+        <ModelInputComponent
+          {...defaultProps}
+          options={[
+            {
+              id: "builtin-gpt-4o",
+              name: "gpt-4o",
+              icon: "OpenAI",
+              provider: "OpenAI",
+              metadata: { model_type: "llm" },
+            },
+            {
+              id: "custom-gpt-4o",
+              name: "gpt-4o",
+              icon: "OpenAI",
+              provider: "Custom OpenAI Compatible",
+              metadata: {
+                model_type: "llm",
+                display_name: "My Proxy GPT-4o",
+              },
+            },
+          ]}
+          value={[
+            {
+              id: "custom-gpt-4o",
+              name: "gpt-4o",
+              icon: "OpenAI",
+              provider: "Custom OpenAI Compatible",
+              metadata: {
+                model_type: "llm",
+                display_name: "My Proxy GPT-4o",
+              },
+            },
+          ]}
+        />,
+      );
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("combobox"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("custom-gpt-4o-option")).toBeInTheDocument();
+      });
+
+      const customOption = screen.getByTestId("custom-gpt-4o-option");
+      const builtinOption = screen.getByTestId("builtin-gpt-4o-option");
+
+      expect(customOption).toHaveTextContent("My Proxy GPT-4o");
+      expect(
+        customOption.querySelector('[data-testid="icon-Check"]'),
+      ).toHaveClass("opacity-100");
+      expect(
+        builtinOption.querySelector('[data-testid="icon-Check"]'),
+      ).toHaveClass("opacity-0");
     });
   });
 });

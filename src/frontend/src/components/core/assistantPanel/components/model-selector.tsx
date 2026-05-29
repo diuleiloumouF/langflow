@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/utils/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/utils/utils";
 import type { AssistantModel } from "../assistant-panel.types";
 import { useEnabledModels } from "../hooks";
 
@@ -29,10 +29,14 @@ export function ModelSelector({
   const allModels = useMemo(() => {
     return enabledProviders.flatMap((provider) =>
       provider.models.map((model) => ({
-        id: `${provider.provider}-${model.model_name}`,
+        id: model.id || `${provider.provider}-${model.model_name}`,
         name: model.model_name,
         provider: provider.provider,
-        displayName: model.model_name,
+        displayName:
+          typeof model.metadata?.display_name === "string" &&
+          model.metadata.display_name.trim()
+            ? model.metadata.display_name
+            : model.model_name,
         icon: provider.icon,
       })),
     );
@@ -140,7 +144,13 @@ export function ModelSelector({
             </DropdownMenuLabel>
             <div className="flex flex-col gap-1">
               {provider.models.map((model) => {
-                const modelId = `${provider.provider}-${model.model_name}`;
+                const modelId =
+                  model.id || `${provider.provider}-${model.model_name}`;
+                const displayName =
+                  typeof model.metadata?.display_name === "string" &&
+                  model.metadata.display_name.trim()
+                    ? model.metadata.display_name
+                    : model.model_name;
                 const isSelected = currentModel?.id === modelId;
                 return (
                   <DropdownMenuItem
@@ -150,7 +160,7 @@ export function ModelSelector({
                         id: modelId,
                         name: model.model_name,
                         provider: provider.provider,
-                        displayName: model.model_name,
+                        displayName,
                         icon: provider.icon,
                       })
                     }
@@ -161,9 +171,7 @@ export function ModelSelector({
                         name={provider.icon}
                         className="h-4 w-4 shrink-0 text-primary ml-2"
                       />
-                      <div className="truncate text-[13px]">
-                        {model.model_name}
-                      </div>
+                      <div className="truncate text-[13px]">{displayName}</div>
                       <div className="pl-2 ml-auto">
                         <ForwardedIconComponent
                           name="Check"

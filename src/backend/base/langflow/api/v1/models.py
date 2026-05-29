@@ -16,6 +16,16 @@ from loguru import logger
 from pydantic import BaseModel, field_validator
 
 from langflow.api.utils import CurrentActiveUser, DbSession
+from langflow.api.v1.custom_openai_models import (
+    CUSTOM_OPENAI_PROVIDER,
+    CustomOpenAIModelRead,
+    CustomOpenAIModelUpsertRequest,
+    build_custom_openai_provider_payload,
+    delete_custom_openai_model,
+    get_custom_openai_model_runtimes,
+    get_custom_openai_models,
+    upsert_custom_openai_model,
+)
 from langflow.services.auth.utils import get_current_active_user
 from langflow.services.deps import get_variable_service
 from langflow.services.variable.constants import GENERIC_TYPE
@@ -32,6 +42,31 @@ DEFAULT_EMBEDDING_MODEL_VAR = "__default_embedding_model__"
 # Security limits
 MAX_STRING_LENGTH = 200  # Maximum length for model IDs and provider names
 MAX_BATCH_UPDATE_SIZE = 100  # Maximum number of models that can be updated at once
+
+
+async def _append_custom_openai_provider(
+    filtered_models: list[dict],
+    *,
+    session: DbSession,
+    current_user: CurrentActiveUser,
+    model_type: str | None = None,
+    selected_providers: list[str] | None = None,
+) -> None:
+    if selected_providers and CUSTOM_OPENAI_PROVIDER not in selected_providers:
+        return
+
+    runtime_models = await get_custom_openai_model_runtimes(
+        session=session,
+        current_user=current_user,
+    )
+    if model_type:
+        runtime_models = [model for model in runtime_models if model.model_type == model_type]
+    if not runtime_models:
+        return
+
+    provider_payload = build_custom_openai_provider_payload(runtime_models)
+    if provider_payload is not None:
+        filtered_models.append(provider_payload)
 
 
 def get_provider_from_variable_name(variable_name: str) -> str | None:
@@ -121,6 +156,53 @@ class ValidateProviderResponse(BaseModel):
     error: str | None = None
 
 
+@router.get("/custom-openai-models", status_code=200, response_model=list[CustomOpenAIModelRead])
+async def list_custom_openai_models(
+    *,
+    session: DbSession,
+    current_user: CurrentActiveUser,
+) -> list[CustomOpenAIModelRead]:
+    return await get_custom_openai_models(
+        session=session,
+        current_user=current_user,
+        include_secrets=False,
+    )
+
+
+@router.post("/custom-openai-models", status_code=200, response_model=CustomOpenAIModelRead)
+async def save_custom_openai_model(
+    *,
+    session: DbSession,
+    current_user: CurrentActiveUser,
+    request: CustomOpenAIModelUpsertRequest,
+) -> CustomOpenAIModelRead:
+    try:
+        return await upsert_custom_openai_model(
+            session=session,
+            current_user=current_user,
+            request=request,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.delete("/custom-openai-models/{model_id}", status_code=204)
+async def remove_custom_openai_model(
+    *,
+    session: DbSession,
+    current_user: CurrentActiveUser,
+    model_id: str,
+) -> None:
+    try:
+        await delete_custom_openai_model(
+            session=session,
+            current_user=current_user,
+            model_id=model_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @router.get("/providers", status_code=200, dependencies=[Depends(get_current_active_user)])
 async def list_model_providers() -> list[str]:
     """Return available model providers."""
@@ -193,6 +275,13 @@ async def list_models(
         include_deprecated=include_deprecated,
         model_type=model_type,
         **metadata_filters,
+    )
+    await _append_custom_openai_provider(
+        filtered_models,
+        session=session,
+        current_user=current_user,
+        model_type=model_type,
+        selected_providers=selected_providers,
     )
 
     # Add configured and enabled status to each provider
@@ -289,6 +378,14 @@ async def get_enabled_providers(
             provider_status[provider] = all_required_present
             if all_required_present:
                 enabled_providers.append(provider)
+
+        custom_openai_models = await get_custom_openai_model_runtimes(
+            session=session,
+            current_user=current_user,
+        )
+        if custom_openai_models:
+            provider_status[CUSTOM_OPENAI_PROVIDER] = True
+            enabled_providers.append(CUSTOM_OPENAI_PROVIDER)
 
         result = {
             "enabled_providers": enabled_providers,
@@ -402,7 +499,11 @@ async def _get_enabled_models(session: DbSession, current_user: CurrentActiveUse
     return set()
 
 
-def _build_model_default_flags() -> dict[str, bool]:
+async def _build_model_default_flags(
+    *,
+    session: DbSession,
+    current_user: CurrentActiveUser,
+) -> dict[str, bool]:
     """Build a map of model names to their default flag status.
 
     Returns:
@@ -416,9 +517,28 @@ def _build_model_default_flags() -> dict[str, bool]:
     is_default_model = {}
     for provider_dict in all_models_by_provider:
         for model in provider_dict.get("models", []):
+            model_id = model.get("id") or model.get("model_name")
             model_name = model.get("model_name")
             is_default = model.get("metadata", {}).get("default", False)
             is_default_model[model_name] = is_default
+            if model_id:
+                is_default_model[model_id] = is_default
+
+    custom_provider_payload = build_custom_openai_provider_payload(
+        await get_custom_openai_model_runtimes(
+            session=session,
+            current_user=current_user,
+        )
+    )
+    if custom_provider_payload is not None:
+        for model in custom_provider_payload.get("models", []):
+            model_id = model.get("id") or model.get("model_name")
+            model_name = model.get("model_name")
+            is_default = model.get("metadata", {}).get("default", False)
+            if model_name:
+                is_default_model[model_name] = is_default
+            if model_id:
+                is_default_model[model_id] = is_default
 
     return is_default_model
 
@@ -533,6 +653,11 @@ async def get_enabled_models(
         include_unsupported=True,
         include_deprecated=True,
     )
+    await _append_custom_openai_provider(
+        all_models_by_provider,
+        session=session,
+        current_user=current_user,
+    )
 
     # Get enabled providers status
     enabled_providers_result = await get_enabled_providers(session=session, current_user=current_user)
@@ -559,7 +684,7 @@ async def get_enabled_models(
             enabled_models[provider] = {}
 
         for model in models:
-            model_name = model.get("model_name")
+            model_id = model.get("id") or model.get("model_name")
             metadata = model.get("metadata", {})
 
             # Check if model is deprecated or not supported
@@ -578,11 +703,12 @@ async def get_enabled_models(
                 provider_status.get(provider, False)
                 and not is_deprecated
                 and not is_not_supported
-                and (is_default or model_name in explicitly_enabled_models)
-                and model_name not in disabled_models
+                and (is_default or model_id in explicitly_enabled_models)
+                and model_id not in disabled_models
             )
             # Store model status per provider (true/false)
-            enabled_models[provider][model_name] = is_enabled
+            if model_id:
+                enabled_models[provider][model_id] = is_enabled
 
     result = {
         "enabled_models": enabled_models,
@@ -633,12 +759,17 @@ async def update_enabled_models(
     explicitly_enabled_models = await _get_enabled_models(session=session, current_user=current_user)
 
     # Build map of model names to their default flag
-    is_default_model = _build_model_default_flags()
+    is_default_model = await _build_model_default_flags(
+        session=session,
+        current_user=current_user,
+    )
 
     # Update model sets based on user requests
     # For any model being enabled, validate the provider credentials
     for update in updates:
         if update.enabled:
+            if update.provider == CUSTOM_OPENAI_PROVIDER:
+                continue
             from lfx.base.models.unified_models import get_all_variables_for_provider, validate_model_provider_key
 
             # Get variables from DB or environment

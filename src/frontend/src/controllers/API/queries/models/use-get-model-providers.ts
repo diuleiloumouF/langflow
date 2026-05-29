@@ -6,9 +6,11 @@ import { UseRequestProcessor } from "../../services/request-processor";
 export interface ModelProviderInfo {
   provider: string;
   models: Array<{
+    id?: string;
     model_name: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
   }>;
+  icon?: string;
   is_enabled: boolean;
   is_configured?: boolean;
   api_docs_url?: string;
@@ -50,7 +52,7 @@ export const useGetModelProviders: useQueryFunctionType<
 
     return providersData.map((providerInfo) => ({
       ...providerInfo,
-      icon: getProviderIcon(providerInfo.provider),
+      icon: providerInfo.icon || getProviderIcon(providerInfo.provider),
     }));
   };
 
@@ -86,6 +88,7 @@ const getProviderIcon = (providerName: string): string => {
     Ollama: "Ollama",
     "IBM WatsonX": "IBM",
     "IBM watsonx.ai": "IBM",
+    "Custom OpenAI Compatible": "OpenAI",
   };
 
   return iconMap[providerName] || "Bot";

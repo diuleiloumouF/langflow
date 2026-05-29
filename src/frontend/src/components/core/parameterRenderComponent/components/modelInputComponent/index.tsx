@@ -27,6 +27,23 @@ import type {
   ModelOption,
   SelectedModel,
 } from "./types";
+import { getModelOptionKey as getOptionKey } from "./types";
+
+const isSameModelSelection = (
+  option: Pick<ModelOption, "id" | "name" | "provider">,
+  selected?: Partial<SelectedModel> | null,
+) => {
+  if (!selected) return false;
+  if (selected.id && option.id) {
+    return option.id === selected.id;
+  }
+  if (selected.name && selected.provider) {
+    return (
+      option.name === selected.name && option.provider === selected.provider
+    );
+  }
+  return option.name === selected.name;
+};
 
 export default function ModelInputComponent({
   id,
@@ -137,7 +154,8 @@ export default function ModelInputComponent({
       // a globally-disabled model never appears in the dropdown.
       if (enabledModelsData?.enabled_models) {
         const providerModels = enabledModelsData.enabled_models[provider];
-        if (providerModels && providerModels[option.name] !== true) {
+        const modelId = option.id || option.name;
+        if (providerModels && providerModels[modelId] !== true) {
           continue;
         }
       }
@@ -146,7 +164,7 @@ export default function ModelInputComponent({
         grouped[provider] = [];
       }
       grouped[provider].push(option);
-      seen.add(`${provider}::${option.name}`);
+      seen.add(getOptionKey(option));
     }
 
     // Augment with models the user has enabled that were not in the saved
@@ -169,7 +187,8 @@ export default function ModelInputComponent({
 
         for (const model of providerInfo.models ?? []) {
           const modelName = model.model_name;
-          if (providerModels[modelName] !== true) continue;
+          const modelId = model.id || modelName;
+          if (providerModels[modelId] !== true) continue;
 
           // Only include models whose declared type matches this component.
           // Older metadata without ``model_type`` is allowed through so we
@@ -184,7 +203,7 @@ export default function ModelInputComponent({
             continue;
           }
 
-          const key = `${providerName}::${modelName}`;
+          const key = model.id || `${providerName}::${modelName}`;
           if (seen.has(key)) continue;
           seen.add(key);
 
@@ -192,6 +211,7 @@ export default function ModelInputComponent({
             grouped[providerName] = [];
           }
           grouped[providerName].push({
+            ...(model.id && { id: model.id }),
             name: modelName,
             icon: providerInfo.icon || "Bot",
             provider: providerName,
@@ -235,9 +255,11 @@ export default function ModelInputComponent({
       } as SelectedModel;
     }
 
-    const currentName = value?.[0]?.name;
-    if (currentName) {
-      const match = flatOptions.find((option) => option.name === currentName);
+    const currentSelection = value?.[0];
+    if (currentSelection) {
+      const match = flatOptions.find((option) =>
+        isSameModelSelection(option, currentSelection),
+      );
       if (match) return match;
     }
 
@@ -252,8 +274,15 @@ export default function ModelInputComponent({
   useEffect(() => {
     if (flatOptions.length === 0 || isConnectionMode) return;
 
-    const savedName = value?.[0]?.name;
-    if (savedName && flatOptions.some((o) => o.name === savedName)) return;
+    const currentSelection = value?.[0];
+    if (
+      currentSelection &&
+      flatOptions.some((option) =>
+        isSameModelSelection(option, currentSelection),
+      )
+    ) {
+      return;
+    }
 
     const firstOption = flatOptions[0];
     const newValue = [
@@ -272,7 +301,7 @@ export default function ModelInputComponent({
    * Handles model selection from the dropdown.
    */
   const handleModelSelect = useCallback(
-    (modelName: string) => {
+    (modelKey: string) => {
       setConnectionMode(false);
       // Clear the _connection_mode flag from the model field template
       // so the backend resumes normal update_build_config behavior.
@@ -305,7 +334,7 @@ export default function ModelInputComponent({
         }
       }
       const selectedOption = flatOptions.find(
-        (option) => option.name === modelName,
+        (option) => getOptionKey(option) === modelKey,
       );
       if (!selectedOption) return;
 

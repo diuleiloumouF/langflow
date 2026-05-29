@@ -5,12 +5,17 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/utils/utils";
-import { ModelOption, SelectedModel } from "../types";
+import {
+  getModelOptionKey,
+  getModelOptionLabel,
+  ModelOption,
+  SelectedModel,
+} from "../types";
 
 interface ModelListProps {
   groupedOptions: Record<string, ModelOption[]>;
   selectedModel: SelectedModel | null;
-  onSelect: (modelName: string) => void;
+  onSelect: (modelKey: string) => void;
 }
 
 const ModelList = ({
@@ -40,24 +45,28 @@ const ModelList = ({
           </div>
           {models.map((data) => (
             <CommandItem
-              key={data.name}
-              value={data.name}
-              onSelect={() => onSelect(data.name)}
+              key={getModelOptionKey(data)}
+              value={getModelOptionKey(data)}
+              onSelect={() => onSelect(getModelOptionKey(data))}
               className="w-full items-center rounded-none"
-              data-testid={`${data.name}-option`}
+              data-testid={`${data.id || data.name}-option`}
             >
               <div className="flex w-full items-center gap-2">
                 <ForwardedIconComponent
                   name={data.icon || "Bot"}
                   className="h-4 w-4 shrink-0 text-primary ml-2"
                 />
-                <div className="truncate text-[13px]">{data.name}</div>
+                <div className="truncate text-[13px]">
+                  {getModelOptionLabel(data)}
+                </div>
                 <div className="pl-2 ml-auto">
                   <ForwardedIconComponent
                     name="Check"
                     className={cn(
                       "h-4 w-4 shrink-0 text-primary",
-                      selectedModel?.name === data.name
+                      selectedModel &&
+                        getModelOptionKey(selectedModel) ===
+                          getModelOptionKey(data)
                         ? "opacity-100"
                         : "opacity-0",
                     )}

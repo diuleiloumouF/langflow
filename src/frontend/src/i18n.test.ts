@@ -7,6 +7,8 @@
 
 // Import the real i18n instance and loadLanguage (not the mock from jest.setup.js)
 jest.unmock("react-i18next");
+
+import { DEFAULT_LANGUAGE, normalizeLanguageCode } from "./constants/languages";
 import i18n, { loadLanguage } from "./i18n";
 
 describe("loadLanguage", () => {
@@ -49,5 +51,28 @@ describe("loadLanguage", () => {
     await loadLanguage("ja");
     expect(i18n.hasResourceBundle("fr", "translation")).toBe(true);
     expect(i18n.hasResourceBundle("ja", "translation")).toBe(true);
+  });
+
+  it("maps zh locale aliases to the zh-Hans translation bundle", async () => {
+    expect(i18n.hasResourceBundle("zh-Hans", "translation")).toBe(false);
+    await loadLanguage("zh");
+    expect(i18n.hasResourceBundle("zh-Hans", "translation")).toBe(true);
+  });
+});
+
+describe("normalizeLanguageCode", () => {
+  it("maps browser zh locales to zh-Hans", () => {
+    expect(normalizeLanguageCode("zh")).toBe("zh-Hans");
+    expect(normalizeLanguageCode("zh-CN")).toBe("zh-Hans");
+    expect(normalizeLanguageCode("zh-Hans")).toBe("zh-Hans");
+  });
+
+  it("falls back to the base language when supported", () => {
+    expect(normalizeLanguageCode("pt-BR")).toBe("pt");
+  });
+
+  it("falls back to the default language when unsupported", () => {
+    expect(normalizeLanguageCode("it-IT")).toBe(DEFAULT_LANGUAGE);
+    expect(normalizeLanguageCode(undefined)).toBe(DEFAULT_LANGUAGE);
   });
 });

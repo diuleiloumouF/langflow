@@ -57,11 +57,21 @@ def get_llm(
     provider = model.get("provider")
     metadata = model.get("metadata", {})
 
+    custom_api_key = None
+    if metadata.get("is_custom_openai_compatible"):
+        provider = "OpenAI"
+        custom_api_key = metadata.get("custom_openai_api_key")
+        custom_base_url = metadata.get("custom_openai_base_url")
+    else:
+        custom_base_url = None
+
     # Get model class and parameter names from metadata
     api_key_param = metadata.get("api_key_param", "api_key")
 
     # Get API key from user input or global variables
     api_key = unified_models_module.get_api_key_for_provider(user_id, provider, api_key)
+    if custom_api_key:
+        api_key = custom_api_key
 
     # Validate API key (Ollama doesn't require one)
     if not api_key and provider != "Ollama":
@@ -129,6 +139,9 @@ def get_llm(
     # Enable streaming usage for providers that support it
     if provider in ["OpenAI", "Anthropic"]:
         kwargs["stream_usage"] = True
+
+    if custom_base_url:
+        kwargs["base_url"] = custom_base_url
 
     # Add provider-specific parameters
     if provider in {"IBM WatsonX", "IBM watsonx.ai"}:
@@ -246,6 +259,13 @@ def get_embeddings(
     model_name = model_dict.get("name")
     provider = model_dict.get("provider")
     metadata = model_dict.get("metadata", {})
+
+    if metadata.get("is_custom_openai_compatible"):
+        provider = "OpenAI"
+        custom_api_key = metadata.get("custom_openai_api_key")
+        if custom_api_key:
+            api_key = custom_api_key
+        api_base = metadata.get("custom_openai_base_url") or api_base
 
     # --- resolve API key -----------------------------------------------------
     api_key = unified_models_module.get_api_key_for_provider(user_id, provider, api_key)
