@@ -7,10 +7,16 @@ import { cn } from "@/utils/utils";
 import InspectionPanelFields from "./components/InspectionPanelFields";
 import InspectionPanelHeader from "./components/InspectionPanelHeader";
 
+/** 检查面板的属性定义 */
 interface InspectionPanelProps {
   selectedNode: AllNodeType | null;
 }
 
+/**
+ * 节点检查面板组件
+ * 当用户选中画布上的节点时，从右侧滑入显示节点的详细信息
+ * 支持编辑模式切换，可查看和修改节点的高级设置字段
+ */
 const InspectionPanel = memo(function InspectionPanel({
   selectedNode,
 }: InspectionPanelProps) {

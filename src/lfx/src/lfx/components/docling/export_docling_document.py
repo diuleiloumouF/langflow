@@ -1,13 +1,23 @@
+# 类型注解支持
 from typing import Any
 
+# Docling 图片引用模式
 from docling_core.types.doc import ImageRefMode
 
+# Docling 文档提取工具函数
 from lfx.base.data.docling_utils import extract_docling_documents
+
+# 组件基类
 from lfx.custom import Component
+
+# 输入组件类型
 from lfx.io import DropdownInput, HandleInput, MessageTextInput, Output, StrInput
+
+# 数据模型
 from lfx.schema import Data, DataFrame
 
 
+# Docling 文档导出组件，将 DoclingDocument 导出为 Markdown、HTML 等格式
 class ExportDoclingDocumentComponent(Component):
     display_name: str = "Export DoclingDocument"
     description: str = "Export DoclingDocument to markdown, html or other formats."
@@ -15,7 +25,9 @@ class ExportDoclingDocumentComponent(Component):
     icon = "Docling"
     name = "ExportDoclingDocument"
 
+    # 输入参数定义
     inputs = [
+        # 输入数据：包含待导出的文档
         HandleInput(
             name="data_inputs",
             display_name="JSON or Table",
@@ -23,6 +35,7 @@ class ExportDoclingDocumentComponent(Component):
             input_types=["Data", "JSON", "DataFrame", "Table"],
             required=True,
         ),
+        # 导出格式选择
         DropdownInput(
             name="export_format",
             display_name="Export format",
@@ -31,6 +44,7 @@ class ExportDoclingDocumentComponent(Component):
             value="Markdown",
             real_time_refresh=True,
         ),
+        # 图片导出模式：占位符或嵌入
         DropdownInput(
             name="image_mode",
             display_name="Image export mode",
@@ -41,6 +55,7 @@ class ExportDoclingDocumentComponent(Component):
             ),
             value="placeholder",
         ),
+        # Markdown 导出的图片占位符文本
         StrInput(
             name="md_image_placeholder",
             display_name="Image placeholder",
@@ -48,6 +63,7 @@ class ExportDoclingDocumentComponent(Component):
             value="<!-- image -->",
             advanced=True,
         ),
+        # Markdown 导出的分页占位符文本
         StrInput(
             name="md_page_break_placeholder",
             display_name="Page break placeholder",
@@ -55,6 +71,7 @@ class ExportDoclingDocumentComponent(Component):
             value="",
             advanced=True,
         ),
+        # DoclingDocument 列的键名
         MessageTextInput(
             name="doc_key",
             display_name="Doc Key",
@@ -64,32 +81,40 @@ class ExportDoclingDocumentComponent(Component):
         ),
     ]
 
+    # 输出参数定义
     outputs = [
         Output(display_name="Exported data", name="data", method="export_document"),
         Output(display_name="Table", name="dataframe", method="as_dataframe"),
     ]
 
+    # 根据导出格式动态更新构建配置
     def update_build_config(self, build_config: dict, field_value: Any, field_name: str | None = None) -> dict:
         if field_name == "export_format" and field_value == "Markdown":
+            # Markdown 格式：显示图片和分页占位符配置
             build_config["md_image_placeholder"]["show"] = True
             build_config["md_page_break_placeholder"]["show"] = True
             build_config["image_mode"]["show"] = True
         elif field_name == "export_format" and field_value == "HTML":
+            # HTML 格式：仅显示图片模式配置
             build_config["md_image_placeholder"]["show"] = False
             build_config["md_page_break_placeholder"]["show"] = False
             build_config["image_mode"]["show"] = True
         elif field_name == "export_format" and field_value in {"Plaintext", "DocTags"}:
+            # 纯文本/DocTags 格式：隐藏所有图片相关配置
             build_config["md_image_placeholder"]["show"] = False
             build_config["md_page_break_placeholder"]["show"] = False
             build_config["image_mode"]["show"] = False
 
         return build_config
 
+    # 导出文档为指定格式
     def export_document(self) -> list[Data]:
+        # 提取 Docling 文档
         documents, warning = extract_docling_documents(self.data_inputs, self.doc_key)
         if warning:
             self.status = warning
 
+        # 根据导出格式转换文档
         results: list[Data] = []
         try:
             image_mode = ImageRefMode(self.image_mode)
@@ -108,7 +133,7 @@ class ExportDoclingDocumentComponent(Component):
                 elif self.export_format == "DocTags":
                     content = doc.export_to_doctags()
 
-                # Preserve metadata from the DoclingDocument
+                # 保留 DoclingDocument 的元数据
                 metadata: dict = {"export_format": self.export_format}
                 if hasattr(doc, "name") and doc.name:
                     metadata["name"] = doc.name
@@ -127,5 +152,6 @@ class ExportDoclingDocumentComponent(Component):
 
         return results
 
+    # 将导出结果转换为 DataFrame 格式
     def as_dataframe(self) -> DataFrame:
         return DataFrame(self.export_document())

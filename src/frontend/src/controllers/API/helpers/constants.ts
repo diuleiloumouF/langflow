@@ -1,6 +1,14 @@
+/**
+ * API 常量模块
+ * 定义所有 API 端点的 URL 路径
+ */
 import { getBaseUrl } from "@/customization/utils/urls";
 import { BASE_URL_API_V2 } from "../../../constants/constants";
 
+/**
+ * API 端点 URL 常量
+ * 包含所有后端 API 的路径定义
+ */
 export const URLs = {
   TRANSACTIONS: `monitor/transactions`,
   TRACES: `monitor/traces`,
@@ -45,8 +53,15 @@ export const URLs = {
   AGENTIC_CHECK_CONFIG: `agentic/check-config`,
 } as const;
 
-// IMPORTANT: FOLDERS endpoint now points to 'projects' for backward compatibility
+// 重要：FOLDERS 端点现在指向 'projects' 以保持向后兼容性
 
+/**
+ * 根据键名生成完整的 API URL
+ * @param key - URL 键名
+ * @param params - 可选的路径参数
+ * @param v2 - 是否使用 V2 API 版本
+ * @returns 完整的 API URL
+ */
 export function getURL(
   key: keyof typeof URLs,
   params: Record<string, unknown> = {},
@@ -59,4 +74,5 @@ export function getURL(
   return `${v2 ? BASE_URL_API_V2 : getBaseUrl()}${url}`;
 }
 
+// URL 常量的类型定义
 export type URLsType = typeof URLs;

@@ -6,8 +6,10 @@ import * as React from "react";
 import { cn } from "../../utils/utils";
 import ShadTooltip from "../common/shadTooltipComponent";
 
+// 手风琴根组件，基于 Radix UI Accordion 原语
 const Accordion = AccordionPrimitive.Root;
 
+// 手风琴面板项组件
 const AccordionItem = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
@@ -20,6 +22,7 @@ const AccordionItem = React.forwardRef<
 ));
 AccordionItem.displayName = "AccordionItem";
 
+// 手风琴触发器组件，点击展开/折叠面板
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
@@ -56,6 +59,7 @@ const AccordionTrigger = React.forwardRef<
 ));
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
 
+// 手风琴内容组件，包含折叠/展开动画
 const AccordionContent = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>

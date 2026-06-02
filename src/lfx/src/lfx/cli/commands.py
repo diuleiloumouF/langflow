@@ -1,5 +1,7 @@
 """CLI commands for LFX."""
 
+# LFX 的 CLI 命令模块，提供 flow 的 serve、run 等命令行接口
+
 from __future__ import annotations
 
 import json
@@ -27,13 +29,15 @@ from lfx.cli.common import (
 )
 from lfx.cli.serve_app import FlowMeta, create_multi_serve_app
 
-# Initialize console
+# 初始化 Rich 控制台，用于终端美化输出
 console = Console()
 
-# Constants
+# 常量
+# API Key 显示时的掩码长度，超过此长度的部分用省略号替代
 API_KEY_MASK_LENGTH = 8
 
 
+# serve 命令入口，将异步函数通过 syncify 转为同步，以便 typer 框架调用
 @partial(syncify, raise_sync_error=False)
 async def serve_command(
     script_path: str | None = typer.Argument(
@@ -88,14 +92,15 @@ async def serve_command(
         cat my_flow.json | lfx serve --stdin
         echo '{"nodes": [...]}' | lfx serve --stdin
     """
-    # Configure logging with the specified level and import logger
+    # 使用指定的日志级别配置日志，并导入 logger
     from lfx.log.logger import configure, logger
 
     configure(log_level=log_level)
 
+    # 创建详细输出打印器，根据 verbose 标志决定是否输出调试信息
     verbose_print = create_verbose_printer(verbose=verbose)
 
-    # Validate input sources - exactly one must be provided
+    # 验证输入源 - 必须且只能提供一种输入方式：文件路径、内联 JSON 或标准输入
     input_sources = [script_path is not None, flow_json is not None, stdin]
     if sum(input_sources) != 1:
         if sum(input_sources) == 0:
@@ -104,7 +109,7 @@ async def serve_command(
             verbose_print("Error: Cannot use script_path, --flow-json, and --stdin together. Choose exactly one.")
         raise typer.Exit(1)
 
-    # Load environment variables from .env file if provided
+    # 如果提供了 .env 文件，加载其中的环境变量
     if env_file:
         if not env_file.exists():
             verbose_print(f"Error: Environment file '{env_file}' does not exist.")
@@ -113,7 +118,7 @@ async def serve_command(
         verbose_print(f"Loading environment variables from: {env_file}")
         load_dotenv(env_file)
 
-    # Validate API key
+    # 验证 API Key 是否已配置
     try:
         api_key = get_api_key()
         verbose_print("✓ LANGFLOW_API_KEY is configured")
@@ -122,14 +127,14 @@ async def serve_command(
         typer.echo("Set the LANGFLOW_API_KEY environment variable before serving.", err=True)
         raise typer.Exit(1) from e
 
-    # Validate log level
+    # 验证日志级别是否合法
     valid_log_levels = {"debug", "info", "warning", "error", "critical"}
     if log_level.lower() not in valid_log_levels:
         verbose_print(f"Error: Invalid log level '{log_level}'. Must be one of: {', '.join(sorted(valid_log_levels))}")
         raise typer.Exit(1)
 
-    # Configure logging with the specified level
-    # Disable pretty logs for serve command to avoid ANSI codes in API responses
+    # 使用指定的日志级别配置日志
+    # 禁用 serve 命令的美化日志，避免 API 响应中出现 ANSI 转义码
     os.environ["LANGFLOW_PRETTY_LOGS"] = "false"
     verbose_print(f"Configuring logging with level: {log_level}")
     from lfx.log.logger import configure
@@ -137,18 +142,20 @@ async def serve_command(
     configure(log_level=log_level)
 
     # ------------------------------------------------------------------
-    # Handle inline JSON content or stdin input
+    # 处理内联 JSON 内容或标准输入
     # ------------------------------------------------------------------
+    # 需要清理的临时文件路径（用于内联 JSON 或 stdin 输入时创建的临时文件）
     temp_file_to_cleanup = None
 
     if flow_json is not None:
+        # 处理通过 --flow-json 参数传入的内联 JSON 内容
         logger.info("Processing inline JSON content...")
         try:
-            # Validate JSON syntax
+            # 验证 JSON 语法是否正确
             json_data = json.loads(flow_json)
             logger.info("JSON content is valid")
 
-            # Create a temporary file with the JSON content
+            # 将 JSON 内容写入临时文件，以便后续统一处理
             with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as temp_file:
                 json.dump(json_data, temp_file, indent=2)
                 temp_file_to_cleanup = temp_file.name
@@ -164,19 +171,20 @@ async def serve_command(
             raise typer.Exit(1) from e
 
     elif stdin:
+        # 处理通过标准输入管道传入的 JSON 内容
         logger.info("Reading JSON content from stdin...")
         try:
-            # Read all content from stdin
+            # 读取标准输入的全部内容
             stdin_content = sys.stdin.read().strip()
             if not stdin_content:
                 logger.error("No content received from stdin")
                 raise typer.Exit(1)
 
-            # Validate JSON syntax
+            # 验证 JSON 语法是否正确
             json_data = json.loads(stdin_content)
             logger.info("JSON content from stdin is valid")
 
-            # Create a temporary file with the JSON content
+            # 将 JSON 内容写入临时文件，以便后续统一处理
             with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as temp_file:
                 json.dump(json_data, temp_file, indent=2)
                 temp_file_to_cleanup = temp_file.name

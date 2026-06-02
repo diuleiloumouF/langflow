@@ -1,3 +1,4 @@
+// ArXiv 图标组件 - 用于 ArXiv 学术论文预印本平台相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import SvgArXivIcon from "./ArXivIcon";

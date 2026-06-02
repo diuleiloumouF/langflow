@@ -5,6 +5,11 @@ import { Button } from "../../ui/button";
 import { Separator } from "../../ui/separator";
 import ForwardedIconComponent from "../genericIconComponent";
 
+/**
+ * 页面布局组件
+ * 提供统一的页面头部布局，包含标题、描述、返回按钮和操作按钮。
+ * 支持自定义横幅和 Beta 标签。
+ */
 export default function PageLayout({
   title,
   description,

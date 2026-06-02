@@ -32,6 +32,11 @@ import { TraceDetailView } from "./TraceDetailView";
 import { downloadJson, toUtcIsoForDate } from "./traceViewHelpers";
 import { RenderGroupedSessionType } from "./types";
 
+/**
+ * 流程洞察内容组件
+ * 显示流程的运行追踪数据，包括搜索、筛选、分页、按会话分组等功能
+ * 支持点击查看追踪详情面板
+ */
 export function FlowInsightsContent({
   flowId,
   initialTraceId,

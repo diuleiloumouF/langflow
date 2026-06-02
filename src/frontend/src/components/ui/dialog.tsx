@@ -6,7 +6,14 @@ import { dialogClass } from "@/customization/utils/dialog-class";
 import { cn } from "../../utils/utils";
 import ShadTooltip from "../common/shadTooltipComponent";
 
+// 对话框根组件
 const Dialog = DialogPrimitive.Root;
+
+// 对话框触发器组件
+const DialogTrigger = DialogPrimitive.Trigger;
+
+// 对话框 Portal 组件，将内容渲染到 DOM 树外层
+const DialogPortal = ({
 
 const DialogTrigger = DialogPrimitive.Trigger;
 
@@ -22,6 +29,7 @@ const DialogPortal = ({
 );
 DialogPortal.displayName = DialogPrimitive.Portal.displayName;
 
+// 对话框遮罩层组件
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -34,6 +42,7 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+// 可视隐藏组件，用于辅助功能（屏幕阅读器可访问但视觉上隐藏）
 // Create a VisuallyHidden component for accessibility
 const VisuallyHidden = React.forwardRef<
   HTMLSpanElement,
@@ -50,6 +59,7 @@ const VisuallyHidden = React.forwardRef<
 ));
 VisuallyHidden.displayName = "VisuallyHidden";
 
+// 对话框内容组件，包含遮罩层、内容区域和关闭按钮
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
@@ -130,6 +140,7 @@ const DialogContent = React.forwardRef<
   },
 );
 
+// 对话框头部组件
 const DialogHeader = ({
   className,
   ...props
@@ -141,6 +152,7 @@ const DialogHeader = ({
 );
 DialogHeader.displayName = "DialogHeader";
 
+// 对话框底部组件
 const DialogFooter = ({
   className,
   ...props
@@ -155,6 +167,7 @@ const DialogFooter = ({
 );
 DialogFooter.displayName = "DialogFooter";
 
+// 对话框标题组件
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
@@ -170,6 +183,7 @@ const DialogTitle = React.forwardRef<
 ));
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
 
+// 对话框描述组件
 const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>

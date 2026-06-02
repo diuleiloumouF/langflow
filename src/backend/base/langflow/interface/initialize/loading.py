@@ -27,6 +27,7 @@ def instantiate_class(
     user_id=None,
     event_manager: EventManager | None = None,
 ) -> Any:
+    """根据模块类型、键和参数实例化类。"""
     """Instantiate class from module type and key, and params."""
     vertex_type = vertex.vertex_type
     base_type = vertex.base_type
@@ -36,9 +37,12 @@ def instantiate_class(
         msg = "No base type provided for vertex"
         raise ValueError(msg)
 
+    # 获取并处理顶点参数
     custom_params = get_params(vertex.params)
+    # 从参数中提取代码并执行，获取组件类对象
     code = custom_params.pop("code")
     class_object: type[CustomComponent | Component] = eval_custom_component_code(code)
+    # 使用类对象和参数创建自定义组件实例
     custom_component: CustomComponent | Component = class_object(
         _user_id=user_id,
         _parameters=custom_params,
@@ -46,6 +50,7 @@ def instantiate_class(
         _tracing_service=get_tracing_service(),
         _id=vertex.id,
     )
+    # 如果组件支持设置事件管理器，则进行设置
     if hasattr(custom_component, "set_event_manager"):
         custom_component.set_event_manager(event_manager)
     return custom_component, custom_params

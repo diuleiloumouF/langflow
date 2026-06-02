@@ -15,6 +15,11 @@ import FeatureToggles from "./featureTogglesComponent";
 import { SearchInput } from "./searchInput";
 import { SidebarFilterComponent } from "./sidebarFilterComponent";
 
+/**
+ * 侧边栏头部组件
+ * 显示侧边栏标题、搜索框、配置按钮和筛选器
+ * 包含新旧两种侧边栏模式的布局切换
+ */
 export const SidebarHeaderComponent = memo(function SidebarHeaderComponent({
   showConfig,
   setShowConfig,

@@ -254,7 +254,11 @@ ignore = [
     "TRY301", # A bit too harsh (Abstract `raise` to an inner function)
     "PLC0415", # Inline imports
     "D10", # Missing docstrings
+    "D415", # First line should end with punctuation (allows Chinese docstrings)
     "PLW1641", # Object does not implement `__hash__` method (mutable objects shouldn't be hashable)
+    "RUF001", # Allow ambiguous unicode characters (Chinese punctuation in comments)
+    "RUF002", # Allow ambiguous unicode characters in docstrings
+    "RUF003", # Allow ambiguous unicode characters in comments
     # Rules that are TODOs
     "ANN"
 ]

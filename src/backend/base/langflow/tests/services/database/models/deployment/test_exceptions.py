@@ -1,3 +1,5 @@
+# 部署守卫异常处理测试模块
+# 测试 DeploymentGuardError 的解析、友好消息映射和重试逻辑
 from __future__ import annotations
 
 import pytest
@@ -79,17 +81,20 @@ def test_parse_deployment_guard_error_maps_code_to_friendly_detail(
 
 
 def test_get_friendly_guard_detail_falls_back_to_generic_code_message() -> None:
+    """测试获取友好守卫详情时，未知代码会回退到通用代码消息。"""
     assert (
         get_friendly_guard_detail("SOME_UNKNOWN_CODE") == "Operation blocked by deployment guard (SOME_UNKNOWN_CODE)."
     )
 
 
 def test_parse_deployment_guard_error_returns_none_when_absent() -> None:
+    """测试解析部署守卫错误时，不存在守卫错误返回 None。"""
     parsed = parse_deployment_guard_error(Exception("plain error DEPLOYMENT_GUARD:PROJECT_HAS_DEPLOYMENTS:oops"))
     assert parsed is None
 
 
 def test_deployment_guard_error_supports_manual_technical_and_code() -> None:
+    """测试部署守卫错误支持手动设置技术详情和代码。"""
     err = DeploymentGuardError(
         code="FLOW_HAS_DEPLOYED_VERSIONS",
         technical_detail="DELETE flow_version blocked due to dependent rows.",
@@ -107,6 +112,7 @@ def test_deployment_guard_error_supports_manual_technical_and_code() -> None:
 
 
 def test_raise_if_deployment_guard_error_or_skip_raises_guard_error() -> None:
+    """测试如果存在部署守卫错误，会抛出守卫错误。"""
     guard_error = DeploymentGuardError(
         code="PROJECT_HAS_DEPLOYMENTS",
         technical_detail="DELETE project blocked: dependent deployments exist.",
@@ -120,11 +126,13 @@ def test_raise_if_deployment_guard_error_or_skip_raises_guard_error() -> None:
 
 
 def test_raise_if_deployment_guard_error_or_skip_is_noop_when_guard_absent() -> None:
+    """测试当守卫错误不存在时，抛出守卫错误是空操作。"""
     raise_if_deployment_guard_error_or_skip(Exception("not a guard error"))
 
 
 @pytest.mark.asyncio
 async def test_araise_if_deployment_guard_error_or_skip_raises_and_logs_message(monkeypatch) -> None:
+    """测试异步抛出部署守卫错误时，会记录日志消息。"""
     guard_error = DeploymentGuardError(
         code="PROJECT_HAS_DEPLOYMENTS",
         technical_detail="DELETE project blocked: dependent deployments exist.",
@@ -158,6 +166,7 @@ async def test_araise_if_deployment_guard_error_or_skip_raises_and_logs_message(
 
 @pytest.mark.asyncio
 async def test_araise_if_deployment_guard_error_or_skip_raises_without_logging_when_message_absent(monkeypatch) -> None:
+    """测试当没有日志消息时，异步抛出部署守卫错误不会记录日志。"""
     guard_error = DeploymentGuardError(
         code="PROJECT_HAS_DEPLOYMENTS",
         technical_detail="DELETE project blocked: dependent deployments exist.",
@@ -177,6 +186,7 @@ async def test_araise_if_deployment_guard_error_or_skip_raises_without_logging_w
 
 
 def test_remap_flow_guard_for_project_delete_remaps_flow_guard() -> None:
+    """测试为项目删除重新映射流程守卫错误。"""
     flow_guard = DeploymentGuardError(
         code="FLOW_HAS_DEPLOYED_VERSIONS",
         technical_detail="DELETE flow blocked by deployment attachment",
@@ -194,6 +204,7 @@ def test_remap_flow_guard_for_project_delete_remaps_flow_guard() -> None:
 
 
 def test_remap_flow_guard_for_project_delete_keeps_non_flow_guard() -> None:
+    """测试为项目删除重新映射时，保留非流程守卫错误。"""
     project_guard = DeploymentGuardError(
         code="PROJECT_HAS_DEPLOYMENTS",
         technical_detail="DELETE project blocked by deployment row",

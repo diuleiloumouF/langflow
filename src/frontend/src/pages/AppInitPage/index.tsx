@@ -18,7 +18,13 @@ import { useDarkStore } from "@/stores/darkStore";
 import useFlowsManagerStore from "@/stores/flowsManagerStore";
 import { LoadingPage } from "../LoadingPage";
 
+/**
+ * 应用初始化页面组件
+ * 负责应用启动时的认证状态恢复、配置加载、数据预取等初始化工作
+ * 在初始化完成前显示加载页面，完成后渲染子路由
+ */
 export function AppInitPage() {
+  // 刷新 GitHub star 数量
   const refreshStars = useDarkStore((state) => state.refreshStars);
   const refreshDiscordCount = useDarkStore(
     (state) => state.refreshDiscordCount,
@@ -32,6 +38,7 @@ export function AppInitPage() {
 
   const { isFetched: isLoaded } = useCustomPrimaryLoading();
 
+  // 在应用初始化时验证会话，从 HttpOnly cookies 恢复认证状态
   // Validate session on app init to restore auth state from HttpOnly cookies
   const { data: sessionData, isFetched: isSessionFetched } = useGetAuthSession({
     enabled: isLoaded,
@@ -39,6 +46,7 @@ export function AppInitPage() {
 
   const { isFetched } = useGetAutoLogin({ enabled: isLoaded });
 
+  // 仅在用户已认证时获取需要认证的接口数据
   // Only fetch authenticated endpoints when user is authenticated
   // (either via auto-login or manual login)
   const isAuthReady = autoLogin === true || isAuthenticated;
@@ -53,6 +61,7 @@ export function AppInitPage() {
   const { isFetched: isExamplesFetched, refetch: refetchExamples } =
     useGetBasicExamplesQuery();
 
+  // 当会话数据可用时更新认证状态
   // Update auth state when session data is available
   useEffect(() => {
     if (sessionData?.authenticated && sessionData.user) {
@@ -79,16 +88,19 @@ export function AppInitPage() {
     }
   }, [isFetched, isConfigFetched]);
 
+  // 判断会话是否已准备就绪
   const isSessionReady = useMemo(
     () => isAuthenticated || autoLogin || isSessionFetched,
     [autoLogin, isSessionFetched, isAuthenticated],
   );
 
+  // 自动登录"完成"的条件：
   // Auto-login is "complete" if:
   // - The query actually ran (isFetched), OR
   // - We're already authenticated (so we skipped auto-login intentionally)
   const isAutoLoginComplete = isFetched || isAuthenticated;
 
+  // 应用是否完全准备就绪
   const isReady = isAutoLoginComplete && isExamplesFetched && isSessionReady;
 
   return (

@@ -36,6 +36,8 @@ The ``api_key_env`` field names an *environment variable* that holds the API
 key.  The actual key is never stored in the file.
 """
 
+# lfx 环境配置模块 —— 用于解析 Langflow 实例的 URL 和 API 密钥。
+
 from __future__ import annotations
 
 import os
@@ -45,6 +47,7 @@ from typing import Any
 
 # ---------------------------------------------------------------------------
 # Public types
+# 公开类型
 # ---------------------------------------------------------------------------
 
 
@@ -57,6 +60,10 @@ class ConfigError(Exception):
     error with actionable guidance.
     """
 
+    # 配置错误异常 —— 当配置文件缺失、格式错误或无法解析环境名称时抛出。
+    # 注意：缺少 API 密钥环境变量不会引发 ConfigError，
+    # 返回的 LangflowEnvironment 中 api_key 将为 None。
+
 
 @dataclass
 class LangflowEnvironment:
@@ -68,18 +75,20 @@ class LangflowEnvironment:
         api_key: Resolved API key value, or ``None`` if not configured.
     """
 
-    name: str
-    url: str
-    api_key: str | None
+    # 已完全解析的 Langflow 目标实例。
+    name: str  # 人类可读的标签（环境名称或 "__inline__"）
+    url: str  # Langflow 实例的基础 URL
+    api_key: str | None  # 已解析的 API 密钥值，未配置时为 None
 
 
 # ---------------------------------------------------------------------------
 # Config file discovery
+# 配置文件发现
 # ---------------------------------------------------------------------------
 
-_YAML_NAMES: tuple[str, ...] = ("environments.yaml", "environments.yml")
-_TOML_FALLBACK = "langflow-environments.toml"
-_LFX_DIR = ".lfx"
+_YAML_NAMES: tuple[str, ...] = ("environments.yaml", "environments.yml")  # 支持的 YAML 配置文件名
+_TOML_FALLBACK = "langflow-environments.toml"  # 向后兼容的 TOML 配置文件名
+_LFX_DIR = ".lfx"  # lfx 配置目录名
 
 
 def _find_config_file(override: Path | None) -> Path | None:
@@ -96,13 +105,16 @@ def _find_config_file(override: Path | None) -> Path | None:
     ConfigError:
         If *override* is given but the file does not exist.
     """
+    # 按照查找顺序返回第一个存在的配置文件。
+
+    # 如果提供了显式路径，只检查该路径
     if override is not None:
         if not override.is_file():
             msg = f"Config file not found: {override}"
             raise ConfigError(msg)
         return override
 
-    # Walk up from cwd looking for .lfx/environments.yaml
+    # 从当前工作目录向上遍历，查找 .lfx/environments.yaml
     cwd = Path.cwd()
     for directory in (cwd, *cwd.parents):
         for name in _YAML_NAMES:
@@ -110,16 +122,18 @@ def _find_config_file(override: Path | None) -> Path | None:
             if candidate.is_file():
                 return candidate
         # Stop walking at a git root or the filesystem root
+        # 遇到 git 根目录或文件系统根目录时停止遍历
         if (directory / ".git").is_dir() or directory.parent == directory:
             break
 
-    # User-level YAML
+    # 用户级别的 YAML 配置文件（~/.lfx/environments.yaml）
     for name in _YAML_NAMES:
         user_yaml = Path.home() / _LFX_DIR / name
         if user_yaml.is_file():
             return user_yaml
 
     # Backward-compat: langflow-environments.toml in cwd
+    # 向后兼容：在当前工作目录中查找 langflow-environments.toml
     toml_fallback = cwd / _TOML_FALLBACK
     if toml_fallback.is_file():
         return toml_fallback
@@ -129,10 +143,12 @@ def _find_config_file(override: Path | None) -> Path | None:
 
 # ---------------------------------------------------------------------------
 # Parsing
+# 解析
 # ---------------------------------------------------------------------------
 
 
 def _parse_yaml(text: str, path: Path) -> dict[str, Any]:
+    # 解析 YAML 格式的配置内容，返回解析后的字典
     try:
         import yaml  # type: ignore[import-untyped]
     except ImportError as exc:
@@ -150,6 +166,7 @@ def _parse_yaml(text: str, path: Path) -> dict[str, Any]:
 
 
 def _parse_toml(path: Path) -> dict[str, Any]:
+    # 解析 TOML 格式的配置文件，返回解析后的字典
     try:
         import tomllib
     except ImportError:
@@ -171,12 +188,14 @@ def _parse_toml(path: Path) -> dict[str, Any]:
 
 def _load_raw(path: Path) -> dict[str, Any]:
     """Return the raw parsed config dict from *path* (YAML or TOML)."""
+    # 从指定路径加载并返回原始配置字典（支持 YAML 或 TOML 格式）
     suffix = path.suffix.lower()
     if suffix in (".yaml", ".yml"):
         return _parse_yaml(path.read_text(encoding="utf-8"), path)
     if suffix == ".toml":
         return _parse_toml(path)
     # Unknown extension — try YAML first, then TOML
+    # 未知扩展名 —— 先尝试 YAML 解析，再尝试 TOML 解析
     try:
         return _parse_yaml(path.read_text(encoding="utf-8"), path)
     except ConfigError:
@@ -184,20 +203,24 @@ def _load_raw(path: Path) -> dict[str, Any]:
 
 
 def _parse_env_block(name: str, block: Any, config_path: Path) -> LangflowEnvironment:
+    # 解析单个环境配置块，将其转换为 LangflowEnvironment 对象
     if not isinstance(block, dict):
         msg = f"Environment {name!r} in {config_path} must be a mapping, got {type(block).__name__}"
         raise ConfigError(msg)
     if "url" not in block:
         msg = f"Environment {name!r} in {config_path} is missing the required 'url' field."
         raise ConfigError(msg)
-    url: str = str(block["url"])
+    url: str = str(block["url"])  # 获取环境的 URL
     api_key: str | None = None
 
     if "api_key_env" in block:
+        # 通过环境变量名查找 API 密钥
         var_name: str = str(block["api_key_env"])
         api_key = os.environ.get(var_name)
         # api_key may be None here; callers that require a key raise their own error.
+        # api_key 可能为 None；需要密钥的调用方会自行抛出错误。
     elif "api_key" in block:
+        # 直接在配置文件中使用明文 API 密钥（不推荐）
         import warnings
 
         warnings.warn(
@@ -213,6 +236,7 @@ def _parse_env_block(name: str, block: Any, config_path: Path) -> LangflowEnviro
 
 def _load_config(path: Path) -> tuple[dict[str, LangflowEnvironment], str | None]:
     """Return ``(environments_dict, default_env_name)`` from the config at *path*."""
+    # 从指定路径的配置文件中加载所有环境定义和默认环境名称
     raw = _load_raw(path)
 
     raw_envs: Any = raw.get("environments") or {}
@@ -232,6 +256,7 @@ def _load_config(path: Path) -> tuple[dict[str, LangflowEnvironment], str | None
 
 # ---------------------------------------------------------------------------
 # Public API
+# 公开 API
 # ---------------------------------------------------------------------------
 
 
@@ -279,8 +304,15 @@ def resolve_environment(
         When resolution fails: file not found, unknown environment name,
         malformed config, etc.
     """
+    # 解析环境名称（或内联参数）为 LangflowEnvironment 对象。
+    # 优先级：
+    # 1. 内联模式 —— 提供 target 时直接返回，不读取配置文件
+    # 2. 命名环境 —— 在配置文件中查找指定环境
+    # 3. 环境变量回退 —— 无配置文件时使用 LANGFLOW_URL / LFX_URL 等环境变量
+
     # -----------------------------------------------------------------------
     # Mode 1: inline (--target provided)
+    # 模式 1：内联模式（提供了 --target 参数）
     # -----------------------------------------------------------------------
     if target is not None:
         name = env or "__inline__"
@@ -288,18 +320,21 @@ def resolve_environment(
 
     # -----------------------------------------------------------------------
     # Mode 2: config file
+    # 模式 2：配置文件模式
     # -----------------------------------------------------------------------
     override = Path(environments_file) if environments_file else None
     config_path = _find_config_file(override)
 
     if config_path is None:
         # No config file found — try env-var fallback before giving up
+        # 未找到配置文件 —— 尝试通过环境变量回退
         lf_url = os.environ.get("LANGFLOW_URL") or os.environ.get("LFX_URL")
         if lf_url and env is None:
             lf_key = api_key or os.environ.get("LANGFLOW_API_KEY") or os.environ.get("LFX_API_KEY")
             return LangflowEnvironment(name="__env__", url=lf_url, api_key=lf_key)
 
         if env is not None:
+            # 指定了环境名称但找不到配置文件
             msg = (
                 f"Environment {env!r} requested but no config file was found.\n"
                 f"  • Create .lfx/environments.yaml in your project root, or\n"
@@ -308,6 +343,7 @@ def resolve_environment(
             )
             raise ConfigError(msg)
 
+        # 完全没有找到任何配置方式
         msg = (
             "No --env, --target URL, or config file found.\n"
             "Options:\n"
@@ -320,8 +356,10 @@ def resolve_environment(
 
     all_envs, default_name = _load_config(config_path)
 
+    # 确定要使用的环境名称（优先使用命令行参数，其次使用默认值）
     resolved_name = env or default_name
     if resolved_name is None:
+        # 既没有指定环境名称，也没有配置默认环境
         available = ", ".join(sorted(all_envs)) or "(none defined)"
         msg = (
             f"No --env given and no 'defaults.environment' set in {config_path}.\n"
@@ -331,13 +369,14 @@ def resolve_environment(
         raise ConfigError(msg)
 
     if resolved_name not in all_envs:
+        # 指定的环境名称在配置文件中不存在
         available = ", ".join(sorted(all_envs)) or "(none defined)"
         msg = f"Environment {resolved_name!r} not found in {config_path}.\nAvailable environments: {available}"
         raise ConfigError(msg)
 
     resolved = all_envs[resolved_name]
 
-    # --api-key overrides the key resolved from the config file
+    # --api-key 参数会覆盖配置文件中解析出的密钥
     if api_key is not None:
         resolved = LangflowEnvironment(name=resolved.name, url=resolved.url, api_key=api_key)
 

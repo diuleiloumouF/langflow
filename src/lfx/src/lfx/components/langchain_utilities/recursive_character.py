@@ -7,6 +7,8 @@ from lfx.inputs.inputs import DataInput, IntInput, MessageTextInput
 from lfx.utils.util import unescape_string
 
 
+# 递归字符文本分割器组件，尝试保持相关文本在一起进行分割
+# Recursive character text splitter component for splitting text while keeping related text together
 class RecursiveCharacterTextSplitterComponent(LCTextSplitterComponent):
     display_name: str = "Recursive Character Text Splitter"
     description: str = "Split text trying to keep all related text together."
@@ -42,9 +44,11 @@ class RecursiveCharacterTextSplitterComponent(LCTextSplitterComponent):
         ),
     ]
 
+    # 获取数据输入
     def get_data_input(self) -> Any:
         return self.data_input
 
+    # 构建递归字符文本分割器实例
     def build_text_splitter(self) -> TextSplitter:
         if not self.separators:
             separators: list[str] | None = None

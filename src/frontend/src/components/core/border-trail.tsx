@@ -1,6 +1,11 @@
 import { motion, type Transition } from "framer-motion";
 import { cn } from "@/utils/utils";
 
+/**
+ * 边框拖尾动画组件
+ * 在元素边框上创建一个沿着路径移动的光效动画。
+ * 使用 framer-motion 的 offset-path 实现路径动画。
+ */
 type BorderTrailProps = {
   className?: string;
   size?: number | string;

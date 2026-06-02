@@ -5,7 +5,17 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 import { cn } from "../../utils/utils";
 
+// 下拉选择根组件
 const Select = SelectPrimitive.Root;
+
+// 下拉选择分组组件
+const SelectGroup = SelectPrimitive.Group;
+
+// 下拉选择值组件
+const SelectValue = SelectPrimitive.Value;
+
+// 下拉选择触发器组件，支持向上/向下展开方向
+const SelectTrigger = React.forwardRef<
 
 const SelectGroup = SelectPrimitive.Group;
 
@@ -37,6 +47,7 @@ const SelectTrigger = React.forwardRef<
 ));
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
+// 下拉选择内容组件
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
@@ -67,6 +78,7 @@ const SelectContent = React.forwardRef<
 ));
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
+// 下拉选择标签组件
 const SelectLabel = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Label>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
@@ -79,6 +91,7 @@ const SelectLabel = React.forwardRef<
 ));
 SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
+// 下拉选择选项项组件
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
@@ -104,6 +117,7 @@ const SelectItem = React.forwardRef<
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
+// 下拉选择分隔线组件
 const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>

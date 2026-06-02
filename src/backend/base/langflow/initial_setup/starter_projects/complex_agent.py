@@ -1,3 +1,6 @@
+# 复杂智能体入门项目
+# 该模块构建一个层级式 CrewAI 智能体流程，包含动态角色生成和工具调用
+
 from lfx.components.crewai.crewai import CrewAIAgentComponent
 from lfx.components.crewai.hierarchical_crew import HierarchicalCrewComponent
 from lfx.components.crewai.hierarchical_task import HierarchicalTaskComponent
@@ -9,6 +12,7 @@ from lfx.graph import Graph
 
 
 def complex_agent_graph():
+    """构建复杂智能体示例图。"""
     llm = OpenAIModelComponent(model_name="gpt-4o-mini")
     manager_llm = OpenAIModelComponent(model_name="gpt-4o")
     search_api_tool = SearchAPIComponent()

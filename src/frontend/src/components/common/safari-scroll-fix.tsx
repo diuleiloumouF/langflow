@@ -6,13 +6,13 @@ export const isSafari =
   /safari/i.test(navigator.userAgent) &&
   !/chrome|chromium|android/i.test(navigator.userAgent);
 
-/** Minimum pixels to detect intentional touch scroll */
+/** 最小触摸滚动像素阈值，用于检测用户主动滚动 */
 const TOUCH_SCROLL_THRESHOLD = 10;
-/** Cooldown (ms) to prevent immediate re-engage during momentum scroll */
+/** 冷却时间（毫秒），防止惯性滚动期间立即重新吸附 */
 const SCROLL_RE_ENGAGE_COOLDOWN_MS = 800;
-/** Pixels from bottom to trigger stick-to-bottom re-engage */
+/** 距离底部的像素阈值，触发重新吸附到底部 */
 const BOTTOM_PROXIMITY_THRESHOLD = 20;
-/** Maximum scroll delta considered natural (blocks sudden jumps) */
+/** 最大滚动增量阈值，超过此值视为异常跳转并阻止 */
 const JITTER_THRESHOLD = 200;
 
 /**

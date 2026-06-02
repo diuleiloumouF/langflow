@@ -1,71 +1,88 @@
+# 标准库：深拷贝
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
+# ChromaDB 配置和 LangChain Chroma 集成
 from chromadb.config import Settings
 from langchain_chroma import Chroma
 from typing_extensions import override
 
+# 向量存储安全配置、基类、工具函数
 from lfx.base.vectorstores.chroma_security import chroma_langchain_collection_kwargs
 from lfx.base.vectorstores.model import LCVectorStoreComponent, check_cached_vector_store
 from lfx.base.vectorstores.utils import chroma_collection_to_data
 from lfx.inputs.inputs import BoolInput, DropdownInput, HandleInput, IntInput, StrInput
 from lfx.schema.data import Data
 
+# 仅在类型检查时导入，避免运行时循环依赖
 if TYPE_CHECKING:
     from lfx.schema.dataframe import DataFrame
 
 
+# Chroma 向量存储组件，支持 ChromaDB 的向量存储与搜索功能
 class ChromaVectorStoreComponent(LCVectorStoreComponent):
     """Chroma Vector Store with search capabilities."""
 
     display_name: str = "Chroma DB"
+    # 组件描述：Chroma 向量存储，支持搜索功能
     description: str = "Chroma Vector Store with search capabilities"
     name = "Chroma"
     icon = "Chroma"
 
+    # 输入参数定义
     inputs = [
+        # ChromaDB 集合名称
         StrInput(
             name="collection_name",
             display_name="Collection Name",
             value="langflow",
         ),
+        # 数据持久化目录
         StrInput(
             name="persist_directory",
             display_name="Persist Directory",
         ),
         *LCVectorStoreComponent.inputs,
+        # 嵌入模型输入
         HandleInput(name="embedding", display_name="Embedding", input_types=["Embeddings"]),
+        # Chroma 服务器 CORS 允许的来源
         StrInput(
             name="chroma_server_cors_allow_origins",
             display_name="Server CORS Allow Origins",
             advanced=True,
         ),
+        # Chroma 服务器主机地址
         StrInput(
             name="chroma_server_host",
             display_name="Server Host",
             advanced=True,
         ),
+        # Chroma 服务器 HTTP 端口
         IntInput(
             name="chroma_server_http_port",
             display_name="Server HTTP Port",
             advanced=True,
         ),
+        # Chroma 服务器 gRPC 端口
         IntInput(
             name="chroma_server_grpc_port",
             display_name="Server gRPC Port",
             advanced=True,
         ),
+        # Chroma 服务器 SSL 启用开关
         BoolInput(
             name="chroma_server_ssl_enabled",
             display_name="Server SSL Enabled",
             advanced=True,
         ),
+        # 允许重复文档开关（关闭时不添加已存在的文档）
         BoolInput(
             name="allow_duplicates",
             display_name="Allow Duplicates",
             advanced=True,
             info="If false, will not add documents that are already in the Vector Store.",
         ),
+        # 搜索类型选择：相似度/MMR
         DropdownInput(
             name="search_type",
             display_name="Search Type",
@@ -73,6 +90,7 @@ class ChromaVectorStoreComponent(LCVectorStoreComponent):
             value="Similarity",
             advanced=True,
         ),
+        # 返回结果数量
         IntInput(
             name="number_of_results",
             display_name="Number of Results",
@@ -80,6 +98,7 @@ class ChromaVectorStoreComponent(LCVectorStoreComponent):
             advanced=True,
             value=10,
         ),
+        # 限制比较记录数（当不允许重复时使用）
         IntInput(
             name="limit",
             display_name="Limit",
@@ -88,6 +107,7 @@ class ChromaVectorStoreComponent(LCVectorStoreComponent):
         ),
     ]
 
+    # 构建 Chroma 向量存储实例（带缓存检查和方法重写）
     @override
     @check_cached_vector_store
     def build_vector_store(self) -> Chroma:
@@ -127,6 +147,7 @@ class ChromaVectorStoreComponent(LCVectorStoreComponent):
         self.status = chroma_collection_to_data(chroma.get(limit=limit))
         return chroma
 
+    # 向向量存储中添加文档（支持去重检查）
     def _add_documents_to_vector_store(self, vector_store: "Chroma") -> None:
         """Adds documents to the Vector Store."""
         ingest_data: list | Data | DataFrame = self.ingest_data

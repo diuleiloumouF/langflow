@@ -5,6 +5,10 @@ import KnowledgeBaseUploadModal from "@/modals/knowledgeBaseUploadModal/Knowledg
 import useAlertStore from "@/stores/alertStore";
 import { useOptimisticKnowledgeBase } from "../hooks/useOptimisticKnowledgeBase";
 
+/**
+ * 知识库空状态组件
+ * 当没有知识库时显示的引导界面，提示用户创建第一个知识库
+ */
 const KnowledgeBaseEmptyState = ({
   handleCreateKnowledge,
 }: {

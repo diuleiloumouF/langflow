@@ -11,6 +11,10 @@ interface ChunkCardProps {
   onCopy: (content: string) => void;
 }
 
+/**
+ * 分块卡片组件
+ * 显示单个文本分块的内容，支持展开/折叠和复制操作
+ */
 const ChunkCard = ({ chunk, index, onCopy }: ChunkCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCopied, setIsCopied] = useState(false);

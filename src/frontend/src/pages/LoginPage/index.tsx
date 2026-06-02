@@ -18,6 +18,11 @@ import type {
   loginInputStateType,
 } from "../../types/components";
 
+/**
+ * 登录页面组件
+ * 提供用户登录表单，包含用户名和密码输入、自动登录检测
+ * 以及自动登录模式下的自动提交功能
+ */
 export default function LoginPage(): JSX.Element {
   const [inputState, setInputState] =
     useState<loginInputStateType>(CONTROL_LOGIN_STATE);

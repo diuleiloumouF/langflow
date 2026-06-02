@@ -1,3 +1,4 @@
+# 循环控制组件：用于迭代处理数据集中的每条数据，并将结果聚合输出
 from lfx.base.flow_controls.loop_utils import (
     execute_loop_body,
     extract_loop_output,
@@ -15,15 +16,21 @@ from lfx.schema.message import Message
 from lfx.template.field.base import Output
 
 
+# 循环组件：迭代遍历 Data 或 Message 对象，逐项处理并聚合循环输入的结果
 class LoopComponent(Component):
+    # 组件显示名称
     display_name = "Loop"
+    # 组件描述：迭代 Data 或 Message 对象，逐项处理并聚合结果
     description = (
         "Iterates through Data or Message objects, processing items individually "
         "and aggregating results from loop inputs."
     )
+    # 组件文档链接
     documentation: str = "https://docs.langflow.org/loop"
+    # 组件图标
     icon = "infinity"
 
+    # 组件输入定义：接收一个 DataFrame 或 Table 作为循环迭代的数据源
     inputs = [
         HandleInput(
             name="data",
@@ -33,6 +40,9 @@ class LoopComponent(Component):
         ),
     ]
 
+    # 组件输出定义：
+    # - Item: 每次迭代输出的单条数据（用于连接循环体内的后续组件）
+    # - Done: 循环结束后的聚合结果（用于连接循环体外的后续组件）
     outputs = [
         Output(
             display_name="Item",
@@ -45,19 +55,21 @@ class LoopComponent(Component):
         Output(display_name="Done", name="done", method="done_output", group_outputs=True),
     ]
 
+    # 初始化数据列表和上下文索引
     def initialize_data(self) -> None:
         """Initialize the data list and context index.
 
         Seeds the input list and index counter in ctx. The aggregated results
         are owned by `_iterate`, which writes them once the subgraph finishes.
         """
+        # 如果已经初始化过，则直接返回
         if self.ctx.get(f"{self._id}_initialized", False):
             return
 
-        # Ensure data is a list of Data objects
+        # 将输入数据验证并转换为 Data 对象列表
         data_list = self._validate_data(self.data)
 
-        # Store the initial data and context variables
+        # 将初始数据和索引存入上下文，供后续迭代使用
         self.update_ctx(
             {
                 f"{self._id}_data": data_list,
@@ -66,14 +78,17 @@ class LoopComponent(Component):
             }
         )
 
+    # 将 Message 对象转换为 Data 对象
     def _convert_message_to_data(self, message: Message) -> Data:
         """Convert a Message object to a Data object using Type Convert logic."""
         return convert_to_data(message, auto_parse=False)
 
+    # 验证输入数据并返回 Data 对象列表
     def _validate_data(self, data):
         """Validate and return a list of Data objects."""
         return validate_data_input(data)
 
+    # 通过图遍历识别循环体内的所有顶点
     def get_loop_body_vertices(self) -> set[str]:
         """Identify vertices in this loop's body via graph traversal.
 
@@ -84,7 +99,7 @@ class LoopComponent(Component):
         Returns:
             Set of vertex IDs that form this loop's body
         """
-        # Check if we have a proper graph context
+        # 检查是否具有有效的图上下文
         if not hasattr(self, "_vertex") or self._vertex is None:
             return set()
 
@@ -94,18 +109,20 @@ class LoopComponent(Component):
             get_incoming_edge_by_target_param_fn=self.get_incoming_edge_by_target_param,
         )
 
+    # 获取循环体中的第一个顶点（连接到循环 item 输出的顶点）
     def _get_loop_body_start_vertex(self) -> str | None:
         """Get the first vertex in the loop body (connected to loop's item output).
 
         Returns:
             The vertex ID of the first vertex in the loop body, or None if not found
         """
-        # Check if we have a proper graph context
+        # 检查是否具有有效的图上下文
         if not hasattr(self, "_vertex") or self._vertex is None:
             return None
 
         return get_loop_body_start_vertex(vertex=self._vertex)
 
+    # 从子图执行结果中提取循环输出
     def _extract_loop_output(self, results: list) -> Data:
         """Extract the output from subgraph execution results.
 
@@ -115,10 +132,11 @@ class LoopComponent(Component):
         Returns:
             Data object containing the loop iteration output
         """
-        # Get the vertex ID that feeds back to the item input (end of loop body)
+        # 获取反馈到 item 输入的顶点 ID（即循环体的结束顶点）
         end_vertex_id = self.get_incoming_edge_by_target_param("item")
         return extract_loop_output(results=results, end_vertex_id=end_vertex_id)
 
+    # 为每个数据项执行循环体子图
     async def execute_loop_body(self, data_list: list[Data], event_manager=None) -> list[Data]:
         """Execute loop body for each data item.
 
@@ -132,7 +150,7 @@ class LoopComponent(Component):
         Returns:
             List of Data objects containing results from each iteration
         """
-        # Get the loop body configuration once
+        # 一次性获取循环体配置
         loop_body_vertex_ids = self.get_loop_body_vertices()
         start_vertex_id = self._get_loop_body_start_vertex()
         start_edge = get_loop_body_start_edge(self._vertex)
@@ -148,6 +166,7 @@ class LoopComponent(Component):
             event_manager=event_manager,
         )
 
+    # 执行一次循环体子图并缓存聚合结果（幂等操作）
     async def _iterate(self) -> list[Data]:
         """Run the loop body subgraph once and cache the aggregated results.
 
@@ -164,6 +183,7 @@ class LoopComponent(Component):
         `Graph.from_payload`), so `ctx` is effectively per-run and the
         cached `_iterated` flag does not leak across executions.
         """
+        # 如果已经迭代过，检查是否有缓存的错误需要重新抛出
         if self.ctx.get(f"{self._id}_iterated", False):
             cached_error = self.ctx.get(f"{self._id}_iteration_error")
             if cached_error is not None:
@@ -172,27 +192,33 @@ class LoopComponent(Component):
 
         import time
 
+        # 记录循环开始时间
         started_at = time.perf_counter()
         try:
+            # 初始化数据
             self.initialize_data()
             data_list = self.ctx.get(f"{self._id}_data", [])
             self.log(f"Starting loop over {len(data_list)} item(s)", name="Start")
 
+            # 如果没有数据需要迭代，直接返回空结果
             if not data_list:
                 self.update_ctx({f"{self._id}_aggregated": [], f"{self._id}_iterated": True})
                 self.log("No items to iterate, skipping loop body", name="Skipped")
                 return []
 
+            # 执行循环体并收集结果
             aggregated_results = await self.execute_loop_body(data_list, event_manager=self._event_manager)
         except Exception as exc:
             from lfx.log.logger import logger
 
+            # 记录循环执行失败并缓存异常，以便后续调用时重新抛出
             elapsed = time.perf_counter() - started_at
             self.log(f"Loop failed after {elapsed:.3f}s: {exc}", name="Error")
             await logger.aexception(f"Loop {self._id} failed while executing loop body")
             self.update_ctx({f"{self._id}_iteration_error": exc, f"{self._id}_iterated": True})
             raise
 
+        # 记录循环完成日志并缓存聚合结果
         elapsed = time.perf_counter() - started_at
         self.log(
             f"Completed {len(aggregated_results)} iteration(s) in {elapsed:.3f}s",
@@ -201,6 +227,7 @@ class LoopComponent(Component):
         self.update_ctx({f"{self._id}_aggregated": aggregated_results, f"{self._id}_iterated": True})
         return aggregated_results
 
+    # Item 输出：展示分发到循环体的输入数据
     async def item_output(self) -> Data:
         """Display the inputs dispatched to the loop body.
 
@@ -215,12 +242,16 @@ class LoopComponent(Component):
         compatible with Data-typed consumers in the loop body. The
         wrapped payload exposes the iterated rows for inspection.
         """
+        # 停止 item 分支的外部执行（循环体内部通过子图执行）
         self.stop("item")
+        # 如果 done 输出未连接，则在此触发迭代
         if self._vertex is not None and "done" not in self._vertex.edges_source_names:
             await self._iterate()
+        # 返回包含所有迭代数据的 Data 对象，供外部检查
         data_list = self.ctx.get(f"{self._id}_data", [])
         return Data(data={"count": len(data_list), "items": [d.data for d in data_list]})
 
+    # Done 输出：返回循环迭代的聚合结果
     async def done_output(self) -> DataFrame:
         """Return the aggregated results from the loop iteration.
 
@@ -230,5 +261,7 @@ class LoopComponent(Component):
         the aggregated results in ctx and this call is a cheap read, so the
         order in which the two outputs are evaluated does not matter.
         """
+        # 执行迭代（幂等操作，已执行则直接返回缓存结果）
         aggregated_results = await self._iterate()
+        # 将聚合结果包装为 DataFrame 返回
         return DataFrame(aggregated_results)

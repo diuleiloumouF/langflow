@@ -1,2 +1,5 @@
+# MCP 服务器名称的最大长度限制
 MAX_MCP_SERVER_NAME_LENGTH = 30
+
+# MCP 工具名称的最大长度限制
 MAX_MCP_TOOL_NAME_LENGTH = 30

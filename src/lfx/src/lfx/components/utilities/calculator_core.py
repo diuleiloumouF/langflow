@@ -8,13 +8,19 @@ from lfx.io import Output
 from lfx.schema.data import Data
 
 
+# 计算器组件，用于对给定的表达式执行基本的算术运算
 class CalculatorComponent(Component):
+    # 组件显示名称
     display_name = "Calculator"
+    # 组件描述信息
     description = "Perform basic arithmetic operations on a given expression."
+    # 组件文档链接
     documentation: str = "https://docs.langflow.org/calculator"
+    # 组件图标
     icon = "calculator"
 
     # Cache operators dictionary as a class variable
+    # 运算符映射字典，将 AST 运算符类型映射到实际的运算函数
     OPERATORS: dict[type[ast.operator], Callable] = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
@@ -23,6 +29,7 @@ class CalculatorComponent(Component):
         ast.Pow: operator.pow,
     }
 
+    # 组件输入参数定义
     inputs = [
         MessageTextInput(
             name="expression",
@@ -32,12 +39,14 @@ class CalculatorComponent(Component):
         ),
     ]
 
+    # 组件输出参数定义
     outputs = [
         Output(display_name="JSON", name="result", type_=Data, method="evaluate_expression"),
     ]
 
     def _eval_expr(self, node: ast.AST) -> float:
         """Evaluate an AST node recursively."""
+        # 递归评估 AST 节点
         if isinstance(node, ast.Constant):
             if isinstance(node.value, int | float):
                 return float(node.value)
@@ -59,6 +68,7 @@ class CalculatorComponent(Component):
 
     def evaluate_expression(self) -> Data:
         """Evaluate the mathematical expression and return the result."""
+        # 评估数学表达式并返回结果
         try:
             tree = ast.parse(self.expression, mode="eval")
             result = self._eval_expr(tree.body)
@@ -81,4 +91,5 @@ class CalculatorComponent(Component):
 
     def build(self):
         """Return the main evaluation function."""
+        # 返回主要的评估函数
         return self.evaluate_expression

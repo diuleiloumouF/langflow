@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/utils";
 import ShortcutDisplay from "../shortcutDisplay";
 
+/**
+ * 工具栏按钮组件
+ * 显示单个操作按钮，支持图标、标签和快捷键提示
+ */
 export const ToolbarButton = memo(
   ({
     onClick,

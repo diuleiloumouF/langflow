@@ -10,6 +10,7 @@ import type { FlowVersionEntry } from "@/types/flow/version";
 import { cn } from "@/utils/utils";
 import { formatTimestamp } from "../utils";
 
+/** 版本列表项的属性定义 */
 interface VersionListItemProps {
   entry: FlowVersionEntry;
   isSelected: boolean;
@@ -19,6 +20,10 @@ interface VersionListItemProps {
   onDeleteClick: (entry: FlowVersionEntry) => void;
 }
 
+/**
+ * 版本列表项组件
+ * 显示单个版本的信息，包括版本标签、时间戳，支持选择、导出和删除操作
+ */
 export default function VersionListItem({
   entry,
   isSelected,

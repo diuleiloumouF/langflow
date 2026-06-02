@@ -7,6 +7,8 @@ from lfx.inputs.inputs import DataInput, IntInput, MessageTextInput
 from lfx.utils.util import unescape_string
 
 
+# 自然语言文本分割器组件，根据自然语言边界分割文本
+# Natural language text splitter component for splitting text based on natural language boundaries
 class NaturalLanguageTextSplitterComponent(LCTextSplitterComponent):
     display_name = "Natural Language Text Splitter"
     description = "Split text based on natural language boundaries, optimized for a specified language."
@@ -48,9 +50,11 @@ class NaturalLanguageTextSplitterComponent(LCTextSplitterComponent):
         ),
     ]
 
+    # 获取数据输入
     def get_data_input(self) -> Any:
         return self.data_input
 
+    # 构建自然语言文本分割器实例
     def build_text_splitter(self) -> TextSplitter:
         separator = unescape_string(self.separator) if self.separator else "\n\n"
         return NLTKTextSplitter(

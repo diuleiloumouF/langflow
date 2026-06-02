@@ -1,9 +1,11 @@
+# 组件基类、输入/输出定义、日志、数据模型
 from lfx.custom.custom_component.component import Component
 from lfx.io import DataInput, Output
 from lfx.log.logger import logger
 from lfx.schema.data import Data
 
 
+# 数据合并组件，将多个 Data 对象合并为统一列表（已弃用）
 class MergeDataComponent(Component):
     """MergeDataComponent is responsible for combining multiple Data objects into a unified list of Data objects.
 
@@ -34,6 +36,7 @@ class MergeDataComponent(Component):
         ),
     ]
 
+    # 合并多个 Data 对象为单个列表
     def merge_data(self) -> list[Data]:
         """Merges multiple Data objects into a single list of Data objects.
 

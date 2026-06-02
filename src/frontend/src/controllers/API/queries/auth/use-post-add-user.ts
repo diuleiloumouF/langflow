@@ -5,6 +5,10 @@ import { api } from "../../api";
 import { getURL } from "../../helpers/constants";
 import { UseRequestProcessor } from "../../services/request-processor";
 
+/**
+ * 添加新用户的自定义 Hook
+ * @returns 添加用户的 mutation 函数
+ */
 export const useAddUser: useMutationFunctionType<undefined, UserInputType> = (
   options?,
 ) => {

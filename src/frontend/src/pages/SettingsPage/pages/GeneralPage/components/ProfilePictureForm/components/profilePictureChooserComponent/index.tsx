@@ -7,6 +7,7 @@ import { useDarkStore } from "../../../../../../../../stores/darkStore";
 import { cn } from "../../../../../../../../utils/utils";
 import usePreloadImages from "./hooks/use-preload-images";
 
+/** 头像选择器组件的属性定义 */
 export type ProfilePictureChooserComponentProps = {
   profilePictures?: ProfilePicturesQueryResponse;
   loading: boolean;

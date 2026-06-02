@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * 水平滚动渐隐组件
+ * 为内容提供水平滚动功能，并在左右两侧显示渐隐效果。
+ * 当内容可滚动时，左侧和右侧会显示渐变遮罩提示用户可以继续滚动。
+ */
 export default function HorizontalScrollFadeComponent({
   children,
   isFolder = true,
@@ -7,10 +12,11 @@ export default function HorizontalScrollFadeComponent({
   children: JSX.Element | JSX.Element[];
   isFolder?: boolean;
 }) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const fadeContainerRef = useRef<HTMLDivElement>(null);
-  const [divWidth, setDivWidth] = useState<number>(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null); // 滚动容器引用
+  const fadeContainerRef = useRef<HTMLDivElement>(null); // 渐隐容器引用
+  const [divWidth, setDivWidth] = useState<number>(0); // 容器宽度
 
+  // 监听窗口大小变化，更新容器宽度
   useEffect(() => {
     const handleResize = () => {
       if (scrollContainerRef.current) {
@@ -23,6 +29,7 @@ export default function HorizontalScrollFadeComponent({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // 监听滚动事件，根据滚动位置显示/隐藏渐隐效果
   useEffect(() => {
     const handleScroll = () => {
       if (!scrollContainerRef.current || !fadeContainerRef.current) return;

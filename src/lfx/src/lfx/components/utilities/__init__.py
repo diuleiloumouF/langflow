@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from lfx.components.utilities.id_generator import IDGeneratorComponent
     from lfx.components.utilities.python_repl_core import PythonREPLComponent
 
+# 工具组件的动态导入映射表
 _dynamic_imports = {
     "CalculatorComponent": "calculator_core",
     "CurrentDateComponent": "current_date",
@@ -27,6 +28,7 @@ __all__ = [
 
 def __getattr__(attr_name: str) -> Any:
     """Lazily import utility components on attribute access."""
+    # 在访问属性时延迟导入工具组件
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)

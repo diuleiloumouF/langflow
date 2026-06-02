@@ -1,3 +1,4 @@
+# 用于延迟类型检查的导入
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
@@ -9,8 +10,10 @@ from lfx.schema.schema import INPUT_FIELD_NAME
 if TYPE_CHECKING:
     from lfx.graph.vertex.base import Vertex
 
+# 向后兼容的类型迁移映射
 # Type migrations for backward compatibility
 # Maps old type names to new type names
+# 旧类型名 -> 新类型名的映射关系
 TYPE_MIGRATIONS: dict[str, str] = {
     "Data": "JSON",
     "DataFrame": "Table",
@@ -20,6 +23,8 @@ TYPE_MIGRATIONS: dict[str, str] = {
 def types_compatible(output_types: list[str], input_types: list[str]) -> bool:
     """Check if output types are compatible with input types, considering type migrations.
 
+    检查输出类型是否与输入类型兼容，考虑类型迁移。
+
     Args:
         output_types: List of output type names from source handle
         input_types: List of input type names from target handle
@@ -27,28 +32,49 @@ def types_compatible(output_types: list[str], input_types: list[str]) -> bool:
     Returns:
         True if any output type matches any input type (directly or via migration)
     """
+    # 遍历所有输出类型
     for output_type in output_types:
         # Get the migrated version of the output type
+        # 获取输出类型的迁移版本
         migrated_output = TYPE_MIGRATIONS.get(output_type, output_type)
 
+        # 遍历所有输入类型
         for input_type in input_types:
             # Get the migrated version of the input type
+            # 获取输入类型的迁移版本
             migrated_input = TYPE_MIGRATIONS.get(input_type, input_type)
 
             # Check all possible combinations using sets for cleaner comparison
+            # 使用集合进行更清晰的比较，检查所有可能的组合
             if input_type in {output_type, migrated_output} or migrated_input in {output_type, migrated_output}:
                 return True
+    # 没有找到兼容的类型
     return False
 
 
 class Edge:
+    """边类 - 表示图中两个顶点之间的连接关系"""
+
     def __init__(self, source: Vertex, target: Vertex, edge: EdgeData):
+        """初始化边对象
+
+        Args:
+            source: 源顶点
+            target: 目标顶点
+            edge: 边数据
+        """
+        # 源顶点ID
         self.source_id: str = source.id if source else ""
+        # 目标顶点ID
         self.target_id: str = target.id if target else ""
+        # 句柄是否有效
         self.valid_handles: bool = False
+        # 目标参数名
         self.target_param: str | None = None
         self._target_handle: TargetHandleDict | str | None = None
+        # 保存边数据的副本
         self._data = edge.copy()
+        # 是否为循环边
         self.is_cycle = False
         if data := edge.get("data", {}):
             self._source_handle = data.get("sourceHandle", {})
@@ -65,6 +91,7 @@ class Edge:
                 except Exception as e:
                     if "inputTypes" in self._target_handle and self._target_handle["inputTypes"] is None:
                         # Check if self._target_handle['fieldName']
+                        # 检查字段是否为有效的输入
                         if hasattr(target, "custom_component"):
                             display_name = getattr(target.custom_component, "display_name", "")
                             msg = (
@@ -84,14 +111,17 @@ class Edge:
                 raise ValueError(msg)
             self.target_param = self.target_handle.field_name
             # validate handles
+            # 验证句柄
             self.validate_handles(source, target)
         else:
             # Logging here because this is a breaking change
+            # 记录日志，因为这是一个破坏性变更
             logger.error("Edge data is empty")
             self._source_handle = edge.get("sourceHandle", "")  # type: ignore[assignment]
             self._target_handle = edge.get("targetHandle", "")  # type: ignore[assignment]
             # 'BaseLoader;BaseOutputParser|documents|PromptTemplate-zmTlD'
             # target_param is documents
+            # 处理旧格式的字符串句柄
             if isinstance(self._target_handle, str):
                 self.target_param = self._target_handle.split("|")[1]
                 self.source_handle = None  # type: ignore[assignment]
@@ -100,6 +130,7 @@ class Edge:
                 msg = "Target handle is not a string"
                 raise ValueError(msg)
         # Validate in __init__ to fail fast
+        # 在初始化时验证以便快速失败
         self.validate_edge(source, target)
 
     def to_data(self):

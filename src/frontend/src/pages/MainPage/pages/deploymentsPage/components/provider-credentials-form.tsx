@@ -9,6 +9,10 @@ interface ProviderCredentialsFormProps {
   layout?: "single-column" | "two-column";
 }
 
+/**
+ * 提供商凭据表单组件
+ * 提供提供商账户的凭据输入表单，包含名称、URL 和 API Key 字段
+ */
 export default function ProviderCredentialsForm({
   credentials,
   onCredentialsChange,

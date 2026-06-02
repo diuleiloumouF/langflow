@@ -1,3 +1,6 @@
+# 类型提取模块
+# 从 Python 类型注解中提取内部类型信息，
+# 支持处理 list、Optional、Union 等泛型类型的解析
 import re
 from collections.abc import Sequence as SequenceABC
 from itertools import chain
@@ -5,6 +8,7 @@ from types import GenericAlias
 from typing import Any, Union
 
 
+# 从泛型别名（如 list[int]、Sequence[str]）中提取内部类型
 def extract_inner_type_from_generic_alias(return_type: GenericAlias) -> Any:
     """Extracts the inner type from a type hint that is a list or a Optional."""
     if return_type.__origin__ in {list, SequenceABC}:
@@ -12,6 +16,7 @@ def extract_inner_type_from_generic_alias(return_type: GenericAlias) -> Any:
     return return_type
 
 
+# 从字符串形式的类型注解中提取 list 的内部类型（如 "list[int]" -> "int"）
 def extract_inner_type(return_type: str) -> str:
     """Extracts the inner type from a type hint that is a list."""
     if match := re.match(r"list\[(.*)\]", return_type, re.IGNORECASE):
@@ -19,6 +24,7 @@ def extract_inner_type(return_type: str) -> str:
     return return_type
 
 
+# 从字符串形式的 Union 类型注解中提取各个类型（如 "Union[int, str]" -> ["int", "str"]）
 def extract_union_types(return_type: str) -> list[str]:
     """Extracts the inner type from a type hint that is a list."""
     # If the return type is a Union, then we need to parse it
@@ -27,6 +33,7 @@ def extract_union_types(return_type: str) -> list[str]:
     return [item.strip() for item in return_types]
 
 
+# 从泛型别名中提取 Union 类型的各个成员
 def extract_uniont_types_from_generic_alias(return_type: GenericAlias) -> list:
     """Extracts the inner type from a type hint that is a Union."""
     if isinstance(return_type, list):
@@ -40,6 +47,7 @@ def extract_uniont_types_from_generic_alias(return_type: GenericAlias) -> list:
     return list(return_type.__args__)
 
 
+# 后处理类型注解：将类型解析为扁平的类型列表，递归展开 Union 和列表类型
 def post_process_type(type_):
     """Process the return type of a function.
 
@@ -65,6 +73,7 @@ def post_process_type(type_):
     return list(type_)
 
 
+# 从泛型别名中提取 Union 类型的各个成员（排除 Any 和 None）
 def extract_union_types_from_generic_alias(return_type: GenericAlias) -> list:
     """Extracts the inner type from a type hint that is a Union."""
     if isinstance(return_type, list):

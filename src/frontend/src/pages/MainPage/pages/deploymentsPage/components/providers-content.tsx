@@ -82,6 +82,11 @@ function ProvidersEmptyState({ onAddProvider }: { onAddProvider: () => void }) {
   );
 }
 
+/**
+ * 提供商内容组件
+ * 管理提供商账户列表的完整视图，包括提供商表格、空状态、加载状态
+ * 以及添加提供商模态框和删除确认对话框
+ */
 export default function ProvidersContent({
   isLoading,
   providers,

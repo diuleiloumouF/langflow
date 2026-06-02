@@ -6,6 +6,8 @@ from lfx.schema import Message
 from lfx.template.field.base import Output
 
 
+# LLM 数学链组件，解释提示并执行 Python 代码进行数学计算
+# LLM math chain component for interpreting prompts and executing Python code for math
 class LLMMathChainComponent(LCChainComponent):
     display_name = "LLMMathChain"
     description = "Chain that interprets a prompt and executes python code to do math."
@@ -30,6 +32,7 @@ class LLMMathChainComponent(LCChainComponent):
 
     outputs = [Output(display_name="Message", name="text", method="invoke_chain")]
 
+    # 调用 LLM 数学链执行数学计算
     def invoke_chain(self) -> Message:
         chain = LLMMathChain.from_llm(llm=self.llm)
         response = chain.invoke(

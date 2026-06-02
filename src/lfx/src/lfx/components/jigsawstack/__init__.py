@@ -1,3 +1,6 @@
+# JigsawStack 组件包，提供 AI 网页抓取、搜索、图像生成等多种 AI 功能
+# JigsawStack component package providing AI web scraping, search, image generation, and more
+
 from .ai_scrape import JigsawStackAIScraperComponent
 from .ai_web_search import JigsawStackAIWebSearchComponent
 from .file_read import JigsawStackFileReadComponent

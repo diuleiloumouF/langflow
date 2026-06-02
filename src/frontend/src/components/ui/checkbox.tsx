@@ -5,6 +5,7 @@ import * as React from "react";
 import { cn } from "../../utils/utils";
 import IconComponent from "../common/genericIconComponent";
 
+// 复选框组件，基于 Radix UI Checkbox 原语
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
@@ -26,6 +27,7 @@ const Checkbox = React.forwardRef<
 ));
 Checkbox.displayName = CheckboxPrimitive.Root.displayName;
 
+// 复选框 div 变体组件，使用 div 模拟复选框样式
 const CheckBoxDiv = ({
   className = "",
   checked,

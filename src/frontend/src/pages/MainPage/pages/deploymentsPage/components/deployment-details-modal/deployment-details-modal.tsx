@@ -24,6 +24,10 @@ interface DeploymentDetailsModalProps {
   providerName: string;
 }
 
+/**
+ * 部署详情模态框
+ * 显示部署的完整详情，包括配置信息、附加的流程版本列表等
+ */
 export default function DeploymentDetailsModal({
   open,
   setOpen,

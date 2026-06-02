@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
 
+/**
+ * 渐变色包装器组件
+ * 提供一个隐藏的 SVG 渐变定义，供子组件中的元素引用该渐变效果。
+ * 渐变色包含粉色、紫色等渐变过渡色。
+ */
 export function GradientWrapper({ children }: { children: ReactNode }) {
   return (
     <>

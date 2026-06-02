@@ -1,3 +1,13 @@
+"""MCP Tools 组件 — 连接 MCP 服务器并调用其工具。
+
+该模块提供 MCPToolsComponent 组件，用于：
+- 连接到 MCP (Model Context Protocol) 服务器
+- 获取服务器上可用的工具列表
+- 执行用户选择的工具并返回结果
+- 支持缓存机制以提升性能
+- 支持 stdio 和 Streamable HTTP 两种 MCP 传输协议
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -11,9 +21,9 @@ from pydantic import BaseModel
 
 from lfx.base.agents.utils import maybe_unflatten_dict, safe_cache_get, safe_cache_set
 from lfx.base.mcp.util import (
-    MCPStdioClient,
-    MCPStreamableHttpClient,
-    update_tools,
+    MCPStdioClient,  # MCP stdio 传输客户端
+    MCPStreamableHttpClient,  # MCP Streamable HTTP 传输客户端
+    update_tools,  # 更新工具列表的工具函数
 )
 from lfx.custom.custom_component.component_with_cache import ComponentWithCache
 from lfx.inputs.inputs import InputTypes  # noqa: TC001
@@ -30,20 +40,24 @@ def resolve_mcp_config(
     server_config_from_value: dict | None,
     server_config_from_db: dict | None,
 ) -> dict | None:
-    """Resolve MCP server config with proper precedence.
+    """根据优先级解析 MCP 服务器配置。
 
     Resolves the configuration for an MCP server with the following precedence:
     1. Database config (takes priority) - ensures edits are reflected
     2. Config from value/tweaks (fallback) - allows REST API to provide config for new servers
 
+    优先级规则：
+    1. 数据库配置（优先）- 确保编辑操作能够生效
+    2. 通过 value/tweaks 传入的配置（回退）- 允许 REST API 为新服务器提供配置
+
     Args:
-        server_name: Name of the MCP server
-        server_config_from_value: Config provided via value/tweaks (optional)
-        server_config_from_db: Config from database (optional)
+        server_name: MCP 服务器的名称
+        server_config_from_value: 通过 value/tweaks 传入的配置（可选）
+        server_config_from_db: 来自数据库的配置（可选）
 
     Returns:
-        Final config to use (DB takes priority, falls back to value)
-        Returns None if no config found in either location
+        最终使用的配置（数据库优先，回退到 value）
+        如果两个位置都没有找到配置则返回 None
     """
     if server_config_from_db:
         return server_config_from_db
@@ -51,35 +65,62 @@ def resolve_mcp_config(
 
 
 class MCPToolsComponent(ComponentWithCache):
-    schema_inputs: list = []
-    tools: list[StructuredTool] = []
-    _not_load_actions: bool = False
-    _tool_cache: dict = {}
+    """MCP 工具组件 — 连接到 MCP 服务器并使用其提供的工具。
+
+    该组件支持两种 MCP 传输协议：
+    - stdio: 通过标准输入输出与本地 MCP 服务器通信
+    - Streamable HTTP: 通过 HTTP 与远程 MCP 服务器通信
+
+    主要功能：
+    - 从 MCP 服务器获取可用工具列表
+    - 根据工具的 schema 动态生成输入表单
+    - 执行用户选择的工具并返回 DataFrame 格式的结果
+    - 支持可选的缓存机制以提升性能
+    - 支持自定义 HTTP 请求头（如认证头）
+    """
+
+    schema_inputs: list = []  # 当前工具的输入 schema 列表
+    tools: list[StructuredTool] = []  # 从 MCP 服务器获取的工具列表
+    _not_load_actions: bool = False  # 标记是否跳过工具加载（用于 tool_mode 场景）
+    _tool_cache: dict = {}  # 工具缓存，键为工具名，值为工具对象
     _last_selected_server: str | None = None  # Cache for the last selected server
+    # 上次选中的服务器名称缓存，用于判断服务器是否切换
 
     def __init__(self, **data) -> None:
+        """初始化 MCP 工具组件。
+
+        设置缓存结构，并创建两种 MCP 传输客户端（stdio 和 HTTP）。
+        """
         super().__init__(**data)
         # Initialize cache keys to avoid CacheMiss when accessing them
+        # 初始化缓存键结构，避免访问时出现 CacheMiss
         self._ensure_cache_structure()
 
         # Initialize clients with access to the component cache
+        # 初始化客户端，使其可以访问组件级共享缓存
         self.stdio_client: MCPStdioClient = MCPStdioClient(component_cache=self._shared_component_cache)
         self.streamable_http_client: MCPStreamableHttpClient = MCPStreamableHttpClient(
             component_cache=self._shared_component_cache
         )
 
     def _ensure_cache_structure(self):
-        """Ensure the cache has the required structure."""
+        """确保缓存具有所需的初始化结构。
+
+        初始化 "servers"（服务器缓存）和 "last_selected_server"（上次选中的服务器）两个缓存键。
+        """
         # Check if servers key exists and is not CacheMiss
+        # 检查 "servers" 缓存键是否存在且不是 CacheMiss
         servers_value = safe_cache_get(self._shared_component_cache, "servers")
         if servers_value is None:
             safe_cache_set(self._shared_component_cache, "servers", {})
 
         # Check if last_selected_server key exists and is not CacheMiss
+        # 检查 "last_selected_server" 缓存键是否存在且不是 CacheMiss
         last_server_value = safe_cache_get(self._shared_component_cache, "last_selected_server")
         if last_server_value is None:
             safe_cache_set(self._shared_component_cache, "last_selected_server", "")
 
+    # 默认配置键列表 — 这些键不会在工具切换时被清除
     default_keys: list[str] = [
         "code",
         "_type",
@@ -162,7 +203,12 @@ class MCPToolsComponent(ComponentWithCache):
     ]
 
     async def _validate_schema_inputs(self, tool_obj) -> list[InputTypes]:
-        """Validate and process schema inputs for a tool."""
+        """验证并处理工具的输入 schema。
+
+        将工具对象的 args_schema 转换为 Langflow 输入组件列表。
+        """
+        # Validate and process schema inputs for a tool.
+        # 验证并处理工具的 schema 输入参数
         try:
             if not tool_obj or not hasattr(tool_obj, "args_schema"):
                 msg = "Invalid tool object or missing input schema"
@@ -187,7 +233,24 @@ class MCPToolsComponent(ComponentWithCache):
             return schema_inputs
 
     async def update_tool_list(self, mcp_server_value=None):
+        """从 MCP 服务器获取并更新工具列表。
+
+        处理流程：
+        1. 检查缓存是否可用
+        2. 从数据库获取最新的服务器配置
+        3. 根据优先级解析最终配置（数据库优先）
+        4. 合并组件级别的 HTTP 请求头
+        5. 调用 MCP 客户端获取工具列表
+        6. 将结果存入缓存（如果启用了缓存）
+
+        Args:
+            mcp_server_value: 服务器配置字典 {name, config}，或服务器名称字符串
+
+        Returns:
+            (工具列表, 服务器配置字典) 的元组
+        """
         # Accepts mcp_server_value as dict {name, config} or uses self.mcp_server
+        # 接受 dict {name, config} 格式的服务器值，或使用 self.mcp_server
         mcp_server = mcp_server_value if mcp_server_value is not None else getattr(self, "mcp_server", None)
         server_name = None
         server_config_from_value = None
@@ -201,9 +264,11 @@ class MCPToolsComponent(ComponentWithCache):
             return [], {"name": server_name, "config": server_config_from_value}
 
         # Check if caching is enabled, default to False
+        # 检查是否启用了缓存，默认为 False
         use_cache = getattr(self, "use_cache", False)
 
         # Use shared cache if available and caching is enabled
+        # 如果启用了缓存，尝试从共享缓存中获取工具数据
         cached = None
         if use_cache:
             servers_cache = safe_cache_get(self._shared_component_cache, "servers", {})
@@ -230,6 +295,7 @@ class MCPToolsComponent(ComponentWithCache):
         try:
             # Try to fetch from database first to ensure we have the latest config
             # This ensures database updates (like editing a server) take effect
+            # 先从数据库获取配置，确保数据库中的编辑操作能够生效
             try:
                 from langflow.api.v2.mcp import get_server
                 from langflow.services.database.models.user.crud import get_user_by_id
@@ -259,6 +325,7 @@ class MCPToolsComponent(ComponentWithCache):
                 )
 
             # Resolve config with proper precedence: DB takes priority, falls back to value
+            # 按优先级解析配置：数据库优先，回退到传入的值
             server_config = resolve_mcp_config(
                 server_name=server_name,
                 server_config_from_value=server_config_from_value,
@@ -270,15 +337,19 @@ class MCPToolsComponent(ComponentWithCache):
                 return [], {"name": server_name, "config": server_config}
 
             # Add verify_ssl option to server config if not present
+            # 如果服务器配置中没有 SSL 验证选项，从组件设置中补充
             if "verify_ssl" not in server_config:
                 verify_ssl = getattr(self, "verify_ssl", True)
                 server_config["verify_ssl"] = verify_ssl
 
             # Merge headers from component input with server config headers
             # Component headers take precedence over server config headers
+            # 将组件输入的请求头与服务器配置的请求头合并
+            # 组件级请求头优先于服务器配置的请求头
             component_headers = getattr(self, "headers", None) or []
             if component_headers:
                 # Convert list of {"key": k, "value": v} to dict
+                # 将 [{"key": k, "value": v}] 格式的列表转换为字典
                 component_headers_dict = {}
                 if isinstance(component_headers, list):
                     for item in component_headers:
@@ -299,12 +370,14 @@ class MCPToolsComponent(ComponentWithCache):
                     merged_headers = {**existing_headers, **component_headers_dict}
                     server_config["headers"] = merged_headers
             # Get request_variables from graph context for global variable resolution
+            # 从图上下文中获取全局变量，用于请求变量解析
             request_variables = None
             if hasattr(self, "graph") and self.graph and hasattr(self.graph, "context"):
                 request_variables = self.graph.context.get("request_variables")
 
             # Only load global variables from database if we have headers that might use them
             # This avoids unnecessary database queries when headers are empty
+            # 仅在有请求头需要解析全局变量时才从数据库加载，避免不必要的查询
             has_headers = server_config.get("headers") and len(server_config.get("headers", {})) > 0
             if not request_variables and has_headers:
                 try:
@@ -332,6 +405,7 @@ class MCPToolsComponent(ComponentWithCache):
             self.tools = tool_list
 
             # Cache the result only if caching is enabled
+            # 仅在启用缓存时将结果存入缓存
             if use_cache:
                 cache_data = {
                     "tools": tool_list,
@@ -358,12 +432,28 @@ class MCPToolsComponent(ComponentWithCache):
             return tool_list, {"name": server_name, "config": server_config}
 
     async def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None) -> dict:
-        """Toggle the visibility of connection-specific fields based on the selected mode."""
+        """根据用户选择动态更新组件的构建配置（UI 表单）。
+
+        根据字段名称分发不同的处理逻辑：
+        - "tool": 工具选择变更时，加载工具的输入参数 schema
+        - "mcp_server": 服务器选择变更时，刷新可用工具列表
+        - "tool_mode": 工具模式切换时，控制工具下拉框的显示/隐藏
+        - "tools_metadata": 工具元数据变更时的处理
+
+        Args:
+            build_config: 当前的构建配置字典
+            field_value: 当前字段的新值
+            field_name: 发生变更的字段名称
+
+        Returns:
+            更新后的构建配置字典
+        """
         try:
             if field_name == "tool":
                 try:
                     # Always refresh tools when cache is disabled, or when tools list is empty
                     # This ensures database edits are reflected immediately when cache is disabled
+                    # 缓存禁用或工具列表为空时始终刷新工具，确保数据库编辑立即生效
                     use_cache = getattr(self, "use_cache", False)
                     if len(self.tools) == 0 or not use_cache:
                         try:
@@ -408,6 +498,7 @@ class MCPToolsComponent(ComponentWithCache):
                 else:
                     return build_config
             elif field_name == "mcp_server":
+                # 处理 MCP 服务器选择变更
                 if not field_value:
                     build_config["tool"]["show"] = False
                     build_config["tool"]["options"] = []
@@ -424,16 +515,22 @@ class MCPToolsComponent(ComponentWithCache):
                 # Only treat as a server change if there was a previous server selection.
                 # Cold cache (_last_selected_server="") on initial flow load is NOT a server change —
                 # the user didn't switch anything, the backend just hasn't seen this component yet.
+                # 仅在有先前选择的服务器时才视为服务器切换
+                # 初始加载时冷缓存（_last_selected_server=""）不算服务器切换
                 server_changed = bool(_last_selected_server and current_server_name != _last_selected_server)
 
                 # Determine if "Tool Mode" is active by checking if the tool dropdown is hidden.
+                # 通过检查工具下拉框是否隐藏来判断是否处于 "工具模式"
                 is_in_tool_mode = build_config["tools_metadata"]["show"]
 
                 # Get use_cache setting to determine if we should use cached data
+                # 获取缓存设置以决定是否使用缓存数据
                 use_cache = getattr(self, "use_cache", False)
 
                 # Fast path: if server didn't change and we already have options, keep them as-is
                 # BUT only if caching is enabled, we're in tool mode, or it's the initial load
+                # 快速路径：如果服务器未切换且已有工具选项，直接返回
+                # 但仅在启用了缓存、处于工具模式或初始加载时适用
                 existing_options = build_config.get("tool", {}).get("options") or []
                 if not server_changed and existing_options:
                     # In non-tool mode with cache disabled, skip the fast path to force refresh
@@ -448,6 +545,7 @@ class MCPToolsComponent(ComponentWithCache):
 
                 # To avoid unnecessary updates, only proceed if the server has actually changed
                 # OR if caching is disabled (to force refresh in non-tool mode)
+                # 为避免不必要的更新，仅在服务器实际切换或缓存禁用时继续处理
                 if (_last_selected_server in (current_server_name, "")) and build_config["tool"]["show"] and use_cache:
                     if current_server_name:
                         servers_cache = safe_cache_get(self._shared_component_cache, "servers", {})
@@ -464,6 +562,7 @@ class MCPToolsComponent(ComponentWithCache):
 
                 # When cache is disabled, clear any cached data for this server
                 # This ensures we always fetch fresh data from the database
+                # 缓存禁用时清除该服务器的缓存数据，确保始终从数据库获取最新数据
                 if not use_cache and current_server_name:
                     servers_cache = safe_cache_get(self._shared_component_cache, "servers", {})
                     if isinstance(servers_cache, dict) and current_server_name in servers_cache:
@@ -471,6 +570,7 @@ class MCPToolsComponent(ComponentWithCache):
                         safe_cache_set(self._shared_component_cache, "servers", servers_cache)
 
                 # Check if tools are already cached for this server before clearing
+                # 在清除之前检查该服务器的工具是否已缓存
                 cached_tools = None
                 if current_server_name and use_cache:
                     servers_cache = safe_cache_get(self._shared_component_cache, "servers", {})
@@ -490,16 +590,19 @@ class MCPToolsComponent(ComponentWithCache):
 
                 # Clear tools when cache is disabled OR when we don't have cached tools
                 # This ensures fresh tools are fetched after database edits
+                # 缓存禁用或没有缓存工具时清空工具列表，确保获取最新工具
                 if not cached_tools or not use_cache:
                     self.tools = []  # Clear previous tools to force refresh
 
                 # Clear previous tool inputs if:
                 # 1. Server actually changed
                 # 2. Cache is disabled (meaning tool list will be refreshed)
+                # 清除之前的工具输入：1. 服务器切换了  2. 缓存禁用（工具列表将刷新）
                 if server_changed or not use_cache:
                     self.remove_non_default_keys(build_config)
 
                 # Only show the tool dropdown if not in tool_mode
+                # 仅在非工具模式下显示工具下拉框
                 if not is_in_tool_mode:
                     build_config["tool"]["show"] = True
                     if cached_tools:
@@ -511,6 +614,8 @@ class MCPToolsComponent(ComponentWithCache):
                         # The frontend has no reliable mechanism to trigger a second
                         # update_build_config call for the "tool" field after this response,
                         # so we must populate the options here.
+                        # 在此处直接获取工具，而不是延迟到前端回调
+                        # 前端没有可靠的机制在响应后触发第二次 update_build_config 调用
                         try:
                             self.tools, build_config["mcp_server"]["value"] = await self.update_tool_list(
                                 mcp_server_value=field_value
@@ -529,14 +634,17 @@ class MCPToolsComponent(ComponentWithCache):
                             build_config["tool"]["placeholder"] = "Error on MCP Server"
                     # Force a value refresh only when the user genuinely switched servers.
                     # server_changed is only True for real user-initiated changes (not initial load).
+                    # 仅在用户实际切换服务器时强制刷新值
                     if server_changed:
                         build_config["tool"]["value"] = uuid.uuid4()
                 else:
                     # Keep the tool dropdown hidden if in tool_mode
+                    # 工具模式下保持工具下拉框隐藏
                     self._not_load_actions = True
                     build_config["tool"]["show"] = False
 
             elif field_name == "tool_mode":
+                # 处理工具模式切换：tool_mode=True 时隐藏工具下拉框，直接通过输入参数调用
                 build_config["tool"]["placeholder"] = ""
                 build_config["tool"]["show"] = not bool(field_value) and bool(build_config["mcp_server"])
                 self.remove_non_default_keys(build_config)
@@ -547,6 +655,7 @@ class MCPToolsComponent(ComponentWithCache):
                     build_config["tool"]["value"] = uuid.uuid4()
                     build_config["tool"]["show"] = True
                     # Fetch tools immediately instead of showing "Loading tools..."
+                    # 立即获取工具列表，而不是显示 "Loading tools..."
                     try:
                         self.tools, build_config["mcp_server"]["value"] = await self.update_tool_list()
                         build_config["tool"]["options"] = [tool.name for tool in self.tools]
@@ -573,7 +682,12 @@ class MCPToolsComponent(ComponentWithCache):
 
     @staticmethod
     def _unwrap_optional_annotation(annotation: Any) -> Any:
-        """Remove a single None branch from a union annotation."""
+        """从联合类型注解中移除 None 分支（解包 Optional 类型）。
+
+        例如：Optional[int] -> int，Union[str, None] -> str
+        """
+        # Remove a single None branch from a union annotation.
+        # 从联合类型注解中移除单个 None 分支
         if isinstance(annotation, UnionType):
             non_none = [item for item in get_args(annotation) if item is not type(None)]
             if len(non_none) == 1:
@@ -590,7 +704,12 @@ class MCPToolsComponent(ComponentWithCache):
 
     @classmethod
     def _is_object_like_annotation(cls, annotation: Any) -> bool:
-        """Return True when the annotation represents a dict-like payload."""
+        """判断注解是否表示类似字典的载荷类型。
+
+        返回 True 表示注解是 dict 或 BaseModel 的子类。
+        """
+        # Return True when the annotation represents a dict-like payload.
+        # 当注解表示类似字典的载荷时返回 True
         annotation = cls._unwrap_optional_annotation(annotation)
         origin = get_origin(annotation)
         if origin is dict:
@@ -599,7 +718,12 @@ class MCPToolsComponent(ComponentWithCache):
 
     @classmethod
     def _should_include_tool_argument(cls, model_field: Any, value: Any) -> bool:
-        """Omit blank optional values so MCP server defaults remain intact."""
+        """判断工具参数是否应该被包含在调用参数中。
+
+        省略空的可选值，以保持 MCP 服务器的默认值不变。
+        """
+        # Omit blank optional values so MCP server defaults remain intact.
+        # 省略空的可选值，以保持 MCP 服务器的默认值完整
         if value is None:
             return False
 
@@ -614,7 +738,12 @@ class MCPToolsComponent(ComponentWithCache):
         )
 
     def _build_tool_kwargs(self, args_schema: type[BaseModel]) -> dict[str, Any]:
-        """Collect tool kwargs from component inputs, omitting blank optional values."""
+        """从组件输入中收集工具调用的关键字参数。
+
+        省略空的可选值，仅包含非空参数。
+        """
+        # Collect tool kwargs from component inputs, omitting blank optional values.
+        # 从组件输入中收集工具关键字参数，省略空的可选值
         kwargs: dict[str, Any] = {}
         for arg_name, model_field in args_schema.model_fields.items():
             value = getattr(self, arg_name, None)
@@ -627,7 +756,13 @@ class MCPToolsComponent(ComponentWithCache):
         return kwargs
 
     def get_inputs_for_all_tools(self, tools: list) -> dict:
-        """Get input schemas for all tools."""
+        """获取所有工具的输入 schema。
+
+        Returns:
+            字典，键为工具名，值为对应的 Langflow 输入列表
+        """
+        # Get input schemas for all tools.
+        # 获取所有工具的输入 schema
         inputs = {}
         for tool in tools:
             if not tool or not hasattr(tool, "name"):
@@ -642,13 +777,29 @@ class MCPToolsComponent(ComponentWithCache):
         return inputs
 
     def remove_non_default_keys(self, build_config: dict) -> None:
-        """Remove non-default keys from the build config."""
+        """从构建配置中移除非默认键（动态添加的工具输入参数）。"""
+        # Remove non-default keys from the build config.
+        # 从构建配置中移除非默认键
         for key in list(build_config.keys()):
             if key not in self.default_keys:
                 build_config.pop(key)
 
     async def _update_tool_config(self, build_config: dict, tool_name: str) -> None:
-        """Update tool configuration with proper error handling."""
+        """更新工具配置，包括加载工具的输入参数 schema 到构建配置中。
+
+        处理流程：
+        1. 如果工具列表为空则先刷新
+        2. 保存当前工具输入的已有值
+        3. 清除所有非默认的动态输入
+        4. 加载选中工具的新输入 schema
+        5. 恢复之前保存的值（如果参数名匹配）
+
+        Args:
+            build_config: 构建配置字典
+            tool_name: 选中的工具名称
+        """
+        # Update tool configuration with proper error handling.
+        # 更新工具配置，包含适当的错误处理
         if not self.tools:
             self.tools, build_config["mcp_server"]["value"] = await self.update_tool_list()
 
@@ -665,15 +816,18 @@ class MCPToolsComponent(ComponentWithCache):
 
         try:
             # Store current values before removing inputs (only for the current tool)
+            # 在清除输入前保存当前值（仅保留当前工具的值）
             current_values = {}
             for key, value in build_config.items():
                 if key not in self.default_keys and isinstance(value, dict) and "value" in value:
                     current_values[key] = value["value"]
 
             # Remove ALL non-default keys (all previous tool inputs)
+            # 清除所有非默认键（之前所有工具的输入）
             self.remove_non_default_keys(build_config)
 
             # Get and validate new inputs for the selected tool
+            # 获取并验证选中工具的新输入参数
             self.schema_inputs = await self._validate_schema_inputs(tool_obj)
             if not self.schema_inputs:
                 msg = f"No input parameters to configure for tool '{tool_name}'"
@@ -681,6 +835,7 @@ class MCPToolsComponent(ComponentWithCache):
                 return
 
             # Add new inputs to build config for the selected tool only
+            # 仅为选中的工具添加新输入到构建配置
             for schema_input in self.schema_inputs:
                 if not schema_input or not hasattr(schema_input, "name"):
                     msg = "Invalid schema input detected, skipping"

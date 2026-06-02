@@ -1,5 +1,8 @@
 """Tests for ``create_default_folder_if_it_doesnt_exist``.
 
+# 默认文件夹创建工具函数测试模块
+# 测试创建默认文件夹时的部署守卫预检查逻辑
+
 These tests exist specifically to protect the new deployment-guard pre-check
 added by this PR: the guard-facing SELECT must correctly find flows whose
 ``folder_id`` is NULL so ``ensure_flow_moves_allowed`` is consulted with a
@@ -30,13 +33,16 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncEngine
 
 _TEST_PASSWORD = "hashed"  # noqa: S105  # pragma: allowlist secret
+# 测试用的哈希密码
 
 
 def _utcnow_naive() -> datetime:
+    """返回无时区信息的当前 UTC 时间。"""
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def _create_sqlite_engine() -> AsyncEngine:
+    """创建 SQLite 异步引擎。"""
     engine = create_async_engine(
         "sqlite+aiosqlite://",
         connect_args={"check_same_thread": False},
@@ -89,6 +95,10 @@ async def test_default_folder_creation_consults_guard_with_null_folder_flows(
     returned zero rows even when matching flows existed. This test asserts the
     guard is invoked with the NULL-folder flow included in its input.
     """
+    # 测试创建默认文件夹时，folder_id=NULL 的流程必须提交给守卫
+    # 回归：守卫面向的 SELECT 之前使用了 Flow.folder_id is None，
+    # SQLAlchemy 将其编译为常量 false 谓词，因此即使存在匹配的流程也返回零行
+    # 此测试断言守卫被调用时，NULL 文件夹流程包含在其输入中
     null_folder_flow = Flow(
         name="orphan-flow",
         user_id=user.id,

@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 import requests
 from langchain_community.embeddings.huggingface import HuggingFaceInferenceAPIEmbeddings
 
+# 下次更新: 使用 langchain_huggingface
 # Next update: use langchain_huggingface
 from pydantic import SecretStr
 from tenacity import retry, stop_after_attempt, wait_fixed
@@ -12,6 +13,8 @@ from lfx.field_typing import Embeddings
 from lfx.io import MessageTextInput, Output, SecretStrInput
 
 
+# Hugging Face 推理 API 嵌入组件，使用 Hugging Face Text Embeddings Inference (TEI) 生成嵌入向量
+# Hugging Face Inference API embeddings component for generating embeddings using TEI
 class HuggingFaceInferenceAPIEmbeddingsComponent(LCEmbeddingsModel):
     display_name = "Hugging Face Embeddings Inference"
     description = "Generate embeddings using Hugging Face Text Embeddings Inference (TEI)"
@@ -46,6 +49,7 @@ class HuggingFaceInferenceAPIEmbeddingsComponent(LCEmbeddingsModel):
         Output(display_name="Embeddings", name="embeddings", method="build_embeddings"),
     ]
 
+    # 验证推理端点是否有效且可访问
     def validate_inference_endpoint(self, inference_endpoint: str) -> bool:
         parsed_url = urlparse(inference_endpoint)
         if not all([parsed_url.scheme, parsed_url.netloc]):
@@ -71,17 +75,20 @@ class HuggingFaceInferenceAPIEmbeddingsComponent(LCEmbeddingsModel):
         # returning True to solve linting error
         return True
 
+    # 获取 API URL
     def get_api_url(self) -> str:
         if "huggingface" in self.inference_endpoint.lower():
             return f"{self.inference_endpoint}"
         return self.inference_endpoint
 
+    # 创建 HuggingFace 嵌入实例，支持重试机制（最多3次，每次间隔2秒）
     @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     def create_huggingface_embeddings(
         self, api_key: SecretStr, api_url: str, model_name: str
     ) -> HuggingFaceInferenceAPIEmbeddings:
         return HuggingFaceInferenceAPIEmbeddings(api_key=api_key, api_url=api_url, model_name=model_name)
 
+    # 构建 HuggingFace 嵌入模型实例
     def build_embeddings(self) -> Embeddings:
         api_url = self.get_api_url()
 

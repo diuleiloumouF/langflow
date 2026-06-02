@@ -1,9 +1,11 @@
 import type { SVGProps } from "react";
 
+// 加载动画组件属性类型
 export type LoadingProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
 
+// 加载动画 SVG 组件，使用圆形描边动画实现旋转加载效果
 // https://github.com/feathericons/feather/issues/695#issuecomment-1503699643
 export const Loading = ({ size = 24, ...props }: LoadingProps) => (
   <svg

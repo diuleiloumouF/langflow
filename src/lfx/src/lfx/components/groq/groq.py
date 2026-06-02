@@ -1,20 +1,35 @@
+# 引入密钥处理类
 from pydantic.v1 import SecretStr
 
+# 引入 Groq 模型常量和动态发现模块
 from lfx.base.models.groq_constants import GROQ_MODELS
 from lfx.base.models.groq_model_discovery import get_groq_models
+
+# 引入语言模型组件基类
 from lfx.base.models.model import LCModelComponent
 from lfx.field_typing import LanguageModel
 from lfx.field_typing.range_spec import RangeSpec
+
+# 引入各类输入组件类型
 from lfx.io import BoolInput, DropdownInput, IntInput, MessageTextInput, SecretStrInput, SliderInput
+
+# 引入日志记录器
 from lfx.log.logger import logger
 
 
 class GroqModel(LCModelComponent):
+    """Groq 语言模型组件，使用 Groq API 生成文本。"""
+
+    # 组件在界面上的显示名称
     display_name: str = "Groq"
+    # 组件的功能描述
     description: str = "Generate text using Groq."
+    # 组件图标
     icon = "Groq"
+    # 组件内部名称
     name = "GroqModel"
 
+    # 组件输入参数定义
     inputs = [
         *LCModelComponent.get_base_inputs(),
         SecretStrInput(
@@ -71,30 +86,33 @@ class GroqModel(LCModelComponent):
     ]
 
     def get_models(self, *, tool_model_enabled: bool | None = None) -> list[str]:
-        """Get available Groq models using the dynamic discovery system.
+        """使用动态发现系统获取可用的 Groq 模型列表。
 
-        This method uses the groq_model_discovery module which:
-        - Fetches models directly from Groq API
-        - Automatically tests tool calling support
-        - Caches results for 24 hours
-        - Falls back to hardcoded list if API fails
+        此方法使用 groq_model_discovery 模块，该模块会：
+        - 直接从 Groq API 获取模型列表
+        - 自动测试工具调用支持
+        - 缓存结果 24 小时
+        - 如果 API 失败则回退到硬编码列表
 
         Args:
-            tool_model_enabled: If True, only return models that support tool calling
+            tool_model_enabled: 如果为 True，则仅返回支持工具调用的模型
 
         Returns:
-            List of available model IDs
+            可用模型 ID 的列表
         """
         try:
+            # 从动态发现系统获取模型及其元数据
             # Get models with metadata from dynamic discovery system
             api_key = self.api_key if hasattr(self, "api_key") and self.api_key else None
             models_metadata = get_groq_models(api_key=api_key)
 
+            # 过滤掉非 LLM 模型（音频、TTS、守护模型等）
             # Filter out non-LLM models (audio, TTS, guards)
             model_ids = [
                 model_id for model_id, metadata in models_metadata.items() if not metadata.get("not_supported", False)
             ]
 
+            # 如果请求，按工具调用支持进行过滤
             # Filter by tool calling support if requested
             if tool_model_enabled:
                 model_ids = [model_id for model_id in model_ids if models_metadata[model_id].get("tool_calling", False)]
@@ -103,6 +121,7 @@ class GroqModel(LCModelComponent):
                 logger.info(f"Loaded {len(model_ids)} Groq models")
         except (ValueError, KeyError, TypeError, ImportError):
             logger.exception("Error getting model names")
+            # 如果获取失败，回退到 groq_constants.py 中的硬编码列表
             # Fallback to hardcoded list from groq_constants.py
             return GROQ_MODELS
         else:
@@ -127,6 +146,7 @@ class GroqModel(LCModelComponent):
         return build_config
 
     def build_model(self) -> LanguageModel:  # type: ignore[type-var]
+        """构建并返回 Groq 语言模型实例。"""
         try:
             from langchain_groq import ChatGroq
         except ImportError as e:

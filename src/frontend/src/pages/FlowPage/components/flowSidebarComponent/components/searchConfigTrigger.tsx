@@ -2,11 +2,16 @@ import { ForwardedIconComponent } from "@/components/common/genericIconComponent
 import ShadTooltip from "@/components/common/shadTooltipComponent";
 import { Button } from "@/components/ui/button";
 
+/** 搜索配置触发器的属性定义 */
 interface SearchConfigTriggerProps {
   showConfig: boolean;
   setShowConfig: (show: boolean) => void;
 }
 
+/**
+ * 搜索配置触发器组件
+ * 显示组件设置按钮，用于切换组件筛选配置面板
+ */
 export const SearchConfigTrigger = ({
   showConfig,
   setShowConfig,

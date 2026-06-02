@@ -16,22 +16,35 @@ from lfx.inputs.inputs import (
 from lfx.schema.data import Data
 
 
+# 查询参数的数据校验模型，用于 StructuredTool 的参数定义
 class QuerySchema(BaseModel):
+    # 查询内容，必填
     query: str = Field(..., description="The query to search for.")
+    # 搜索类型，可选 "search"（网页搜索）或 "news"（新闻搜索）
     query_type: str = Field(
         "search",
         description="The type of search to perform (e.g., 'news' or 'search').",
     )
+    # 返回结果数量
     k: int = Field(4, description="The number of results to return.")
+    # 额外的查询参数，如地区 (gl)、语言 (hl) 等
     query_params: dict[str, Any] = Field({}, description="Additional query parameters to pass to the API.")
 
 
+# Google Serper API 组件，通过 Serper.dev 提供 Google 搜索能力
+# 该组件已标记为 legacy（弃用），不再建议新用户使用
 class GoogleSerperAPIComponent(LCToolComponent):
+    # 组件在画布上的显示名称，包含 [DEPRECATED] 标记
     display_name = "Google Serper API [DEPRECATED]"
+    # 组件描述
     description = "Call the Serper.dev Google Search API."
+    # 组件内部唯一标识名
     name = "GoogleSerperAPI"
+    # 画布上的图标
     icon = "Google"
+    # 标记为遗留组件，已有流程中的该组件仍可运行，但不可新增
     legacy = True
+    # 组件输入参数定义列表
     inputs = [
         SecretStrInput(name="serper_api_key", display_name="Serper API Key", required=True),
         MultilineInput(
@@ -58,6 +71,8 @@ class GoogleSerperAPIComponent(LCToolComponent):
         ),
     ]
 
+    # 执行 Google 搜索并返回结果列表
+    # 根据 query_type（search/news）从不同的结果字段中提取数据
     def run_model(self) -> Data | list[Data]:
         wrapper = self._build_wrapper(self.k, self.query_type, self.query_params)
         results = wrapper.results(query=self.query)
@@ -77,6 +92,7 @@ class GoogleSerperAPIComponent(LCToolComponent):
         self.status = data_list
         return data_list
 
+    # 构建 LangChain StructuredTool 实例，使组件可作为 Agent 工具使用
     def build_tool(self) -> Tool:
         return StructuredTool.from_function(
             name="google_search",
@@ -85,6 +101,8 @@ class GoogleSerperAPIComponent(LCToolComponent):
             args_schema=self.QuerySchema,
         )
 
+    # 内部方法：根据参数构建 GoogleSerperAPIWrapper 实例
+    # 将 API 密钥、结果数量、搜索类型和额外参数合并后传给包装器
     def _build_wrapper(
         self,
         k: int = 5,
@@ -104,6 +122,7 @@ class GoogleSerperAPIComponent(LCToolComponent):
         # Dynamically pass parameters to the wrapper
         return GoogleSerperAPIWrapper(**wrapper_args)
 
+    # 内部搜索方法，供 StructuredTool 回调使用
     def _search(
         self,
         query: str,

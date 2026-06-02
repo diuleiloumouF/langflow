@@ -14,6 +14,7 @@ import { AllNodeType } from "@/types/flow";
 import DropdownControlButton from "./DropdownControlButton";
 import { formatZoomPercentage, reactFlowSelector } from "./utils/canvasUtils";
 
+// 画布控制快捷键定义
 export const KEYBOARD_SHORTCUTS = {
   ZOOM_IN: { key: "+", code: "Equal" },
   ZOOM_OUT: { key: "-", code: "Minus" },
@@ -21,6 +22,11 @@ export const KEYBOARD_SHORTCUTS = {
   RESET_ZOOM: { key: "0", code: "Digit0" },
 } as const;
 
+/**
+ * 画布控制下拉菜单组件
+ * 提供缩放控制功能，包括放大、缩小、重置缩放和适应视图。
+ * 支持键盘快捷键操作。
+ */
 const CanvasControlsDropdown = ({
   selectedNode,
 }: {

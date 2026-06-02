@@ -1,3 +1,7 @@
+/**
+ * 计算时间流逝
+ * 将日期时间字符串转换为人类可读的相对时间格式（如 "2 hours"、"3 days"）
+ */
 export const timeElapsed = (dateTimeString: string | undefined): string => {
   if (!dateTimeString) {
     return "";

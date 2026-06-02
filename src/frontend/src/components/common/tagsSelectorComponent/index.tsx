@@ -2,6 +2,11 @@ import { cn } from "../../../utils/utils";
 import { Badge } from "../../ui/badge";
 import HorizontalScrollFadeComponent from "../horizontalScrollFadeComponent";
 
+/**
+ * 标签选择器组件
+ * 以可滚动的标签列表形式展示标签，支持多选。
+ * 选中的标签会高亮显示，支持禁用状态。
+ */
 export function TagsSelector({
   tags,
   disabled = false,
@@ -15,6 +20,7 @@ export function TagsSelector({
   selectedTags: any[];
   setSelectedTags: (tags: any[]) => void;
 }) {
+  // 切换标签的选中状态
   const updateTags = (tagName: string) => {
     const index = selectedTags.indexOf(tagName);
     const newArray =

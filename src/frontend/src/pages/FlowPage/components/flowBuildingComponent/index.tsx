@@ -18,6 +18,11 @@ import {
   STOP_BUTTON_VARIANTS,
 } from "./helpers/visual-variants";
 
+/**
+ * 流程构建状态组件
+ * 在画布底部显示流程构建的实时状态，包括构建中、成功和失败三种状态
+ * 支持停止构建、重试、关闭提示等操作，显示构建耗时
+ */
 export default function FlowBuildingComponent() {
   const isBuilding = useFlowStore((state) => state.isBuilding);
   const flowBuildStatus = useFlowStore((state) => state.flowBuildStatus);

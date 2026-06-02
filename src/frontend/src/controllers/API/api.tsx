@@ -1,3 +1,7 @@
+/**
+ * API 客户端模块
+ * 提供 Axios 实例、请求/响应拦截器和流式请求功能
+ */
 import axios, {
   type AxiosError,
   type AxiosInstance,
@@ -21,11 +25,15 @@ import useFlowStore from "../../stores/flowStore";
 import { checkDuplicateRequestAndStoreRequest } from "./helpers/check-duplicate-requests";
 import { useLogout, useRefreshAccessToken } from "./queries/auth";
 
-// Create a new Axios instance
+// 创建 Axios 实例
 const api: AxiosInstance = axios.create({
   baseURL: baseURL,
   withCredentials: getAxiosWithCredentials(),
 });
+/**
+ * API 拦截器组件
+ * 处理请求认证、错误重试和令牌刷新逻辑
+ */
 function ApiInterceptor() {
   const autoLogin = useAuthStore((state) => state.autoLogin);
   const setErrorData = useAlertStore((state) => state.setErrorData);
@@ -182,6 +190,10 @@ function ApiInterceptor() {
     };
   }, [accessToken, setErrorData, customHeaders, autoLogin]);
 
+  /**
+   * 检查认证错误计数，超过阈值则触发登出
+   * @returns 是否可以继续尝试刷新令牌
+   */
   function checkErrorCount() {
     if (isLoginPage) return;
 
@@ -196,6 +208,10 @@ function ApiInterceptor() {
     return true;
   }
 
+  /**
+   * 尝试刷新访问令牌
+   * @param error - 原始请求错误
+   */
   async function tryToRenewAccessToken(error: AxiosError) {
     if (isLoginPage) return;
     if (error.config?.headers) {
@@ -216,6 +232,10 @@ function ApiInterceptor() {
     });
   }
 
+  /**
+   * 清除构建顶点状态（服务器错误时）
+   * @param error - 请求错误
+   */
   async function clearBuildVerticesState(error) {
     if (error?.response?.status === 500) {
       const vertices = useFlowStore.getState().verticesBuild;
@@ -226,6 +246,11 @@ function ApiInterceptor() {
     }
   }
 
+  /**
+   * 重新发送原始请求（令牌刷新后）
+   * @param error - 原始请求错误
+   * @returns 重试请求的响应数据
+   */
   async function remakeRequest(error: AxiosError) {
     const originalRequest = error.config as AxiosRequestConfig;
 
@@ -242,6 +267,9 @@ function ApiInterceptor() {
   return null;
 }
 
+/**
+ * 流式请求参数类型定义
+ */
 export type StreamingRequestParams = {
   method: string;
   url: string;
@@ -254,7 +282,11 @@ export type StreamingRequestParams = {
   eventDeliveryConfig?: EventDeliveryType;
 };
 
-// Helper function to sanitize JSON strings
+/**
+ * 清理 JSON 字符串中的 NaN 值，使其成为有效的 JSON
+ * @param jsonStr - 原始 JSON 字符串
+ * @returns 清理后的 JSON 字符串
+ */
 function sanitizeJsonString(jsonStr: string): string {
   // Replace NaN with null (valid JSON)
   return jsonStr
@@ -264,6 +296,11 @@ function sanitizeJsonString(jsonStr: string): string {
     .replace(/,\s*NaN\s*\]/g, ", null]");
 }
 
+/**
+ * 执行流式 HTTP 请求
+ * 支持 SSE (Server-Sent Events) 格式的流式数据处理
+ * @param params - 流式请求参数
+ */
 async function performStreamingRequest({
   method,
   url,

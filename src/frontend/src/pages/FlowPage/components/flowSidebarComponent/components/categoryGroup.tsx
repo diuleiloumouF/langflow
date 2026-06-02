@@ -12,6 +12,10 @@ import type { CategoryGroupProps } from "../types";
 import { CategoryDisclosure } from "./categoryDisclouse";
 import { SearchConfigTrigger } from "./searchConfigTrigger";
 
+/**
+ * 分类分组组件
+ * 按分类组织显示组件列表，支持搜索、排序和展开/折叠
+ */
 export const CategoryGroup = memo(function CategoryGroup({
   dataFilter,
   sortedCategories,

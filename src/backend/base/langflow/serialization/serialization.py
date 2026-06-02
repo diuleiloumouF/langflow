@@ -1,3 +1,6 @@
+# 统一序列化模块
+# 提供将各种 Python 对象转换为 JSON 可序列化格式的功能，
+# 支持截断长字符串和列表、递归处理嵌套结构、处理特殊类型（numpy、pandas 等）
 import math
 from collections.abc import AsyncIterator, Generator, Iterator
 from datetime import datetime, timezone
@@ -17,29 +20,31 @@ from langflow.serialization.constants import MAX_ITEMS_LENGTH, MAX_TEXT_LENGTH
 from langflow.services.deps import get_settings_service
 
 
-# Sentinel variable to signal a failed serialization.
-# Using a helper class ensures that the sentinel is a unique object,
-# while its __repr__ displays the desired message.
+# 序列化失败时的哨兵对象：使用独立类确保唯一性，__repr__ 显示提示信息
 class _UnserializableSentinel:
     def __repr__(self):
         return "[Unserializable Object]"
 
 
+# 不可序列化对象的哨兵实例
 UNSERIALIZABLE_SENTINEL = _UnserializableSentinel()
 
 
+# 获取当前设置中允许的最大文本长度（带缓存）
 @lru_cache(maxsize=1)
 def get_max_text_length() -> int:
     """Return the maximum allowed text length for serialization from the current settings."""
     return get_settings_service().settings.max_text_length
 
 
+# 获取当前设置中允许的最大列表项数（带缓存）
 @lru_cache(maxsize=1)
 def get_max_items_length() -> int:
     """Return the maximum allowed number of items for serialization, as defined in the current settings."""
     return get_settings_service().settings.max_items_length
 
 
+# 字符串序列化：按最大长度截断，超出部分追加省略号
 def _serialize_str(obj: str, max_length: int | None, _) -> str:
     """Truncates a string to the specified maximum length, appending an ellipsis if truncation occurs.
 
@@ -55,6 +60,7 @@ def _serialize_str(obj: str, max_length: int | None, _) -> str:
     return obj[:max_length] + "..."
 
 
+# 字节序列化：解码为字符串，可选截断
 def _serialize_bytes(obj: bytes, max_length: int | None, _) -> str:
     """Decode bytes to string and truncate if max_length provided."""
     if max_length is not None:
@@ -191,6 +197,7 @@ def _serialize_numpy_type(obj: Any, max_length: int | None, max_items: int | Non
     return UNSERIALIZABLE_SENTINEL
 
 
+# 序列化调度器：根据对象类型分发到对应的序列化函数
 def _serialize_dispatcher(obj: Any, max_length: int | None, max_items: int | None) -> Any | _UnserializableSentinel:
     """Dispatch object to appropriate serializer."""
     # Handle primitive types first
@@ -255,6 +262,7 @@ def _serialize_dispatcher(obj: Any, max_length: int | None, max_items: int | Non
             return UNSERIALIZABLE_SENTINEL
 
 
+# 统一序列化入口函数：协调各类型序列化器，支持递归处理嵌套结构和可选截断
 def serialize(
     obj: Any,
     max_length: int | None = None,
@@ -322,6 +330,7 @@ def serialize(
     return obj
 
 
+# 序列化或转字符串：序列化失败时回退到字符串表示
 def serialize_or_str(
     obj: Any,
     max_length: int | None = MAX_TEXT_LENGTH,

@@ -7,6 +7,7 @@ from lfx.components._importing import import_mod
 if TYPE_CHECKING:
     from lfx.components.sambanova.sambanova import SambaNovaComponent
 
+# SambaNova 组件的动态导入映射表
 _dynamic_imports = {
     "SambaNovaComponent": "sambanova",
 }
@@ -16,6 +17,7 @@ __all__ = ["SambaNovaComponent"]
 
 def __getattr__(attr_name: str) -> Any:
     """Lazily import sambanova components on attribute access."""
+    # 在访问属性时延迟导入 SambaNova 组件
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)

@@ -15,10 +15,12 @@ import { cn } from "@/utils/utils";
 import { useSearchContext } from "../flowSidebarComponent";
 import { NAV_ITEMS } from "../flowSidebarComponent/components/sidebarSegmentedNav";
 
+/** 画布背景组件（已缓存），显示网格点阵 */
 export const MemoizedBackground = memo(() => (
   <Background size={2} gap={20} className="" />
 ));
 
+/** 画布控制按钮组件的属性定义 */
 interface MemoizedCanvasControlsProps {
   setIsAddingNote: (value: boolean) => void;
   shadowBoxWidth: number;
@@ -27,6 +29,7 @@ interface MemoizedCanvasControlsProps {
   isAgentWorking?: boolean;
 }
 
+/** 画布控制按钮组件（已缓存），包含流程锁定/解锁功能 */
 export const MemoizedCanvasControls = memo(
   ({
     setIsAddingNote,
@@ -107,6 +110,7 @@ export const MemoizedCanvasControls = memo(
   },
 );
 
+/** 侧边栏触发按钮组件（已缓存），根据功能标志显示新旧侧边栏导航 */
 export const MemoizedSidebarTrigger = memo(() => {
   const { open, toggleSidebar, setActiveSection } = useSidebar();
   const { focusSearch, isSearchFocused } = useSearchContext();

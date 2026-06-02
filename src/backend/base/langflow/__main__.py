@@ -29,6 +29,8 @@ from rich.panel import Panel
 from rich.table import Table
 from sqlmodel import select
 
+# Langflow CLI 入口模块
+# 提供命令行界面功能，包括启动服务、创建超级用户、数据库迁移等
 from langflow.cli.progress import create_langflow_progress
 from langflow.initial_setup.setup import get_or_create_default_folder
 from langflow.main import setup_app
@@ -40,12 +42,15 @@ from langflow.services.utils import initialize_services
 from langflow.utils.version import fetch_latest_version, get_version_info
 from langflow.utils.version import is_pre_release as langflow_is_pre_release
 
+# 创建 Typer 应用实例，无参数时显示帮助信息
 app = typer.Typer(no_args_is_help=True)
+# 创建 Rich 控制台用于格式化输出
 console = Console()
 if platform.system() == "Windows":
+    # Windows 旧版控制台使用兼容模式，禁用 emoji 显示
     console = Console(legacy_windows=True, emoji=False)
 
-# Add LFX commands as a sub-app
+# 将 LFX 命令添加为子应用
 try:
     from lfx.cli.commands import serve_command
     from lfx.cli.run import run as lfx_run
@@ -63,15 +68,17 @@ except ImportError:
 class ProcessManager:
     """Manages the lifecycle of the backend process."""
 
-    def __init__(self):
-        self.webapp_process = None
-        self.shutdown_in_progress = False
-        if platform.system() == "Windows":
-            self._farewell_emoji = ":)"  # ASCII smiley
-        else:
-            self._farewell_emoji = "👋"  # Unicode wave
+    # 进程管理器类，负责管理后端进程的生命周期
 
-    # params are required for signal handlers, even if they are not used
+    def __init__(self):
+        self.webapp_process = None  # Web 应用进程实例
+        self.shutdown_in_progress = False  # 标记是否正在关闭
+        if platform.system() == "Windows":
+            self._farewell_emoji = ":)"  # Windows 使用 ASCII 笑脸
+        else:
+            self._farewell_emoji = "👋"  # 非 Windows 使用 Unicode 挥手表情
+
+    # 信号处理器参数是必需的，即使未使用
     def handle_sigterm(self, _signum: int, _frame) -> None:
         """Handle SIGTERM signal gracefully."""
         if self.shutdown_in_progress:
@@ -80,6 +87,7 @@ class ProcessManager:
         self.shutdown()
 
     # params are required for signal handlers, even if they are not used
+    # 信号处理器参数是必需的，即使未使用
     def handle_sigint(self, _signum: int, _frame) -> None:
         """Handle SIGINT signal gracefully."""
         if self.shutdown_in_progress:
@@ -89,6 +97,7 @@ class ProcessManager:
 
     def shutdown(self):
         """Gracefully shutdown the webapp process."""
+        # 优雅地关闭 Web 应用进程
         if self.webapp_process and self.webapp_process.is_alive():
             # Just terminate the process - the actual shutdown progress is handled
             # by the FastAPI lifespan context in main.py
@@ -107,6 +116,7 @@ class ProcessManager:
 
     def print_farewell_message(self) -> None:
         """Print a nice farewell message after shutdown is complete."""
+        # 关闭完成后打印告别信息
         # Clear any progress indicator output that might be on the current line
         sys.stdout.write("\r")  # Move cursor to beginning of line
         sys.stdout.write(" " * 80)  # Clear the line with spaces
@@ -117,15 +127,16 @@ class ProcessManager:
         click.echo(farewell)
 
 
-# Create a single instance of ProcessManager
+# 创建 ProcessManager 的单例实例
 process_manager = ProcessManager()
 
-# Update signal handlers to use the instance methods
+# 注册信号处理器，使用实例方法处理 SIGTERM 和 SIGINT 信号
 signal.signal(signal.SIGTERM, process_manager.handle_sigterm)
 signal.signal(signal.SIGINT, process_manager.handle_sigint)
 
 
 def get_number_of_workers(workers=None):
+    """获取工作进程数量，未指定时使用 CPU 核心数 * 2 + 1。"""
     if workers == -1 or workers is None:
         workers = (cpu_count() * 2) + 1
     logger.debug(f"Number of workers: {workers}")
@@ -134,6 +145,7 @@ def get_number_of_workers(workers=None):
 
 def display_results(results) -> None:
     """Display the results of the migration."""
+    # 以表格形式显示数据库迁移结果
     for table_results in results:
         table = Table(title=f"Migration {table_results.table_name}")
         table.add_column("Name")
@@ -150,6 +162,7 @@ def display_results(results) -> None:
 
 
 def set_var_for_macos_issue() -> None:
+    """设置 macOS 上 gunicorn 运行所需的环境变量。"""
     # OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
     # we need to set this var is we are running on MacOS
     # otherwise we get an error when running gunicorn
@@ -164,6 +177,7 @@ def set_var_for_macos_issue() -> None:
 
 def wait_for_server_ready(host, port, protocol) -> None:
     """Wait for the server to become ready by polling the health endpoint."""
+    # 通过轮询健康检查端点等待服务器就绪
     # Use localhost for health check when host is 0.0.0.0 (bind to all interfaces)
     health_check_host = "localhost" if host == "0.0.0.0" else host  # noqa: S104
 
@@ -186,6 +200,7 @@ def wait_for_server_ready(host, port, protocol) -> None:
 
 @app.command()
 def run(
+    # 启动 Langflow 服务器的主命令
     *,
     host: str | None = typer.Option(None, help="Host to bind the server to.", show_default=False),
     workers: int | None = typer.Option(None, help="Number of worker processes.", show_default=False),
@@ -450,6 +465,7 @@ def is_port_in_use(port, host="localhost"):
     Returns:
         bool: True if the port is in use, False otherwise.
     """
+    # 检查指定端口是否被占用
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex((host, port)) == 0
 
@@ -463,6 +479,7 @@ def get_free_port(port):
     Returns:
         int: A free port number.
     """
+    # 给定一个被占用的端口，找到一个可用的端口
     while is_port_in_use(port):
         port += 1
     return port
@@ -477,6 +494,7 @@ def is_loopback_address(host: str) -> bool:
     Returns:
         bool: True if the host is a loopback address, False otherwise
     """
+    # 检查主机是否为回环地址（localhost、127.0.0.1、::1 等）
     # Check if it's exactly "localhost"
     if host == "localhost":
         return True
@@ -496,6 +514,7 @@ def is_loopback_address(host: str) -> bool:
 
 
 def can_connect(host: str, port: int, timeout: float = 1.0) -> bool:
+    """检查是否可以连接到指定的主机和端口。"""
     try:
         for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
             family, socktype, proto, _, sa = res
@@ -522,6 +541,8 @@ def get_best_access_host(host: str, port: int) -> str:
     Returns:
         str: The best host address to use for access
     """
+    # 获取用于访问服务器的最佳主机地址
+    # 对于回环地址，优先使用 'localhost' 而不是 IP 地址
     if not is_loopback_address(host):
         return host
 
@@ -534,6 +555,7 @@ def get_best_access_host(host: str, port: int) -> str:
 
 def get_letter_from_version(version: str) -> str | None:
     """Get the letter from a pre-release version."""
+    # 从预发布版本号中提取字母标识（a=alpha, b=beta, rc=release candidate）
     if "a" in version:
         return "a"
     if "b" in version:
@@ -561,6 +583,7 @@ def build_version_notice(current_version: str, package_name: str) -> str:
         >>> build_version_notice("1.0.0", "langflow")
         'A new version of langflow is available: 1.1.0'
     """
+    # 构建版本更新通知消息，检查 PyPI 上是否有更新版本
     with suppress(httpx.ConnectError):
         latest_version = fetch_latest_version(package_name, include_prerelease=langflow_is_pre_release(current_version))
         if latest_version and pkg_version.parse(current_version) < pkg_version.parse(latest_version):
@@ -571,6 +594,7 @@ def build_version_notice(current_version: str, package_name: str) -> str:
 
 def generate_pip_command(package_names, is_pre_release) -> str:
     """Generate the pip install command based on the packages and whether it's a pre-release."""
+    # 根据包名和是否为预发布版本生成 pip install 命令
     base_command = "pip install"
     if is_pre_release:
         return f"{base_command} {' '.join(package_names)} -U --pre"
@@ -578,6 +602,7 @@ def generate_pip_command(package_names, is_pre_release) -> str:
 
 
 def stylize_text(text: str, to_style: str, *, is_prerelease: bool) -> str:
+    """为文本添加样式格式。"""
     color = "#42a7f5" if is_prerelease else "#6e42f5"
     # return "".join(f"[{color}]{char}[/]" for char in text)
     styled_text = f"[{color}]{to_style}[/]"
@@ -585,6 +610,7 @@ def stylize_text(text: str, to_style: str, *, is_prerelease: bool) -> str:
 
 
 def print_banner(host: str, port: int, protocol: str) -> None:
+    """打印 Langflow 启动横幅，包含版本信息和访问链接。"""
     notices = []
     package_names = []  # Track package names for pip install instructions
     is_pre_release = False  # Track if any package is a pre-release
@@ -677,6 +703,7 @@ def print_banner(host: str, port: int, protocol: str) -> None:
 
 @app.command()
 def superuser(
+    # 创建超级用户命令
     username: str = typer.Option(
         None, help="Username for the superuser. Defaults to 'langflow' when AUTO_LOGIN is enabled."
     ),
@@ -700,6 +727,7 @@ def superuser(
 
 async def _create_superuser(username: str, password: str, auth_token: str | None):
     """Create a superuser."""
+    # 创建超级用户的异步实现
     await initialize_services()
 
     settings_service = get_settings_service()
@@ -812,8 +840,8 @@ async def _create_superuser(username: str, password: str, auth_token: str | None
             typer.echo("Superuser creation failed.")
 
 
-# command to copy the langflow database from the cache to the current directory
-# because now the database is stored per installation
+# 命令：将 langflow 数据库从缓存目录复制到当前目录
+# 因为现在数据库是按安装目录存储的
 @app.command()
 def copy_db() -> None:
     """Copy the database files to the current directory.
@@ -848,6 +876,7 @@ def copy_db() -> None:
 
 
 async def _migration(*, test: bool, fix: bool) -> None:
+    """执行数据库迁移的异步实现。"""
     await initialize_services(fix_migration=fix)
     db_service = get_db_service()
     if not test:
@@ -858,6 +887,7 @@ async def _migration(*, test: bool, fix: bool) -> None:
 
 @app.command()
 def migration(
+    # 运行或测试数据库迁移命令
     test: bool = typer.Option(default=True, help="Run migrations in test mode."),  # noqa: FBT001
     fix: bool = typer.Option(  # noqa: FBT001
         default=False,
@@ -875,6 +905,7 @@ def migration(
 
 @app.command()
 def api_key(
+    # 为默认超级用户创建 API 密钥命令
     log_level: str = typer.Option("error", help="Logging level."),
 ) -> None:
     """Creates an API key for the default superuser if AUTO_LOGIN is enabled.
@@ -924,6 +955,7 @@ def api_key(
 
 
 def show_version(*, value: bool):
+    """显示 Langflow 版本信息。"""
     if value:
         default = "DEV"
         raw_info = get_version_info()
@@ -948,6 +980,7 @@ def version_option(
 
 
 def api_key_banner(unmasked_api_key) -> None:
+    """显示 API 密钥创建成功的横幅信息。"""
     is_mac = platform.system() == "Darwin"
     import pyperclip
 
@@ -978,6 +1011,7 @@ def api_key_banner(unmasked_api_key) -> None:
 
 
 def main() -> None:
+    """Langflow CLI 主入口函数。"""
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         app()

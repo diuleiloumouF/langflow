@@ -5,12 +5,19 @@ from lfx.schema.data import Data
 
 
 class FirecrawlExtractApi(Component):
+    """Firecrawl 数据提取 API 组件，用于从指定的 URL 中提取结构化数据。
+
+    该组件封装了 Firecrawl 的 Extract API，支持通过提示词引导提取过程，
+    并可以使用 Web 搜索来查找额外数据。
+    """
+
     display_name: str = "Firecrawl Extract API"
     description: str = "Extracts data from a URL."
     name = "FirecrawlExtractApi"
 
     documentation: str = "https://docs.firecrawl.dev/api-reference/endpoint/extract"
 
+    # 组件输入参数定义
     inputs = [
         SecretStrInput(
             name="api_key",
@@ -64,11 +71,21 @@ class FirecrawlExtractApi(Component):
         # ),
     ]
 
+    # 组件输出定义
     outputs = [
         Output(display_name="JSON", name="data", method="extract"),
     ]
 
     def extract(self) -> Data:
+        """从指定 URL 提取数据的主方法。
+
+        返回:
+            Data: 包含提取结果的数据对象
+
+        异常:
+            ImportError: 当 firecrawl 包未安装时抛出
+            ValueError: 当必要参数缺失或提取过程中出错时抛出
+        """
         try:
             from firecrawl import FirecrawlApp
         except ImportError as e:
@@ -104,6 +121,7 @@ class FirecrawlExtractApi(Component):
         if "schema" not in prompt_text.lower():
             enhanced_prompt = f"{prompt_text}. Please extract all instances in a comprehensive, structured format."
 
+        # 构建 Firecrawl Extract API 请求参数
         params = {
             "prompt": enhanced_prompt,
             "enableWebSearch": self.enable_web_search,
@@ -127,6 +145,7 @@ class FirecrawlExtractApi(Component):
             except Exception as e:  # noqa: BLE001
                 logger.error(f"Invalid schema: {e!s}")
 
+        # 调用 Firecrawl API 执行数据提取
         try:
             app = FirecrawlApp(api_key=self.api_key)
             extract_result = app.extract(urls, params=params)

@@ -1,18 +1,27 @@
 # mypy: disable-error-code="attr-defined"
+# Metal 检索器的 LangChain 集成
 from langchain_community.retrievers import MetalRetriever
 
+# 缓存检查装饰器
 from lfx.base.vectorstores.model import check_cached_vector_store
+
+# 自定义组件基类
 from lfx.custom.custom_component.custom_component import CustomComponent
+
+# 输入组件类型
 from lfx.io import DictInput, SecretStrInput, StrInput
 
 
+# Metal 检索器组件，使用 Metal API 进行文档检索
 class MetalRetrieverComponent(CustomComponent):
     display_name: str = "Metal Retriever"
     description: str = "Retriever that uses the Metal API."
     name = "MetalRetriever"
     legacy = True
 
+    # 输入参数定义
     inputs = [
+        # Metal API 密钥
         SecretStrInput(
             name="api_key",
             display_name="Metal Retriever API Key",

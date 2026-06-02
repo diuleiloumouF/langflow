@@ -25,6 +25,11 @@ const TYPE_OPTIONS = [
   },
 ];
 
+/**
+ * 类型选择步骤组件
+ * 部署向导的第二步，允许用户选择部署类型（如 Agent）
+ * 并配置部署名称、描述和 LLM 模型
+ */
 export default function StepType() {
   const {
     isEditMode,

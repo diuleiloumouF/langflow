@@ -13,6 +13,10 @@ interface StepDeployStatusProps {
   doneDescription?: string;
 }
 
+/**
+ * 部署状态步骤组件
+ * 显示部署过程中的状态，包括部署中和部署完成两种状态
+ */
 export default function StepDeployStatus({
   phase,
   deploymentName,

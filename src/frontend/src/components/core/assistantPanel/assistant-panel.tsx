@@ -12,7 +12,12 @@ import { AssistantMessageItem } from "./components/assistant-message";
 import { AssistantNoModelsState } from "./components/assistant-no-models-state";
 import { useAssistantChat, useEnabledModels, useSessionHistory } from "./hooks";
 
-// Module-level draft cache — survives panel unmount/remount
+/**
+ * 助手面板组件
+ * 提供 AI 助手聊天界面，支持与 Langflow AI 助手交互。
+ * 包含消息列表、输入框、模型选择和会话历史管理。
+ */
+// 模块级草稿缓存 — 面板卸载/重新挂载时保留
 let draftMessageCache = "";
 
 const PANEL_SIZE_KEY = "langflow-assistant-panel-size";

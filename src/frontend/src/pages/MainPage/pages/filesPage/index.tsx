@@ -3,6 +3,10 @@ import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import FilesTab from "./components/FilesTab";
 
+/**
+ * 文件页面组件
+ * 显示和管理文件列表，支持多选、快速过滤和键盘快捷键
+ */
 export const FilesPage = () => {
   const [selectedFiles, setSelectedFiles] = useState<any[]>([]);
   const [quantitySelected, setQuantitySelected] = useState(0);

@@ -12,12 +12,18 @@ from lfx.io import (
 from lfx.schema.data import Data
 
 
+# Upstash 向量存储组件，提供基于 Upstash 的向量搜索和存储功能
 class UpstashVectorStoreComponent(LCVectorStoreComponent):
+    # 组件显示名称
     display_name = "Upstash"
+    # 组件描述信息
     description = "Upstash Vector Store with search capabilities"
+    # 组件内部名称
     name = "Upstash"
+    # 组件图标
     icon = "Upstash"
 
+    # 组件输入参数定义
     inputs = [
         StrInput(
             name="index_url",
@@ -64,6 +70,7 @@ class UpstashVectorStoreComponent(LCVectorStoreComponent):
         ),
     ]
 
+    # 构建 Upstash 向量存储实例
     @check_cached_vector_store
     def build_vector_store(self) -> UpstashVectorStore:
         use_upstash_embedding = self.embedding is None
@@ -108,6 +115,7 @@ class UpstashVectorStoreComponent(LCVectorStoreComponent):
 
         return upstash_vs
 
+    # 搜索文档，使用相似度搜索在 Upstash 向量存储中查找相关文档
     def search_documents(self) -> list[Data]:
         vector_store = self.build_vector_store()
 

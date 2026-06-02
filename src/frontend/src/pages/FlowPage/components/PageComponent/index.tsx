@@ -18,6 +18,7 @@ import {
   useState,
 } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import FlowToolbar from "@/components/core/flowToolbarComponent";
@@ -33,14 +34,12 @@ import CustomLoader from "@/customization/components/custom-loader";
 import { track } from "@/customization/utils/analytics";
 import useApplyFlowToCanvas from "@/hooks/flows/use-apply-flow-to-canvas";
 import useAutoSaveFlow from "@/hooks/flows/use-autosave-flow";
-
 import { useFlowEvents } from "@/hooks/flows/use-flow-events";
 import useUploadFlow from "@/hooks/flows/use-upload-flow";
 import { useAddComponent } from "@/hooks/use-add-component";
 import InspectionPanel from "@/pages/FlowPage/components/InspectionPanel";
 import { nodeColorsName } from "@/utils/styleUtils";
 import { isSupportedNodeTypes } from "@/utils/utils";
-import { useTranslation } from "react-i18next";
 import ExportModal from "../../../../modals/exportModal";
 import useAlertStore from "../../../../stores/alertStore";
 import useFlowStore from "../../../../stores/flowStore";
@@ -85,6 +84,13 @@ import {
 import getRandomName from "./utils/get-random-name";
 import isWrappedWithClass from "./utils/is-wrapped-with-class";
 
+/**
+ * 流程画布页面组件
+ * 管理 ReactFlow 画布的完整交互，包括节点拖拽、复制粘贴、撤销重做、
+ * 连接管理、辅助线对齐、快捷键绑定、Agent 工作状态显示等
+ * @param view - 是否为只读视图模式
+ * @param setIsLoading - 设置页面加载状态的回调
+ */
 export default function Page({
   view,
   setIsLoading,
@@ -299,6 +305,7 @@ export default function Page({
   const shadowBoxHeight = NOTE_NODE_MIN_HEIGHT * (zoomLevel || 1);
   const shadowBoxBackgroundColor = COLOR_OPTIONS[Object.keys(COLOR_OPTIONS)[0]];
 
+  // 将选中的节点组合成一个子流程节点
   const handleGroupNode = useCallback(() => {
     takeSnapshot();
     const edgesState = useFlowStore.getState().edges;
@@ -360,6 +367,7 @@ export default function Page({
     useFlowStore.setState({ autoSaveFlow });
   }, [autoSaveFlow]);
 
+  // 撤销操作
   function handleUndo(e: KeyboardEvent) {
     if (isPreviewActive || effectiveLocked) return;
     if (!isWrappedWithClass(e, "noflow")) {
@@ -369,6 +377,7 @@ export default function Page({
     }
   }
 
+  // 重做操作
   function handleRedo(e: KeyboardEvent) {
     if (isPreviewActive || effectiveLocked) return;
     if (!isWrappedWithClass(e, "noflow")) {
@@ -378,6 +387,7 @@ export default function Page({
     }
   }
 
+  // 组合选中节点
   function handleGroup(e: KeyboardEvent) {
     if (isPreviewActive || effectiveLocked) return;
     if (selectionMenuVisible) {
@@ -387,6 +397,7 @@ export default function Page({
     }
   }
 
+  // 复制选中节点
   function handleDuplicate(e: KeyboardEvent) {
     if (isPreviewActive || effectiveLocked) return;
     e.preventDefault();
@@ -404,6 +415,7 @@ export default function Page({
     }
   }
 
+  // 复制选中节点到剪贴板
   function handleCopy(e: KeyboardEvent) {
     const multipleSelection = lastSelection?.nodes
       ? lastSelection?.nodes.length > 0
@@ -424,6 +436,7 @@ export default function Page({
     }
   }
 
+  // 剪切选中节点
   function handleCut(e: KeyboardEvent) {
     if (isPreviewActive || effectiveLocked) return;
     if (!isWrappedWithClass(e, "noflow")) {
@@ -435,6 +448,7 @@ export default function Page({
     }
   }
 
+  // 粘贴剪贴板中的节点
   function handlePaste(e: KeyboardEvent) {
     if (isPreviewActive || effectiveLocked) return;
     if (!isWrappedWithClass(e, "noflow")) {
@@ -453,6 +467,7 @@ export default function Page({
     }
   }
 
+  // 删除选中的节点和边
   function handleDelete(e: KeyboardEvent) {
     if (isPreviewActive) return;
     if (effectiveLocked) return;
@@ -522,6 +537,7 @@ export default function Page({
   //@ts-ignore
   useHotkeys("escape", handleEscape);
 
+  // 处理节点连接事件，拍照快照并记录分析事件
   const onConnectMod = useCallback(
     (params: Connection) => {
       takeSnapshot();
@@ -635,6 +651,7 @@ export default function Page({
     takeSnapshot();
   }, [takeSnapshot]);
 
+  // 处理拖拽悬停事件，设置拖拽效果
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     if (event.dataTransfer.types.some((types) => isSupportedNodeTypes(types))) {
@@ -644,6 +661,7 @@ export default function Page({
     }
   }, []);
 
+  // 处理拖拽放置事件，支持组件拖入和文件上传
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -729,6 +747,7 @@ export default function Page({
     setSelectionEnded(false);
   }, []);
 
+  // 在选择结束后显示选择菜单（变通方案）
   // Workaround to show the menu only after the selection has ended.
   useEffect(() => {
     if (selectionEnded && lastSelection && lastSelection.nodes.length > 1) {
@@ -767,6 +786,7 @@ export default function Page({
     [effectiveLocked, setRightClickedNodeId, setNodes],
   );
 
+  // 处理画布空白区域点击事件，用于添加笔记节点或清除选中状态
   const onPaneClick = useCallback(
     (event: React.MouseEvent) => {
       setFilterEdge([]);
@@ -884,11 +904,13 @@ export default function Page({
     maxZoom: MAX_ZOOM,
   };
 
+  // 从状态管理获取检查面板的可见性
   // Get inspection panel visibility from store
   const inspectionPanelVisible = useFlowStore(
     (state) => state.inspectionPanelVisible,
   );
 
+  // 判断是否选中了单个通用节点
   // Determine if a single generic node is selected
   const hasSingleGenericNodeSelected =
     lastSelection?.nodes?.length === 1 &&
@@ -905,6 +927,7 @@ export default function Page({
   // Determine if InspectionPanel should be visible
   const showInspectionPanel = inspectionPanelVisible && !!selectedNode;
 
+  // 通过取消所有节点选中来关闭检查面板
   // Handler to close the inspection panel by deselecting all nodes
   const handleCloseInspectionPanel = useCallback(() => {
     setNodes((nds) =>

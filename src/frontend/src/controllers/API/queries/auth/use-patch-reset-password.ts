@@ -4,11 +4,18 @@ import { api } from "../../api";
 import { getURL } from "../../helpers/constants";
 import { UseRequestProcessor } from "../../services/request-processor";
 
+/**
+ * 重置密码参数接口
+ */
 interface resetPasswordParams {
   user_id: string;
   password: resetPasswordType;
 }
 
+/**
+ * 重置用户密码的自定义 Hook
+ * @returns 重置密码的 mutation 函数
+ */
 export const useResetPassword: useMutationFunctionType<
   undefined,
   resetPasswordParams

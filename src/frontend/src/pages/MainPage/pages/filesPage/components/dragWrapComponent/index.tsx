@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import useFlowsManagerStore from "@/stores/flowsManagerStore";
 import { cn } from "@/utils/utils";
 
+/**
+ * 拖拽包裹组件
+ * 提供文件拖拽上传的功能，显示拖拽提示和文件计数
+ */
 export default function DragWrapComponent({
   onFileDrop,
   children,

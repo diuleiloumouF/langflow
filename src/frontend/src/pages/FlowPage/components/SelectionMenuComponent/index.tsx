@@ -6,6 +6,11 @@ import { Button } from "../../../../components/ui/button";
 import { GradientGroup } from "../../../../icons/GradientSparkles";
 import useFlowStore from "../../../../stores/flowStore";
 import { validateSelection } from "../../../../utils/reactflowUtils";
+/**
+ * 选择菜单组件
+ * 当用户在画布上选中多个节点时显示的工具栏，提供组合节点功能
+ * 支持验证选中节点的有效性，并在无效时显示错误提示
+ */
 export default function SelectionMenu({
   onClick,
   nodes,

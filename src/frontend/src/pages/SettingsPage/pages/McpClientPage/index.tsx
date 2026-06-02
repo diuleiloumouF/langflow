@@ -5,13 +5,19 @@ import { Button } from "@/components/ui/button";
 import { customGetHostProtocol } from "@/customization/utils/custom-get-host-protocol";
 import { cn } from "@/utils/utils";
 
+/** 代理标签页类型 */
 type AgentTab = "bob" | "claude-code";
 
+/** 可用的 MCP 客户端代理列表 */
 const agents: { id: AgentTab; title: string; icon: string }[] = [
   { id: "bob", title: "Bob (IBM)", icon: "Bot" },
   { id: "claude-code", title: "Claude Code", icon: "Terminal" },
 ];
 
+/**
+ * 构建 MCP JSON 配置
+ * 生成 MCP 服务器的 JSON 配置字符串
+ */
 function buildMcpJson(serverUrl: string): string {
   return JSON.stringify(
     {

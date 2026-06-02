@@ -10,6 +10,10 @@ import { useShortcutsStore } from "../../../../stores/shortcuts";
 import CellRenderShortcuts from "./CellRenderWrapper";
 import EditShortcutButton from "./EditShortcutButton";
 
+/**
+ * 快捷键管理页面
+ * 显示和编辑键盘快捷键配置，支持自定义快捷键和恢复默认设置
+ */
 export default function ShortcutsPage() {
   const { t } = useTranslation();
   const [selectedRows, setSelectedRows] = useState<string[]>([]);

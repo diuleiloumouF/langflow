@@ -11,14 +11,20 @@ if TYPE_CHECKING:
     from lfx.schema.dataframe import DataFrame
 
 
+# Vectara 向量存储组件，提供基于 Vectara 的向量搜索和存储功能
 class VectaraVectorStoreComponent(LCVectorStoreComponent):
     """Vectara Vector Store with search capabilities."""
 
+    # 组件显示名称
     display_name: str = "Vectara"
+    # 组件描述信息
     description: str = "Vectara Vector Store with search capabilities"
+    # 组件内部名称
     name = "Vectara"
+    # 组件图标
     icon = "Vectara"
 
+    # 组件输入参数定义
     inputs = [
         StrInput(name="vectara_customer_id", display_name="Vectara Customer ID", required=True),
         StrInput(name="vectara_corpus_id", display_name="Vectara Corpus ID", required=True),
@@ -38,6 +44,7 @@ class VectaraVectorStoreComponent(LCVectorStoreComponent):
         ),
     ]
 
+    # 构建 Vectara 向量存储实例
     @check_cached_vector_store
     def build_vector_store(self) -> Vectara:
         """Builds the Vectara object."""
@@ -56,6 +63,7 @@ class VectaraVectorStoreComponent(LCVectorStoreComponent):
         self._add_documents_to_vector_store(vectara)
         return vectara
 
+    # 向向量存储添加文档
     def _add_documents_to_vector_store(self, vector_store: Vectara) -> None:
         """Adds documents to the Vector Store."""
         ingest_data: list | Data | DataFrame = self.ingest_data
@@ -63,7 +71,7 @@ class VectaraVectorStoreComponent(LCVectorStoreComponent):
             self.status = "No documents to add to Vectara"
             return
 
-        # Convert DataFrame to Data if needed using parent's method
+        # 使用父类方法将 DataFrame 转换为 Data（如果需要）
         ingest_data = self._prepare_ingest_data()
 
         documents = []
@@ -81,6 +89,7 @@ class VectaraVectorStoreComponent(LCVectorStoreComponent):
             self.log("No documents to add to Vectara.")
             self.status = "No valid documents to add to Vectara"
 
+    # 搜索文档，使用相似度搜索在 Vectara 向量存储中查找相关文档
     def search_documents(self) -> list[Data]:
         vector_store = self.build_vector_store()
 

@@ -1,6 +1,10 @@
 import RenderIcons from "@/components/common/renderIconComponent";
 import { cn } from "@/utils/utils";
 
+/**
+ * 快捷键显示组件
+ * 以可视化方式显示键盘快捷键组合，支持侧边栏和工具栏两种显示模式
+ */
 export default function ShortcutDisplay({
   display_name,
   shortcut,

@@ -3,12 +3,17 @@ import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import { Button } from "@/components/ui/button";
 import useTheme from "@/customization/hooks/use-custom-theme";
 
+/**
+ * 主题切换按钮组件
+ * 提供浅色、深色和跟随系统三种主题选择。
+ * 使用滑动指示器动画显示当前选中的主题。
+ */
 export const ThemeButtons = () => {
   const { systemTheme, dark, setThemePreference } = useTheme();
   const [selectedTheme, setSelectedTheme] = useState(
     systemTheme ? "system" : dark ? "dark" : "light",
   );
-  const [hasInteracted, setHasInteracted] = useState(false); // Track user interaction
+  const [hasInteracted, setHasInteracted] = useState(false); // 跟踪用户是否已交互，用于控制动画
 
   useEffect(() => {
     if (!hasInteracted) {
@@ -23,6 +28,7 @@ export const ThemeButtons = () => {
     }
   }, [systemTheme, dark, hasInteracted]);
 
+  // 处理主题切换
   const handleThemeChange = (theme) => {
     setHasInteracted(true); // Mark that a button has been clicked
     setSelectedTheme(theme);

@@ -1,3 +1,4 @@
+# VLM Run 转录组件，使用 VLM Run AI 从音视频文件中提取结构化数据
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -14,20 +15,29 @@ from langflow.schema.data import Data
 from loguru import logger
 
 
+# 使用 VLM Run AI 从音频和视频中提取结构化转录数据的组件
 class VLMRunTranscription(Component):
+    # 组件显示名称
     display_name = "VLM Run Transcription"
+    # 组件描述
     description = "Extract structured data from audio and video using [VLM Run AI](https://app.vlm.run)"
+    # 文档链接
     documentation = "https://docs.vlm.run"
+    # 组件图标
     icon = "VLMRun"
+    # 标记为 Beta 功能
     beta = True
 
+    # 组件输入参数定义
     inputs = [
+        # VLM Run API 密钥
         SecretStrInput(
             name="api_key",
             display_name="VLM Run API Key",
             info="Get your API key from https://app.vlm.run",
             required=True,
         ),
+        # 媒体类型：音频或视频
         DropdownInput(
             name="media_type",
             display_name="Media Type",
@@ -35,6 +45,7 @@ class VLMRunTranscription(Component):
             value="audio",
             info="Select the type of media to process",
         ),
+        # 上传的媒体文件列表（支持多种音视频格式）
         FileInput(
             name="media_files",
             display_name="Media Files",
@@ -59,6 +70,7 @@ class VLMRunTranscription(Component):
             required=False,
             is_list=True,
         ),
+        # 媒体文件 URL（替代文件上传方式）
         MessageTextInput(
             name="media_url",
             display_name="Media URL",
@@ -66,6 +78,7 @@ class VLMRunTranscription(Component):
             required=False,
             advanced=True,
         ),
+        # 处理超时时间（秒）
         IntInput(
             name="timeout_seconds",
             display_name="Timeout (seconds)",
@@ -73,6 +86,7 @@ class VLMRunTranscription(Component):
             info="Maximum time to wait for processing completion",
             advanced=True,
         ),
+        # 处理领域，当前仅支持转录
         DropdownInput(
             name="domain",
             display_name="Processing Domain",
@@ -83,6 +97,7 @@ class VLMRunTranscription(Component):
         ),
     ]
 
+    # 组件输出定义
     outputs = [
         Output(
             display_name="Result",
@@ -91,12 +106,14 @@ class VLMRunTranscription(Component):
         ),
     ]
 
+    # 验证输入参数，确保提供了媒体文件或 URL
     def _check_inputs(self) -> str | None:
         """Validate that either media files or URL is provided."""
         if not self.media_files and not self.media_url:
             return "Either media files or media URL must be provided"
         return None
 
+    # 导入并返回 VLMRun 客户端类
     def _import_vlmrun(self):
         """Import and return VLMRun client class."""
         try:
@@ -107,6 +124,7 @@ class VLMRunTranscription(Component):
         else:
             return VLMRun
 
+    # 根据媒体类型生成 API 请求响应
     def _generate_media_response(self, client, media_source):
         """Generate response for audio or video media."""
         domain_str = f"{self.media_type}.{self.domain}"
@@ -120,12 +138,14 @@ class VLMRunTranscription(Component):
             return client.video.generate(file=media_source, domain=domain_str, batch=True)
         return client.video.generate(url=media_source, domain=domain_str, batch=True)
 
+    # 等待批量处理完成
     def _wait_for_response(self, client, response):
         """Wait for batch processing to complete if needed."""
         if hasattr(response, "id"):
             return client.predictions.wait(response.id, timeout=self.timeout_seconds)
         return response
 
+    # 从分段数据中提取转录文本
     def _extract_transcription(self, segments: list) -> list[str]:
         """Extract transcription parts from segments."""
         transcription_parts = []
@@ -135,12 +155,14 @@ class VLMRunTranscription(Component):
             elif self.media_type == "video" and "video" in segment:
                 transcription_parts.append(segment["video"].get("content", ""))
                 # Also include audio if available for video
+                # 视频类型同时包含音频内容
                 if "audio" in segment:
                     audio_content = segment["audio"].get("content", "")
                     if audio_content and audio_content.strip():
                         transcription_parts.append(f"[Audio: {audio_content}]")
         return transcription_parts
 
+    # 创建标准化的结果字典
     def _create_result_dict(self, response, transcription_parts: list, source_name: str) -> dict:
         """Create a standardized result dictionary."""
         response_data = response.response if hasattr(response, "response") else {}
@@ -157,6 +179,7 @@ class VLMRunTranscription(Component):
         }
 
         # Add source-specific field
+        # 根据来源类型添加对应的字段（URL 或文件名）
         parsed_url = urlparse(source_name)
         if parsed_url.scheme in ["http", "https", "s3", "gs", "ftp", "ftps"]:
             result["source"] = source_name
@@ -165,6 +188,7 @@ class VLMRunTranscription(Component):
 
         return result
 
+    # 处理单个媒体文件或 URL
     def _process_single_media(self, client, media_source, source_name: str) -> dict:
         """Process a single media file or URL."""
         response = self._generate_media_response(client, media_source)
@@ -174,6 +198,7 @@ class VLMRunTranscription(Component):
         transcription_parts = self._extract_transcription(segments)
         return self._create_result_dict(response, transcription_parts, source_name)
 
+    # 处理音频或视频文件并提取结构化数据（主入口方法）
     def process_media(self) -> Data:
         """Process audio or video file and extract structured data."""
         # Validate inputs
@@ -189,6 +214,7 @@ class VLMRunTranscription(Component):
             all_results = []
 
             # Handle multiple files
+            # 处理多个上传的文件
             if self.media_files:
                 files_to_process = self.media_files if isinstance(self.media_files, list) else [self.media_files]
                 for idx, media_file in enumerate(files_to_process):
@@ -197,11 +223,13 @@ class VLMRunTranscription(Component):
                     all_results.append(result)
 
             # Handle URL
+            # 处理 URL 方式的媒体源
             elif self.media_url:
                 result = self._process_single_media(client, self.media_url, self.media_url)
                 all_results.append(result)
 
             # Return clean, flexible output structure
+            # 返回简洁灵活的输出结构
             output_data = {
                 "results": all_results,
                 "total_files": len(all_results),

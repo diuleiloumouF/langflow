@@ -69,6 +69,11 @@ function formatDate(iso: string) {
   });
 }
 
+/**
+ * 部署表格组件
+ * 以表格形式显示部署列表，包含名称、类型、附加流程、提供商等列
+ * 支持展开行查看详情和下拉菜单操作
+ */
 export default function DeploymentsTable({
   deployments,
   providerMap,

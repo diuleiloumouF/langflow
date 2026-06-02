@@ -18,6 +18,10 @@ import useAlertStore from "@/stores/alertStore";
 import type { MCPServerInfoType } from "@/types/mcp";
 import { cn } from "@/utils/utils";
 
+/**
+ * MCP 服务器管理页面
+ * 显示、添加、编辑和删除 MCP 服务器配置
+ */
 export default function MCPServersPage() {
   const { data: servers } = useGetMCPServers({ withCounts: true });
   const { mutate: deleteServer } = useDeleteMCPServer();

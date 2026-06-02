@@ -4,20 +4,28 @@ import useFlowStore from "@/stores/flowStore";
 import type { NodeDataType } from "@/types/flow";
 import { getGroupOutputNodeId } from "@/utils/reactflowUtils";
 
+/** 检查面板输出的属性定义 */
 interface InspectionPanelOutputsProps {
   data: NodeDataType;
 }
 
+/**
+ * 检查面板输出组件
+ * 显示节点的输出数据，支持分组输出和代理输出的数据解析
+ * 当没有输出数据时显示提示信息
+ */
 export default function InspectionPanelOutputs({
   data,
 }: InspectionPanelOutputsProps) {
   const flowPool = useFlowStore((state) => state.flowPool);
 
+  // 获取节点的所有可见输出
   // Get all outputs from the node
   const outputs = useMemo(() => {
     return data.node?.outputs?.filter((output) => !output.hidden) ?? [];
   }, [data.node?.outputs]);
 
+  // 获取第一个有数据的输出
   // Get the first output with data
   const firstOutputWithData = useMemo(() => {
     for (const output of outputs) {

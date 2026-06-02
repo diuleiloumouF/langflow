@@ -1,3 +1,4 @@
+// Apify 图标组件 - 用于 Apify 网页爬虫和自动化平台相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import SvgApifyLogo from "./Apify";
@@ -9,6 +10,7 @@ export const ApifyIcon = forwardRef<SVGSVGElement, React.PropsWithChildren<{}>>(
   },
 );
 
+// ApifyWhiteIcon: Apify 白色版本图标，用于深色背景
 export const ApifyWhiteIcon = forwardRef<
   SVGSVGElement,
   React.PropsWithChildren<{}>

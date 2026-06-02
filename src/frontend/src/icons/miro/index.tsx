@@ -1,3 +1,4 @@
+// Miro 图标组件 - 用于 Miro 在线协作白板平台相关组件的标识
 import React, { forwardRef } from "react";
 import SvgMiro from "./miro";
 

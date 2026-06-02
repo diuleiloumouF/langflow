@@ -12,6 +12,7 @@ import { usePlaygroundStore } from "@/stores/playgroundStore";
 import { cn } from "@/utils/utils";
 import { useSearchContext } from "../index";
 
+/** 侧边栏分段导航组件，提供搜索、组件、MCP 等区域的切换 */
 export type { SidebarSection };
 
 interface NavItem {
@@ -21,6 +22,7 @@ interface NavItem {
   tooltip: string;
 }
 
+/** 侧边栏导航项配置列表 */
 export const NAV_ITEMS: NavItem[] = [
   {
     id: "search",

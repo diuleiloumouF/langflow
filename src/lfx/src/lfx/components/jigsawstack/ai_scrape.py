@@ -2,9 +2,12 @@ from lfx.custom.custom_component.component import Component
 from lfx.io import MessageTextInput, Output, SecretStrInput
 from lfx.schema.data import Data
 
+# 最大元素提示数量限制
 MAX_ELEMENT_PROMPTS = 5
 
 
+# JigsawStack AI 网页抓取组件，使用 AI 自动抓取网页并提取结构化数据
+# JigsawStack AI scraper component for automatically scraping web pages and extracting structured data
 class JigsawStackAIScraperComponent(Component):
     display_name = "AI Scraper"
     description = "Scrape any website instantly and get consistent structured data \
@@ -54,6 +57,7 @@ class JigsawStackAIScraperComponent(Component):
         Output(display_name="AI Scraper Results", name="scrape_results", method="scrape"),
     ]
 
+    # 执行网页抓取操作
     def scrape(self) -> Data:
         try:
             from jigsawstack import JigsawStack, JigsawStackError

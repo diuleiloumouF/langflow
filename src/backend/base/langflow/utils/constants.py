@@ -1,3 +1,4 @@
+# 从 lfx 模块导入通用常量，包括 AI 模型列表、消息发送者标识等
 from lfx.utils.constants import (
     ANTHROPIC_MODELS,
     CHAT_OPENAI_MODELS,
@@ -13,7 +14,7 @@ from lfx.utils.constants import (
     REASONING_OPENAI_MODELS,
 )
 
-# Langflow-specific constants
+# Langflow 特有的常量定义
 LANGFLOW_GLOBAL_VAR_HEADER_PREFIX = "x-langflow-global-var-"
 
 __all__ = [

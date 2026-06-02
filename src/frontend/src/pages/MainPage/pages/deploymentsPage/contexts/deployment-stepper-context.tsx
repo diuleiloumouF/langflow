@@ -116,6 +116,11 @@ interface DeploymentStepperContextType {
 const DeploymentStepperContext =
   createContext<DeploymentStepperContextType | null>(null);
 
+/**
+ * 部署向导上下文提供者
+ * 管理部署向导的完整状态，包括步骤导航、提供商选择、类型配置、
+ * 流程附加和部署/更新操作的构建方法
+ */
 export function DeploymentStepperProvider({
   children,
   initialState,

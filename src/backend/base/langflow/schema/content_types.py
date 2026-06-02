@@ -1,3 +1,6 @@
+# 内容类型定义模块
+# 定义了 Playground 中各种内容类型的基础类和具体实现，
+# 包括错误、文本、媒体、JSON、代码和工具调用等内容类型
 from typing import Any, Literal
 
 from fastapi.encoders import jsonable_encoder
@@ -7,11 +10,13 @@ from typing_extensions import TypedDict
 from langflow.schema.encoders import CUSTOM_ENCODERS
 
 
+# 内容块头部信息字典，包含标题和图标
 class HeaderDict(TypedDict, total=False):
     title: str | None
     icon: str | None
 
 
+# 所有内容类型的基础类
 class BaseContent(BaseModel):
     """Base class for all content types."""
 
@@ -35,6 +40,7 @@ class BaseContent(BaseModel):
             return nxt(self)
 
 
+# 错误消息内容类型
 class ErrorContent(BaseContent):
     """Content type for error messages."""
 
@@ -46,6 +52,7 @@ class ErrorContent(BaseContent):
     traceback: str | None = None
 
 
+# 简单文本内容类型
 class TextContent(BaseContent):
     """Content type for simple text content."""
 
@@ -54,6 +61,7 @@ class TextContent(BaseContent):
     duration: int | None = None
 
 
+# 媒体内容类型（图片、音频、视频等）
 class MediaContent(BaseContent):
     """Content type for media content."""
 
@@ -62,6 +70,7 @@ class MediaContent(BaseContent):
     caption: str | None = None
 
 
+# JSON 内容类型
 class JSONContent(BaseContent):
     """Content type for JSON content."""
 
@@ -69,6 +78,7 @@ class JSONContent(BaseContent):
     data: dict[str, Any]
 
 
+# 代码片段内容类型
 class CodeContent(BaseContent):
     """Content type for code snippets."""
 
@@ -78,6 +88,7 @@ class CodeContent(BaseContent):
     title: str | None = None
 
 
+# 工具调用内容类型（记录工具的输入、输出和错误信息）
 class ToolContent(BaseContent):
     """Content type for tool start content."""
 

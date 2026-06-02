@@ -1,22 +1,36 @@
 # from lfx.field_typing import Data
 
+# LangChain 结构化工具
 from langchain_core.tools import StructuredTool
+
+# MCP 协议类型
 from mcp import types
 
+# MCP 工具函数
 from lfx.base.mcp.util import (
     MCPSseClient,
     create_input_schema_from_json_schema,
     create_tool_coroutine,
     create_tool_func,
 )
+
+# 组件基类
 from lfx.custom.custom_component.component import Component
+
+# 工具类型
 from lfx.field_typing import Tool
+
+# 输入输出组件类型
 from lfx.io import MessageTextInput, Output
 
 
+# MCP SSE 工具组件（已弃用），通过 SSE 连接 MCP 服务器并暴露其工具
 class MCPSse(Component):
+    # MCP SSE 客户端实例
     client = MCPSseClient()
+    # 工具列表结果
     tools = types.ListToolsResult
+    # 工具名称列表
     tool_names = [str]
     display_name = "MCP Tools (SSE) [DEPRECATED]"
     description = "Connects to an MCP server over SSE and exposes it's tools as langflow tools to be used by an Agent."
@@ -25,7 +39,9 @@ class MCPSse(Component):
     name = "MCPSse"
     legacy = True
 
+    # 输入参数定义
     inputs = [
+        # MCP SSE 服务器 URL
         MessageTextInput(
             name="url",
             display_name="mcp sse url",
@@ -35,16 +51,20 @@ class MCPSse(Component):
         ),
     ]
 
+    # 输出参数定义
     outputs = [
         Output(display_name="Tools", name="tools", method="build_output"),
     ]
 
+    # 异步构建输出：连接 MCP 服务器并获取工具列表
     async def build_output(self) -> list[Tool]:
+        # 如果尚未连接，则连接到 MCP 服务器
         if self.client.session is None:
             self.tools = await self.client.connect_to_server(self.url, {})
 
         tool_list = []
 
+        # 将 MCP 工具转换为 LangChain 结构化工具
         for tool in self.tools:
             args_schema = create_input_schema_from_json_schema(tool.inputSchema)
             tool_list.append(
@@ -57,5 +77,6 @@ class MCPSse(Component):
                 )
             )
 
+        # 记录工具名称列表
         self.tool_names = [tool.name for tool in self.tools]
         return tool_list

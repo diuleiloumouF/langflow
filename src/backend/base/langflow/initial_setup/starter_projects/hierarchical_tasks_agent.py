@@ -1,3 +1,6 @@
+# 层级任务智能体入门项目
+# 该模块构建一个层级式 CrewAI 智能体流程，包含研究员和编辑两个角色
+
 from lfx.components.crewai.crewai import CrewAIAgentComponent
 from lfx.components.crewai.hierarchical_crew import HierarchicalCrewComponent
 from lfx.components.crewai.hierarchical_task import HierarchicalTaskComponent
@@ -9,6 +12,7 @@ from lfx.graph import Graph
 
 
 def hierarchical_tasks_agent_graph():
+    """构建层级任务智能体示例图。"""
     llm = OpenAIModelComponent(model_name="gpt-4o-mini")
     manager_llm = OpenAIModelComponent(model_name="gpt-4o")
     search_api_tool = SearchAPIComponent()

@@ -1,3 +1,6 @@
+# 带记忆的聊天机器人入门项目
+# 该模块构建一个具有记忆功能的聊天流程：用户输入 -> 记忆检索 -> 类型转换 -> 提示词模板 -> OpenAI 模型 -> 输出
+
 from lfx.components.helpers import MemoryComponent
 from lfx.components.input_output import ChatInput, ChatOutput
 from lfx.components.models_and_agents import PromptComponent
@@ -7,6 +10,7 @@ from lfx.graph import Graph
 
 
 def memory_chatbot_graph(template: str | None = None):
+    """构建带记忆的聊天机器人示例图。"""
     if template is None:
         template = """{context}
 

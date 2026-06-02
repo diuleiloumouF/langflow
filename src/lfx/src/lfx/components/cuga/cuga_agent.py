@@ -1,15 +1,33 @@
+# 异步编程支持
 import asyncio
+
+# JSON 序列化/反序列化
 import json
+
+# 异常追踪
 import traceback
+
+# UUID 生成，用于事件唯一标识
 import uuid
+
+# 异步迭代器类型
 from collections.abc import AsyncIterator
+
+# 类型检查相关
 from typing import TYPE_CHECKING, Any, cast
 
+# LangChain Agent 相关：AgentFinish 表示代理执行完成
 from langchain_core.agents import AgentFinish
+
+# LangChain 消息类型：AI 消息和人类消息
 from langchain_core.messages import AIMessage, HumanMessage
+
+# LangChain 结构化工具
 from langchain_core.tools import StructuredTool
 
 from lfx.base.agents.agent import LCToolsAgentComponent
+
+# 模型输入常量：提供商列表、动态更新字段、模型元数据等
 from lfx.base.models.model_input_constants import (
     ALL_PROVIDER_FIELDS,
     MODEL_DYNAMIC_UPDATE_FIELDS,
@@ -17,22 +35,46 @@ from lfx.base.models.model_input_constants import (
     MODEL_PROVIDERS_DICT,
     MODELS_METADATA,
 )
+
+# 获取模型名称的工具函数
 from lfx.base.models.model_utils import get_model_name
+
+# 当前日期组件，可作为工具添加给代理
 from lfx.components.helpers import CurrentDateComponent
+
+# 工具调用代理组件基类
 from lfx.components.langchain_utilities.tool_calling import ToolCallingAgentComponent
+
+# 记忆组件，用于管理聊天历史
 from lfx.components.models_and_agents.memory import MemoryComponent
+
+# 组件工具包，用于构建组件工具
 from lfx.custom.custom_component.component import _get_component_toolkit
+
+# 更新组件构建配置的工具函数
 from lfx.custom.utils import update_component_build_config
+
+# 工具类型定义
 from lfx.field_typing import Tool
+
+# 输入/输出组件类型
 from lfx.io import BoolInput, DropdownInput, IntInput, MultilineInput, Output
+
+# 日志记录器
 from lfx.log.logger import logger
+
+# 点号字典，支持点号访问的字典
 from lfx.schema.dotdict import dotdict
+
+# 消息类型
 from lfx.schema.message import Message
 
+# TYPE_CHECKING 块中的导入仅用于类型检查，不会在运行时导入
 if TYPE_CHECKING:
     from lfx.schema.log import SendMessageFunctionType
 
 
+# 将组件输入参数标记为高级选项的辅助函数
 def set_advanced_true(component_input):
     """Set the advanced flag to True for a component input.
 
@@ -46,6 +88,7 @@ def set_advanced_true(component_input):
     return component_input
 
 
+# 支持的模型提供商列表
 MODEL_PROVIDERS_LIST = ["OpenAI"]
 
 
@@ -64,12 +107,18 @@ class CugaComponent(ToolCallingAgentComponent):
         name: Internal component name
     """
 
+    # 组件在 UI 中显示的名称
     display_name: str = "Cuga"
+    # 组件功能的简短描述
     description: str = "Define the Cuga agent's instructions, then assign it a task."
+    # 组件文档链接
     documentation: str = "https://docs.langflow.org/bundles-cuga"
+    # UI 图标标识
     icon = "bot"
+    # 内部组件名称
     name = "Cuga"
 
+    # 记忆组件的输入参数，全部标记为高级选项
     memory_inputs = [set_advanced_true(component_input) for component_input in MemoryComponent().inputs]
 
     inputs = [

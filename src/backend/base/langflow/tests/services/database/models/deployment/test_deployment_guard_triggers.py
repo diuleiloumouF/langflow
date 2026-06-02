@@ -1,3 +1,5 @@
+# 部署守卫触发器测试模块
+# 测试 ORM 级别的部署守卫规则（流程移动、不可变字段、跨项目附件等）
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -36,13 +38,16 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncEngine
 
 _TEST_PASSWORD = "hashed"  # noqa: S105  # pragma: allowlist secret
+# 测试用的哈希密码
 
 
 def _utcnow_naive() -> datetime:
+    """返回无时区信息的当前 UTC 时间。"""
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def _create_sqlite_engine() -> AsyncEngine:
+    """创建 SQLite 异步引擎。"""
     engine = create_async_engine(
         "sqlite+aiosqlite://",
         connect_args={"check_same_thread": False},
@@ -60,11 +65,13 @@ def _create_sqlite_engine() -> AsyncEngine:
 
 @pytest.fixture(name="db_engine")
 def db_engine_fixture():
+    """创建数据库引擎的固定装置。"""
     return _create_sqlite_engine()
 
 
 @pytest.fixture(name="db")
 async def db_fixture(db_engine):
+    """创建数据库会话的固定装置。"""
     async with db_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     async with AsyncSession(db_engine, expire_on_commit=False) as session:
@@ -76,6 +83,7 @@ async def db_fixture(db_engine):
 
 @pytest.fixture
 async def user(db: AsyncSession) -> User:
+    """创建测试用户的固定装置。"""
     now = _utcnow_naive()
     row = User(username="testuser", password=_TEST_PASSWORD, is_active=True, create_at=now, updated_at=now)
     db.add(row)
@@ -86,6 +94,7 @@ async def user(db: AsyncSession) -> User:
 
 @pytest.fixture
 async def source_project(db: AsyncSession, user: User) -> Folder:
+    """创建源项目文件夹的固定装置。"""
     row = Folder(name="source-project", user_id=user.id)
     db.add(row)
     await db.commit()
@@ -95,6 +104,7 @@ async def source_project(db: AsyncSession, user: User) -> Folder:
 
 @pytest.fixture
 async def target_project(db: AsyncSession, user: User) -> Folder:
+    """创建目标项目文件夹的固定装置。"""
     row = Folder(name="target-project", user_id=user.id)
     db.add(row)
     await db.commit()
@@ -104,6 +114,7 @@ async def target_project(db: AsyncSession, user: User) -> Folder:
 
 @pytest.fixture
 async def flow(db: AsyncSession, user: User, source_project: Folder) -> Flow:
+    """创建测试流程的固定装置。"""
     row = Flow(
         name="flow-1",
         user_id=user.id,
@@ -119,6 +130,7 @@ async def flow(db: AsyncSession, user: User, source_project: Folder) -> Flow:
 
 @pytest.fixture
 async def flow_version(db: AsyncSession, user: User, flow: Flow) -> FlowVersion:
+    """创建测试流程版本的固定装置。"""
     row = FlowVersion(
         flow_id=flow.id,
         user_id=user.id,
@@ -133,6 +145,7 @@ async def flow_version(db: AsyncSession, user: User, flow: Flow) -> FlowVersion:
 
 @pytest.fixture
 async def provider_account(db: AsyncSession, user: User) -> DeploymentProviderAccount:
+    """创建测试部署提供商账户的固定装置。"""
     row = DeploymentProviderAccount(
         user_id=user.id,
         provider_tenant_id="tenant-1",
@@ -154,6 +167,7 @@ async def deployment(
     source_project: Folder,
     provider_account: DeploymentProviderAccount,
 ) -> Deployment:
+    """创建测试部署的固定装置。"""
     row = Deployment(
         user_id=user.id,
         project_id=source_project.id,
@@ -170,6 +184,7 @@ async def deployment(
 
 @pytest.mark.asyncio
 async def test_flow_move_guard_allows_noop(db: AsyncSession, flow: Flow) -> None:
+    """测试流程移动守卫允许空操作（不移动）。"""
     await ensure_flow_move_allowed(
         db,
         flow_id=flow.id,
@@ -187,6 +202,7 @@ async def test_flow_move_guard_blocks_when_flow_is_deployed(
     deployment: Deployment,
     target_project: Folder,
 ) -> None:
+    """测试当流程已部署时，流程移动守卫会阻止移动。"""
     _ = target_project
     await create_deployment_attachment(
         db,
@@ -210,6 +226,7 @@ async def test_flow_move_guard_blocks_when_flow_is_deployed(
 
 @pytest.mark.asyncio
 async def test_flow_moves_guard_allows_empty_batch(db: AsyncSession, target_project: Folder) -> None:
+    """测试批量流程移动守卫允许空批次。"""
     await ensure_flow_moves_allowed(
         db,
         flow_folder_pairs=[],
@@ -219,6 +236,7 @@ async def test_flow_moves_guard_allows_empty_batch(db: AsyncSession, target_proj
 
 @pytest.mark.asyncio
 async def test_flow_moves_guard_allows_when_all_moves_are_noop(db: AsyncSession, flow: Flow) -> None:
+    """测试当所有移动都是空操作时，批量流程移动守卫允许。"""
     await ensure_flow_moves_allowed(
         db,
         flow_folder_pairs=[(flow.id, flow.folder_id)],
@@ -235,6 +253,8 @@ async def test_flow_moves_guard_blocks_when_any_group_has_deployed_flow(
     deployment: Deployment,
     target_project: Folder,
 ) -> None:
+    """测试当任何组有已部署的流程时，批量流程移动守卫会阻止移动。"""
+    # 创建另一个源项目文件夹
     other_source_project = Folder(name="source-project-2", user_id=user.id)
     db.add(other_source_project)
     await db.commit()
@@ -284,6 +304,7 @@ async def test_flow_moves_guard_blocks_when_any_group_has_deployed_flow(
 
 
 def test_deployment_immutable_field_guard_blocks_project_move(deployment: Deployment, target_project: Folder) -> None:
+    """测试部署不可变字段守卫阻止项目移动。"""
     with pytest.raises(DeploymentGuardError) as exc_info:
         ensure_deployment_immutable_fields(
             old_project_id=deployment.project_id,
@@ -300,6 +321,7 @@ def test_deployment_immutable_field_guard_blocks_project_move(deployment: Deploy
 
 
 def test_deployment_immutable_field_guard_blocks_type_update(deployment: Deployment) -> None:
+    """测试部署不可变字段守卫阻止类型更新。"""
     with pytest.raises(DeploymentGuardError) as exc_info:
         ensure_deployment_immutable_fields(
             old_project_id=deployment.project_id,
@@ -316,6 +338,7 @@ def test_deployment_immutable_field_guard_blocks_type_update(deployment: Deploym
 
 
 def test_deployment_immutable_field_guard_blocks_resource_key_update(deployment: Deployment) -> None:
+    """测试部署不可变字段守卫阻止资源键更新。"""
     with pytest.raises(DeploymentGuardError) as exc_info:
         ensure_deployment_immutable_fields(
             old_project_id=deployment.project_id,
@@ -332,6 +355,7 @@ def test_deployment_immutable_field_guard_blocks_resource_key_update(deployment:
 
 
 def test_deployment_immutable_field_guard_blocks_provider_account_move(deployment: Deployment) -> None:
+    """测试部署不可变字段守卫阻止提供商账户移动。"""
     with pytest.raises(DeploymentGuardError) as exc_info:
         ensure_deployment_immutable_fields(
             old_project_id=deployment.project_id,
@@ -348,6 +372,7 @@ def test_deployment_immutable_field_guard_blocks_provider_account_move(deploymen
 
 
 def test_deployment_immutable_field_guard_allows_noop(deployment: Deployment) -> None:
+    """测试部署不可变字段守卫允许空操作。"""
     ensure_deployment_immutable_fields(
         old_project_id=deployment.project_id,
         new_project_id=deployment.project_id,
@@ -361,6 +386,7 @@ def test_deployment_immutable_field_guard_allows_noop(deployment: Deployment) ->
 
 
 def test_provider_identity_guard_blocks_changes(provider_account: DeploymentProviderAccount) -> None:
+    """测试提供商身份守卫阻止更改。"""
     with pytest.raises(DeploymentGuardError) as exc_info:
         ensure_provider_account_identity_immutable(
             old_provider_key=provider_account.provider_key,
@@ -375,6 +401,7 @@ def test_provider_identity_guard_blocks_changes(provider_account: DeploymentProv
 
 
 def test_provider_identity_guard_blocks_provider_key_changes(provider_account: DeploymentProviderAccount) -> None:
+    """测试提供商身份守卫阻止提供商密钥更改。"""
     with pytest.raises(DeploymentGuardError) as exc_info:
         ensure_provider_account_identity_immutable(
             old_provider_key=provider_account.provider_key,
@@ -389,6 +416,7 @@ def test_provider_identity_guard_blocks_provider_key_changes(provider_account: D
 
 
 def test_provider_identity_guard_blocks_provider_tenant_id_changes(provider_account: DeploymentProviderAccount) -> None:
+    """测试提供商身份守卫阻止提供商租户 ID 更改。"""
     with pytest.raises(DeploymentGuardError) as exc_info:
         ensure_provider_account_identity_immutable(
             old_provider_key=provider_account.provider_key,
@@ -403,6 +431,7 @@ def test_provider_identity_guard_blocks_provider_tenant_id_changes(provider_acco
 
 
 def test_provider_identity_guard_allows_noop(provider_account: DeploymentProviderAccount) -> None:
+    """测试提供商身份守卫允许空操作。"""
     ensure_provider_account_identity_immutable(
         old_provider_key=provider_account.provider_key,
         new_provider_key=provider_account.provider_key,
@@ -419,6 +448,7 @@ async def test_crud_update_deployment_blocks_project_move(
     deployment: Deployment,
     target_project: Folder,
 ) -> None:
+    """测试 CRUD 更新部署时，阻止项目移动。"""
     with pytest.raises(DeploymentGuardError) as exc_info:
         await update_deployment(db, deployment=deployment, project_id=target_project.id)
 
@@ -430,6 +460,7 @@ async def test_crud_update_deployment_blocks_type_update(
     db: AsyncSession,
     deployment: Deployment,
 ) -> None:
+    """测试 CRUD 更新部署时，阻止类型更新。"""
     with pytest.raises(DeploymentGuardError) as exc_info:
         await update_deployment(
             db,
@@ -445,6 +476,7 @@ async def test_crud_update_provider_account_blocks_identity_update(
     db: AsyncSession,
     provider_account: DeploymentProviderAccount,
 ) -> None:
+    """测试 CRUD 更新提供商账户时，阻止身份更新。"""
     with pytest.raises(DeploymentGuardError) as exc_info:
         await update_provider_account(
             db,
@@ -463,6 +495,7 @@ async def test_attachment_project_match_blocks_cross_project_directly(
     flow_version: FlowVersion,
     provider_account: DeploymentProviderAccount,
 ) -> None:
+    """测试附件项目匹配守卫直接阻止跨项目附件。"""
     deployment_in_other_project = Deployment(
         user_id=user.id,
         project_id=target_project.id,
@@ -491,6 +524,7 @@ async def test_attachment_project_match_allows_same_project_directly(
     flow_version: FlowVersion,
     deployment: Deployment,
 ) -> None:
+    """测试附件项目匹配守卫允许同项目附件。"""
     await ensure_attachment_project_match(
         db,
         flow_version_id=flow_version.id,
@@ -506,6 +540,7 @@ async def test_attachment_create_blocks_cross_project(
     flow_version: FlowVersion,
     provider_account: DeploymentProviderAccount,
 ) -> None:
+    """测试创建附件时，阻止跨项目附件。"""
     deployment_in_other_project = Deployment(
         user_id=user.id,
         project_id=target_project.id,
@@ -537,6 +572,8 @@ async def test_attachment_create_succeeds_same_project(
     flow_version: FlowVersion,
     deployment: Deployment,
 ) -> None:
+    """测试创建同项目附件成功。"""
+    # 创建部署附件
     row = await create_deployment_attachment(
         db,
         user_id=user.id,

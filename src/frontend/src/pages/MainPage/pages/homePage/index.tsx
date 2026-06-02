@@ -24,6 +24,11 @@ import DeploymentsPage from "../deploymentsPage/deployments-page";
 import EmptyFolder from "../emptyFolder";
 import { isFolderEmpty } from "./utils/isFolderEmpty";
 
+/**
+ * 主页组件
+ * 显示流程、组件或 MCP 服务器的列表视图
+ * 支持网格/列表视图切换、搜索、分页、文件拖拽导入等功能
+ */
 const HomePage = ({ type }: { type: "flows" | "components" | "mcp" }) => {
   const { t } = useTranslation();
   const [view, setView] = useState<"grid" | "list">(() => {

@@ -1,3 +1,6 @@
+# 顺序任务智能体入门项目
+# 该模块构建一个顺序执行的 CrewAI 智能体流程：研究员 -> 编辑 -> 喜剧演员
+
 from lfx.components.crewai.sequential_crew import SequentialCrewComponent
 from lfx.components.crewai.sequential_task_agent import SequentialTaskAgentComponent
 from lfx.components.input_output import ChatOutput, TextInputComponent
@@ -8,6 +11,7 @@ from lfx.graph import Graph
 
 
 def sequential_tasks_agent_graph():
+    """构建顺序任务智能体示例图。"""
     llm = OpenAIModelComponent()
     search_api_tool = SearchAPIComponent()
 

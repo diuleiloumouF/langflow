@@ -3,6 +3,8 @@ from lfx.io import MessageTextInput, Output, SecretStrInput, StrInput
 from lfx.schema.data import Data
 
 
+# JigsawStack 文本翻译组件，支持多种语言之间的文本翻译
+# JigsawStack text translation component for translating text between multiple languages
 class JigsawStackTextTranslateComponent(Component):
     display_name = "Text Translate"
     description = "Translate text from one language to another with support for multiple text formats."
@@ -39,6 +41,7 @@ class JigsawStackTextTranslateComponent(Component):
         Output(display_name="Translation Results", name="translation_results", method="translation"),
     ]
 
+    # 执行文本翻译操作
     def translation(self) -> Data:
         try:
             from jigsawstack import JigsawStack, JigsawStackError

@@ -1,8 +1,11 @@
+# 时间戳验证器模块
+# 提供时间戳格式转换和验证的工具函数，支持多种输入格式
 from datetime import datetime, timezone
 
 from pydantic import BeforeValidator
 
 
+# 将时间戳转换为标准化的字符串格式（YYYY-MM-DD HH:MM:SS UTC）
 def timestamp_to_str(timestamp: datetime | str) -> str:
     """Convert timestamp to standardized string format.
 
@@ -43,6 +46,7 @@ def timestamp_to_str(timestamp: datetime | str) -> str:
     return timestamp.strftime("%Y-%m-%d %H:%M:%S %Z")
 
 
+# 将时间戳字符串转换为 datetime 对象
 def str_to_timestamp(timestamp: str | datetime) -> datetime:
     """Convert timestamp to datetime object.
 
@@ -66,6 +70,7 @@ def str_to_timestamp(timestamp: str | datetime) -> datetime:
     return timestamp
 
 
+# 将时间戳转换为包含小数秒的字符串格式（YYYY-MM-DD HH:MM:SS.ffffff UTC）
 def timestamp_with_fractional_seconds(timestamp: datetime | str) -> str:
     """Convert timestamp to string format including fractional seconds.
 
@@ -109,6 +114,7 @@ def timestamp_with_fractional_seconds(timestamp: datetime | str) -> str:
     return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f %Z")
 
 
+# Pydantic 预验证器：在模型验证前自动转换时间戳格式
 timestamp_to_str_validator = BeforeValidator(timestamp_to_str)
 timestamp_with_fractional_seconds_validator = BeforeValidator(timestamp_with_fractional_seconds)
 str_to_timestamp_validator = BeforeValidator(str_to_timestamp)

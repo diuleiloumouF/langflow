@@ -1,5 +1,9 @@
 import type { APIDataType } from "@/types/api";
 
+/**
+ * 合并筛选数据函数
+ * 将 Fuse.js 搜索结果和传统元数据搜索结果合并为统一的筛选数据
+ */
 export const filteredDataFn = (
   data: APIDataType,
   combinedResults,

@@ -1,3 +1,4 @@
+# 弹性搜索相关组件的初始化模块
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -8,11 +9,13 @@ if TYPE_CHECKING:
     from .elasticsearch import ElasticsearchVectorStoreComponent
     from .opensearch import OpenSearchVectorStoreComponent
 
+# 动态导入映射表，用于延迟加载组件
 _dynamic_imports = {
     "ElasticsearchVectorStoreComponent": "elasticsearch",
     "OpenSearchVectorStoreComponent": "opensearch",
 }
 
+# 模块公开导出的组件列表
 __all__ = [
     "ElasticsearchVectorStoreComponent",
     "OpenSearchVectorStoreComponent",
@@ -20,6 +23,7 @@ __all__ = [
 
 
 def __getattr__(attr_name: str) -> Any:
+    """# 当访问模块属性时，延迟导入弹性搜索相关的组件"""
     """Lazily import Elastic components on attribute access."""
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
@@ -34,4 +38,5 @@ def __getattr__(attr_name: str) -> Any:
 
 
 def __dir__() -> list[str]:
+    """# 返回模块公开导出的所有组件名称"""
     return list(__all__)

@@ -4,6 +4,10 @@ This module provides the JSON class (formerly Data) as the base type for Langflo
 Data is maintained as an alias for backwards compatibility.
 """
 
+# lfx 包的轻量级 JSON 类模块，不依赖 langflow。
+# 提供 JSON 类（前身为 Data）作为 Langflow 数据结构的基础类型。
+# Data 作为向后兼容的别名保留。
+
 from __future__ import annotations
 
 import copy
@@ -23,10 +27,12 @@ from lfx.utils.constants import MESSAGE_SENDER_AI, MESSAGE_SENDER_USER
 from lfx.utils.image import create_image_content_dict
 
 if TYPE_CHECKING:
+    # 类型检查导入，避免循环依赖
     from lfx.schema.dataframe import Table
     from lfx.schema.message import Message
 
 
+# 自定义 JSON 序列化器，处理 Pydantic 无法自动序列化的类型
 def custom_serializer(obj):
     if isinstance(obj, datetime):
         utc_date = obj.replace(tzinfo=timezone.utc)
@@ -44,6 +50,7 @@ def custom_serializer(obj):
     raise TypeError(msg)
 
 
+# 将数据序列化为格式化的 JSON 字符串
 def serialize_data(data):
     return json.dumps(data, indent=4, default=custom_serializer)
 
@@ -58,12 +65,17 @@ class JSON(CrossModuleModel):
         data (dict, optional): Additional data associated with the record.
     """
 
+    # 允许在赋值时进行类型验证
     model_config = ConfigDict(validate_assignment=True)
 
+    # data 字典中用于存储文本内容的键名
     text_key: str = "text"
+    # 存储所有键值对数据的字典
     data: dict = {}
+    # 当 text_key 不存在时使用的默认值
     default_value: str | None = ""
 
+    # Pydantic 模型验证器：在模型创建前验证并处理传入的数据
     @model_validator(mode="before")
     @classmethod
     def validate_data(cls, values):
@@ -78,16 +90,18 @@ class JSON(CrossModuleModel):
                 " This will raise an error in version langflow==1.3.0."
             )
             logger.warning(msg)
-        # Any other keyword should be added to the data dictionary
+        # 任何其他关键字参数都应被添加到 data 字典中
         for key in values:
             if key not in values["data"] and key not in {"text_key", "data", "default_value"}:
                 values["data"][key] = values[key]
         return values
 
+    # 自定义模型序列化器：当转换为 JSON 时，对含有 to_json 方法的对象进行特殊处理
     @model_serializer(mode="plain", when_used="json")
     def serialize_model(self):
         return {k: v.to_json() if hasattr(v, "to_json") else v for k, v in self.data.items()}
 
+    # 从 data 字典中获取文本值
     def get_text(self):
         """Retrieves the text value from the data dictionary.
 
@@ -99,6 +113,7 @@ class JSON(CrossModuleModel):
         """
         return self.data.get(self.text_key, self.default_value)
 
+    # 在 data 字典中设置文本值
     def set_text(self, text: str | None) -> str:
         r"""Sets the text value in the data dictionary.
 
@@ -117,6 +132,7 @@ class JSON(CrossModuleModel):
         self.data[self.text_key] = new_text
         return new_text
 
+    # 从 langchain Document 对象创建 JSON 实例的类方法
     @classmethod
     def from_document(cls, document: Document) -> JSON:
         """Converts a Document to a JSON.

@@ -7,6 +7,11 @@ interface IsFolderEmptyInput {
   enableMcp: boolean;
 }
 
+/**
+ * 判断文件夹是否为空
+ * 综合全局流程存储和当前文件夹查询结果来判断文件夹是否为空
+ * 只有两个数据源都认为空时才返回 true
+ */
 export function isFolderEmpty({
   flows,
   folderId,

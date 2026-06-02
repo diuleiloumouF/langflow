@@ -1,3 +1,4 @@
+# YouTube 评论组件，通过 YouTube Data API 获取和分析视频评论
 from contextlib import contextmanager
 
 import pandas as pd
@@ -10,19 +11,28 @@ from lfx.schema.dataframe import DataFrame
 from lfx.template.field.base import Output
 
 
+# YouTube 评论组件，获取视频评论并返回结构化 DataFrame
 class YouTubeCommentsComponent(Component):
     """A component that retrieves comments from YouTube videos."""
 
+    # 组件显示名称
     display_name: str = "YouTube Comments"
+    # 组件描述
     description: str = "Retrieves and analyzes comments from YouTube videos."
+    # 组件图标
     icon: str = "YouTube"
 
     # Constants
+    # 评论被禁用的状态码
     COMMENTS_DISABLED_STATUS = 403
+    # 视频未找到状态码
     NOT_FOUND_STATUS = 404
+    # API 单次最大返回结果数
     API_MAX_RESULTS = 100
 
+    # 组件输入参数定义
     inputs = [
+        # YouTube 视频 URL
         MessageTextInput(
             name="video_url",
             display_name="Video URL",
@@ -30,18 +40,21 @@ class YouTubeCommentsComponent(Component):
             tool_mode=True,
             required=True,
         ),
+        # YouTube Data API 密钥
         SecretStrInput(
             name="api_key",
             display_name="YouTube API Key",
             info="Your YouTube Data API key.",
             required=True,
         ),
+        # 最大返回评论数
         IntInput(
             name="max_results",
             display_name="Max Results",
             value=20,
             info="The maximum number of comments to return.",
         ),
+        # 排序方式：按时间或相关性
         DropdownInput(
             name="sort_by",
             display_name="Sort By",
@@ -49,6 +62,7 @@ class YouTubeCommentsComponent(Component):
             value="relevance",
             info="Sort comments by time or relevance.",
         ),
+        # 是否包含回复评论
         BoolInput(
             name="include_replies",
             display_name="Include Replies",
@@ -56,6 +70,7 @@ class YouTubeCommentsComponent(Component):
             info="Whether to include replies to comments.",
             advanced=True,
         ),
+        # 是否包含指标数据（点赞数、回复数）
         BoolInput(
             name="include_metrics",
             display_name="Include Metrics",
@@ -65,10 +80,12 @@ class YouTubeCommentsComponent(Component):
         ),
     ]
 
+    # 组件输出定义
     outputs = [
         Output(name="comments", display_name="Comments", method="get_video_comments"),
     ]
 
+    # 从 YouTube URL 中提取视频 ID
     def _extract_video_id(self, video_url: str) -> str:
         """Extracts the video ID from a YouTube URL."""
         import re
@@ -85,6 +102,7 @@ class YouTubeCommentsComponent(Component):
 
         return video_url.strip()
 
+    # 处理单条回复评论
     def _process_reply(self, reply: dict, parent_id: str, *, include_metrics: bool = True) -> dict:
         """Process a single reply comment."""
         reply_snippet = reply["snippet"]
@@ -102,6 +120,7 @@ class YouTubeCommentsComponent(Component):
 
         return reply_data
 
+    # 处理单条评论线程（包含顶级评论及其回复）
     def _process_comment(
         self, item: dict, *, include_metrics: bool = True, include_replies: bool = False
     ) -> list[dict]:
@@ -110,6 +129,7 @@ class YouTubeCommentsComponent(Component):
         comment_id = item["snippet"]["topLevelComment"]["id"]
 
         # Basic comment data
+        # 构建基本评论数据
         processed_comments = [
             {
                 "comment_id": comment_id,
@@ -124,6 +144,7 @@ class YouTubeCommentsComponent(Component):
         ]
 
         # Add metrics if requested
+        # 添加指标数据（如果请求了）
         if include_metrics:
             processed_comments[0].update(
                 {
@@ -133,6 +154,7 @@ class YouTubeCommentsComponent(Component):
             )
 
         # Add replies if requested
+        # 添加回复评论（如果请求了且存在回复）
         if include_replies and item["snippet"]["totalReplyCount"] > 0 and "replies" in item:
             for reply in item["replies"]["comments"]:
                 reply_data = self._process_reply(reply, parent_id=comment_id, include_metrics=include_metrics)
@@ -140,6 +162,7 @@ class YouTubeCommentsComponent(Component):
 
         return processed_comments
 
+    # YouTube API 客户端上下文管理器
     @contextmanager
     def youtube_client(self):
         """Context manager for YouTube API client."""
@@ -149,6 +172,7 @@ class YouTubeCommentsComponent(Component):
         finally:
             client.close()
 
+    # 获取视频评论并返回 DataFrame
     def get_video_comments(self) -> DataFrame:
         """Retrieves comments from a YouTube video and returns as DataFrame."""
         try:
@@ -181,6 +205,7 @@ class YouTubeCommentsComponent(Component):
                         results_count += 1
 
                     # Get the next page if available and needed
+                    # 获取下一页数据（如果需要）
                     if "nextPageToken" in response and results_count < self.max_results:
                         request = youtube.commentThreads().list(
                             part="snippet,replies",
@@ -201,6 +226,7 @@ class YouTubeCommentsComponent(Component):
                 comments_df["video_url"] = self.video_url
 
                 # Sort columns for better organization
+                # 整理列顺序
                 column_order = [
                     "video_id",
                     "video_url",

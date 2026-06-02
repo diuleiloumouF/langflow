@@ -11,6 +11,8 @@ from lfx.inputs.inputs import SecretStrInput, StrInput
 from lfx.schema.data import Data
 
 
+# Home Assistant 状态列表组件，用于从 Home Assistant 获取设备状态列表
+# Home Assistant states list component for retrieving device states from Home Assistant
 class ListHomeAssistantStates(LCToolComponent):
     display_name: str = "List Home Assistant States"
     description: str = (
@@ -21,6 +23,7 @@ class ListHomeAssistantStates(LCToolComponent):
     documentation: str = "https://developers.home-assistant.io/docs/api/rest/"
     icon = "HomeAssistant"
 
+    # 1) 定义在 LangFlow UI 中接收的字段
     # 1) Define fields to be received in LangFlow UI
     inputs = [
         SecretStrInput(
@@ -43,9 +46,12 @@ class ListHomeAssistantStates(LCToolComponent):
         ),
     ]
 
+    # 2) 仅包含暴露给 Agent 参数的 Pydantic schema
     # 2) Pydantic schema containing only parameters exposed to the agent
     class ToolSchema(BaseModel):
         """Parameters to be passed by the agent: filter_domain only."""
+
+        # 传递给 Agent 的参数：仅 filter_domain
 
         filter_domain: str = Field("", description="Filter domain (e.g., 'light'). If empty, returns all.")
 
@@ -55,6 +61,9 @@ class ListHomeAssistantStates(LCToolComponent):
         Uses self.ha_token, self.base_url, self.filter_domain as entered in the UI.
         Triggered when 'Run' is clicked directly without an agent.
         """
+        # 执行 LangFlow 组件
+        # 使用 UI 中输入的 self.ha_token、self.base_url、self.filter_domain
+        # 在没有 Agent 时直接点击"运行"触发
         filter_domain = self.filter_domain or ""  # Use "" for fetching all states
         result = self._list_states(
             ha_token=self.ha_token,
@@ -69,6 +78,9 @@ class ListHomeAssistantStates(LCToolComponent):
         The agent can only pass 'filter_domain' as a parameter.
         'ha_token' and 'base_url' are not exposed (stored as self attributes).
         """
+        # 构建供 Agent 使用的工具对象
+        # Agent 只能传递 'filter_domain' 作为参数
+        # 'ha_token' 和 'base_url' 不暴露（存储为 self 属性）
         return StructuredTool.from_function(
             name="list_homeassistant_states",
             description=(
@@ -84,6 +96,8 @@ class ListHomeAssistantStates(LCToolComponent):
 
         'ha_token' and 'base_url' are stored in self (not exposed).
         """
+        # 当 Agent 调用时执行工具
+        # 'ha_token' 和 'base_url' 存储在 self 中（不暴露）
         return self._list_states(
             ha_token=self.ha_token,
             base_url=self.base_url,
@@ -97,6 +111,7 @@ class ListHomeAssistantStates(LCToolComponent):
         filter_domain: str = "",
     ) -> list[Any] | str:
         """Call the Home Assistant /api/states endpoint."""
+        # 调用 Home Assistant /api/states 端点
         try:
             headers = {
                 "Authorization": f"Bearer {ha_token}",
@@ -118,6 +133,7 @@ class ListHomeAssistantStates(LCToolComponent):
 
     def _make_data_response(self, result: list[Any] | str | dict) -> Data:
         """Format the response into a Data object."""
+        # 将响应格式化为 Data 对象
         try:
             if isinstance(result, list):
                 # Wrap list data into a dictionary and convert to text

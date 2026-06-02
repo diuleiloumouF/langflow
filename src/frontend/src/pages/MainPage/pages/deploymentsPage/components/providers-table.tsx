@@ -39,6 +39,10 @@ function formatDate(iso: string | null) {
   });
 }
 
+/**
+ * 提供商表格组件
+ * 以表格形式显示提供商账户列表，支持下拉菜单操作（编辑、删除）
+ */
 export default function ProvidersTable({
   providers,
   deletingId,

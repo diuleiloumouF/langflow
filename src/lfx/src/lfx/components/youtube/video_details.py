@@ -1,3 +1,4 @@
+# YouTube 视频详情组件，通过 YouTube Data API 获取视频详细信息和统计数据
 from contextlib import contextmanager
 
 import googleapiclient
@@ -11,14 +12,20 @@ from lfx.schema.dataframe import DataFrame
 from lfx.template.field.base import Output
 
 
+# YouTube 视频详情组件，获取视频完整信息并返回 DataFrame
 class YouTubeVideoDetailsComponent(Component):
     """A component that retrieves detailed information about YouTube videos."""
 
+    # 组件显示名称
     display_name: str = "YouTube Video Details"
+    # 组件描述
     description: str = "Retrieves detailed information and statistics about YouTube videos."
+    # 组件图标
     icon: str = "YouTube"
 
+    # 组件输入参数定义
     inputs = [
+        # YouTube 视频 URL
         MessageTextInput(
             name="video_url",
             display_name="Video URL",
@@ -26,18 +33,21 @@ class YouTubeVideoDetailsComponent(Component):
             tool_mode=True,
             required=True,
         ),
+        # YouTube Data API 密钥
         SecretStrInput(
             name="api_key",
             display_name="YouTube API Key",
             info="Your YouTube Data API key.",
             required=True,
         ),
+        # 是否包含统计数据（观看数、点赞数、评论数）
         BoolInput(
             name="include_statistics",
             display_name="Include Statistics",
             value=True,
             info="Include video statistics (views, likes, comments).",
         ),
+        # 是否包含内容详情（时长、画质、年龄限制等）
         BoolInput(
             name="include_content_details",
             display_name="Include Content Details",
@@ -45,6 +55,7 @@ class YouTubeVideoDetailsComponent(Component):
             info="Include video duration, quality, and age restriction info.",
             advanced=True,
         ),
+        # 是否包含视频标签和关键词
         BoolInput(
             name="include_tags",
             display_name="Include Tags",
@@ -52,6 +63,7 @@ class YouTubeVideoDetailsComponent(Component):
             info="Include video tags and keywords.",
             advanced=True,
         ),
+        # 是否包含不同分辨率的缩略图
         BoolInput(
             name="include_thumbnails",
             display_name="Include Thumbnails",
@@ -61,13 +73,16 @@ class YouTubeVideoDetailsComponent(Component):
         ),
     ]
 
+    # 组件输出定义
     outputs = [
         Output(name="video_data", display_name="Video Data", method="get_video_details"),
     ]
 
+    # API 状态码常量
     API_FORBIDDEN = 403
     VIDEO_NOT_FOUND = 404
 
+    # YouTube API 客户端上下文管理器
     @contextmanager
     def youtube_client(self):
         """Context manager for YouTube API client."""
@@ -77,6 +92,7 @@ class YouTubeVideoDetailsComponent(Component):
         finally:
             client.close()
 
+    # 从 YouTube URL 中提取视频 ID
     def _extract_video_id(self, video_url: str) -> str:
         """Extracts the video ID from a YouTube URL."""
         import re
@@ -93,6 +109,7 @@ class YouTubeVideoDetailsComponent(Component):
 
         return video_url.strip()
 
+    # 将 ISO 8601 格式时长转换为可读格式
     def _format_duration(self, duration: str) -> str:
         """Formats the ISO 8601 duration to a readable format."""
         import re
@@ -116,6 +133,7 @@ class YouTubeVideoDetailsComponent(Component):
             return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
         return f"{minutes:02d}:{seconds:02d}"
 
+    # 获取视频详细信息并返回 DataFrame
     def get_video_details(self) -> DataFrame:
         """Retrieves detailed information about a YouTube video and returns as DataFrame."""
         try:
@@ -124,6 +142,7 @@ class YouTubeVideoDetailsComponent(Component):
                 video_id = self._extract_video_id(self.video_url)
 
                 # Prepare parts for the API request
+                # 准备 API 请求的 part 参数
                 parts = ["snippet"]
                 if self.include_statistics:
                     parts.append("statistics")
@@ -131,6 +150,7 @@ class YouTubeVideoDetailsComponent(Component):
                     parts.append("contentDetails")
 
                 # Get video information
+                # 获取视频信息
                 video_response = youtube.videos().list(part=",".join(parts), id=video_id).execute()
 
                 if not video_response["items"]:
@@ -140,6 +160,7 @@ class YouTubeVideoDetailsComponent(Component):
                 snippet = video_info["snippet"]
 
                 # Build video data dictionary
+                # 构建视频数据字典
                 video_data = {
                     "video_id": [video_id],
                     "url": [f"https://www.youtube.com/watch?v={video_id}"],
@@ -153,6 +174,7 @@ class YouTubeVideoDetailsComponent(Component):
                 }
 
                 # Add thumbnails if requested
+                # 添加缩略图（如果请求了）
                 if self.include_thumbnails:
                     for size, thumb in snippet["thumbnails"].items():
                         video_data[f"thumbnail_{size}_url"] = [thumb["url"]]
@@ -160,11 +182,13 @@ class YouTubeVideoDetailsComponent(Component):
                         video_data[f"thumbnail_{size}_height"] = [thumb.get("height", 0)]
 
                 # Add tags if requested
+                # 添加标签（如果请求了）
                 if self.include_tags and "tags" in snippet:
                     video_data["tags"] = [", ".join(snippet["tags"])]
                     video_data["tags_count"] = [len(snippet["tags"])]
 
                 # Add statistics if requested
+                # 添加统计数据（如果请求了）
                 if self.include_statistics and "statistics" in video_info:
                     stats = video_info["statistics"]
                     video_data.update(
@@ -177,6 +201,7 @@ class YouTubeVideoDetailsComponent(Component):
                     )
 
                 # Add content details if requested
+                # 添加内容详情（如果请求了）
                 if self.include_content_details and "contentDetails" in video_info:
                     content_details = video_info["contentDetails"]
                     video_data.update(
@@ -200,6 +225,7 @@ class YouTubeVideoDetailsComponent(Component):
                 video_df = pd.DataFrame(video_data)
 
                 # Organize columns in logical groups
+                # 按逻辑分组整理列
                 basic_cols = [
                     "video_id",
                     "title",
@@ -230,6 +256,7 @@ class YouTubeVideoDetailsComponent(Component):
                 thumb_cols = [col for col in video_df.columns if col.startswith("thumbnail_")]
 
                 # Reorder columns based on what's included
+                # 根据包含的内容重新排序列
                 ordered_cols = basic_cols.copy()
 
                 if self.include_statistics:

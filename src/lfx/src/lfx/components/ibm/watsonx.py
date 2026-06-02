@@ -1,28 +1,48 @@
+# 引入 JSON 处理模块
 import json
 from typing import Any
 
+# 引入 IBM WatsonX 聊天模型和密钥处理类
 from langchain_ibm import ChatWatsonx
 from pydantic.v1 import SecretStr
 
+# 引入语言模型组件基类和工具函数
 from lfx.base.models.model import LCModelComponent
 from lfx.base.models.model_utils import get_watsonx_llm_models
 from lfx.field_typing import LanguageModel
 from lfx.field_typing.range_spec import RangeSpec
+
+# 引入各类输入组件类型
 from lfx.inputs.inputs import BoolInput, DropdownInput, IntInput, SecretStrInput, SliderInput, StrInput
+
+# 引入日志记录器
 from lfx.log.logger import logger
+
+# 引入字典工具类
 from lfx.schema.dotdict import dotdict
 
 
+# IBM WatsonX AI 组件，用于 IBM watsonx.ai 的文本/聊天生成
+# IBM WatsonX AI component for text/chat generation
 class WatsonxAIComponent(LCModelComponent):
+    """IBM watsonx.ai 文本/聊天生成组件。"""
+
     """LFX component for IBM watsonx.ai text/chat generation."""
 
+    # 组件在界面上的显示名称
     display_name = "IBM watsonx.ai"
+    # 组件的功能描述
     description = "Generate text using IBM watsonx.ai foundation models."
+    # 组件图标
     icon = "WatsonxAI"
+    # 组件内部名称
     name = "IBMwatsonxModel"
+    # 是否为测试版
     beta = False
 
+    # 默认模型列表
     _default_models = ["ibm/granite-3-2b-instruct", "ibm/granite-3-8b-instruct", "ibm/granite-13b-instruct-v2"]
+    # 可用的 API 端点 URL 列表
     _urls = [
         "https://us-south.ml.cloud.ibm.com",
         "https://eu-de.ml.cloud.ibm.com",
@@ -32,6 +52,8 @@ class WatsonxAIComponent(LCModelComponent):
         "https://ca-tor.ml.cloud.ibm.com",
         "https://ap-south-1.aws.wxai.ibm.com",
     ]
+
+    # 组件输入参数定义
     inputs = [
         *LCModelComponent.get_base_inputs(),
         DropdownInput(
@@ -149,6 +171,7 @@ class WatsonxAIComponent(LCModelComponent):
         ),
     ]
 
+    # 从 watsonx.ai API 获取可用模型列表
     @staticmethod
     def fetch_models(base_url: str) -> list[str]:
         """Fetch available models from the watsonx.ai API.
@@ -157,6 +180,7 @@ class WatsonxAIComponent(LCModelComponent):
         """
         return get_watsonx_llm_models(base_url, default_models=WatsonxAIComponent._default_models)
 
+    # 当 URL 或 API 密钥更改时更新模型选项
     def update_build_config(self, build_config: dotdict, field_value: Any, field_name: str | None = None):
         """Update model options when URL or API key changes."""
         if field_name == "base_url" and field_value:
@@ -172,7 +196,9 @@ class WatsonxAIComponent(LCModelComponent):
 
         return build_config
 
+    # 构建 ChatWatsonx 语言模型实例
     def build_model(self) -> LanguageModel:
+        # 从 JSON 字符串解析 logit_bias（如果提供）
         # Parse logit_bias from JSON string if provided
         logit_bias = None
         if hasattr(self, "logit_bias") and self.logit_bias:

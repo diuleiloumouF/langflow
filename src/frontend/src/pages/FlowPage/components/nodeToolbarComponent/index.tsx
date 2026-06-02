@@ -42,6 +42,11 @@ import useShortcuts from "./hooks/use-shortcuts";
 import ShortcutDisplay from "./shortcutDisplay";
 import ToolbarSelectItem from "./toolbarSelectItem";
 
+/**
+ * 节点工具栏组件
+ * 在选中节点上方显示操作工具栏，包含编辑、复制、删除、下载、文档、
+ * 代码编辑、分享、工具模式切换等功能按钮
+ */
 const NodeToolbarComponent = memo(
   ({
     data,

@@ -1,3 +1,4 @@
+# YouTube 频道信息组件，通过 YouTube Data API 获取频道详情和统计数据
 from typing import Any
 from urllib.error import HTTPError
 
@@ -11,20 +12,30 @@ from lfx.schema.dataframe import DataFrame
 from lfx.template.field.base import Output
 
 
+# YouTube 频道信息组件，获取频道详细信息和统计数据并返回 DataFrame
 class YouTubeChannelComponent(Component):
     """A component that retrieves detailed information about YouTube channels."""
 
+    # 组件显示名称
     display_name: str = "YouTube Channel"
+    # 组件描述
     description: str = "Retrieves detailed information and statistics about YouTube channels as a DataFrame."
+    # 组件图标
     icon: str = "YouTube"
 
     # Constants
+    # 频道 ID 固定长度为 24 个字符
     CHANNEL_ID_LENGTH = 24
+    # API 配额超限状态码
     QUOTA_EXCEEDED_STATUS = 403
+    # 资源未找到状态码
     NOT_FOUND_STATUS = 404
+    # 播放列表最大查询数量
     MAX_PLAYLIST_RESULTS = 10
 
+    # 组件输入参数定义
     inputs = [
+        # YouTube 频道 URL 或 ID
         MessageTextInput(
             name="channel_url",
             display_name="Channel URL or ID",
@@ -32,18 +43,21 @@ class YouTubeChannelComponent(Component):
             tool_mode=True,
             required=True,
         ),
+        # YouTube Data API 密钥
         SecretStrInput(
             name="api_key",
             display_name="YouTube API Key",
             info="Your YouTube Data API key.",
             required=True,
         ),
+        # 是否包含频道统计数据
         BoolInput(
             name="include_statistics",
             display_name="Include Statistics",
             value=True,
             info="Include channel statistics (views, subscribers, videos).",
         ),
+        # 是否包含频道品牌设置
         BoolInput(
             name="include_branding",
             display_name="Include Branding",
@@ -51,6 +65,7 @@ class YouTubeChannelComponent(Component):
             info="Include channel branding settings (banner, thumbnails).",
             advanced=True,
         ),
+        # 是否包含频道的公开播放列表
         BoolInput(
             name="include_playlists",
             display_name="Include Playlists",
@@ -60,10 +75,12 @@ class YouTubeChannelComponent(Component):
         ),
     ]
 
+    # 组件输出定义
     outputs = [
         Output(name="channel_df", display_name="Channel Info", method="get_channel_info"),
     ]
 
+    # 从各种 YouTube 频道 URL 格式中提取频道 ID
     def _extract_channel_id(self, channel_url: str) -> str:
         """Extracts the channel ID from various YouTube channel URL formats."""
         import re
@@ -87,6 +104,7 @@ class YouTubeChannelComponent(Component):
 
         return channel_url
 
+    # 通过频道名称或自定义 URL 获取频道 ID
     def _get_channel_id_by_name(self, channel_name: str, identifier_type: str) -> str:
         """Gets the channel ID using the channel name or custom URL."""
         youtube = None
@@ -115,6 +133,7 @@ class YouTubeChannelComponent(Component):
             if youtube:
                 youtube.close()
 
+    # 获取频道的公开播放列表
     def _get_channel_playlists(self, youtube: Any, channel_id: str) -> list[dict[str, Any]]:
         """Gets the public playlists for a channel."""
         try:
@@ -143,15 +162,18 @@ class YouTubeChannelComponent(Component):
         else:
             return playlists
 
+    # 获取频道信息并返回 DataFrame
     def get_channel_info(self) -> DataFrame:
         """Retrieves channel information and returns it as a DataFrame."""
         youtube = None
         try:
             # Get channel ID and initialize YouTube API client
+            # 获取频道 ID 并初始化 YouTube API 客户端
             channel_id = self._extract_channel_id(self.channel_url)
             youtube = build("youtube", "v3", developerKey=self.api_key)
 
             # Prepare parts for the API request
+            # 准备 API 请求的 part 参数
             parts = ["snippet", "contentDetails"]
             if self.include_statistics:
                 parts.append("statistics")
@@ -159,6 +181,7 @@ class YouTubeChannelComponent(Component):
                 parts.append("brandingSettings")
 
             # Get channel information
+            # 获取频道信息
             channel_response = youtube.channels().list(part=",".join(parts), id=channel_id).execute()
 
             if not channel_response["items"]:
@@ -167,6 +190,7 @@ class YouTubeChannelComponent(Component):
             channel_info = channel_response["items"][0]
 
             # Build basic channel data
+            # 构建基本频道数据
             channel_data = {
                 "title": [channel_info["snippet"]["title"]],
                 "description": [channel_info["snippet"]["description"]],
@@ -177,10 +201,12 @@ class YouTubeChannelComponent(Component):
             }
 
             # Add thumbnails
+            # 添加缩略图
             for size, thumb in channel_info["snippet"]["thumbnails"].items():
                 channel_data[f"thumbnail_{size}"] = [thumb["url"]]
 
             # Add statistics if requested
+            # 添加统计数据（如果请求了）
             if self.include_statistics:
                 stats = channel_info["statistics"]
                 channel_data.update(
@@ -193,6 +219,7 @@ class YouTubeChannelComponent(Component):
                 )
 
             # Add branding if requested
+            # 添加品牌设置（如果请求了）
             if self.include_branding:
                 branding = channel_info.get("brandingSettings", {})
                 channel_data.update(
@@ -208,6 +235,7 @@ class YouTubeChannelComponent(Component):
             channel_df = pd.DataFrame(channel_data)
 
             # Add playlists if requested
+            # 添加播放列表（如果请求了）
             if self.include_playlists:
                 playlists = self._get_channel_playlists(youtube, channel_id)
                 if playlists and "error" not in playlists[0]:

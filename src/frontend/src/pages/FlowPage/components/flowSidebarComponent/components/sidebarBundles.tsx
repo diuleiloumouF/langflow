@@ -11,6 +11,10 @@ import type { SidebarGroupProps } from "../types";
 import { BundleItem } from "./bundleItems";
 import { SearchConfigTrigger } from "./searchConfigTrigger";
 
+/**
+ * 侧边栏组件分组（已缓存）
+ * 按分类组织显示组件列表，支持搜索、排序和展开/折叠
+ */
 export const MemoizedSidebarGroup = memo(
   ({
     BUNDLES,

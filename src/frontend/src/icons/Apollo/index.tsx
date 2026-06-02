@@ -1,3 +1,4 @@
+// Apollo 图标组件 - 用于 Apollo 销售智能平台相关组件的标识
 import React, { forwardRef } from "react";
 import ApolloIconSVG from "./apollo";
 

@@ -1,30 +1,38 @@
+# AssemblyAI SDK
 import assemblyai as aai
 
+# 组件基类、输入/输出定义、日志、数据模型
 from lfx.custom.custom_component.component import Component
 from lfx.io import DataInput, DropdownInput, IntInput, Output, SecretStrInput
 from lfx.log.logger import logger
 from lfx.schema.data import Data
 
 
+# AssemblyAI 字幕提取组件，用于将转录结果导出为 SRT 或 VTT 格式的字幕文件
 class AssemblyAIGetSubtitles(Component):
     display_name = "AssemblyAI Get Subtitles"
+    # 组件描述：将转录结果导出为 SRT 或 VTT 格式的字幕和隐藏式字幕
     description = "Export your transcript in SRT or VTT format for subtitles and closed captions"
     documentation = "https://www.assemblyai.com/docs"
     icon = "AssemblyAI"
 
+    # 输入参数定义
     inputs = [
+        # AssemblyAI API 密钥
         SecretStrInput(
             name="api_key",
             display_name="Assembly API Key",
             info="Your AssemblyAI API key. You can get one from https://www.assemblyai.com/",
             required=True,
         ),
+        # 转录结果数据输入
         DataInput(
             name="transcription_result",
             display_name="Transcription Result",
             info="The transcription result from AssemblyAI",
             required=True,
         ),
+        # 字幕格式选择：SRT 或 VTT
         DropdownInput(
             name="subtitle_format",
             display_name="Subtitle Format",
@@ -32,6 +40,7 @@ class AssemblyAIGetSubtitles(Component):
             value="srt",
             info="The format of the captions (SRT or VTT)",
         ),
+        # 每条字幕的最大字符数（0 表示不限制）
         IntInput(
             name="chars_per_caption",
             display_name="Characters per Caption",
@@ -41,10 +50,12 @@ class AssemblyAIGetSubtitles(Component):
         ),
     ]
 
+    # 输出参数：字幕数据
     outputs = [
         Output(display_name="Subtitles", name="subtitles", method="get_subtitles"),
     ]
 
+    # 获取字幕内容
     def get_subtitles(self) -> Data:
         aai.settings.api_key = self.api_key
 

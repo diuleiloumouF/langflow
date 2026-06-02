@@ -6,6 +6,8 @@ from lfx.base.textsplitters.model import LCTextSplitterComponent
 from lfx.inputs.inputs import DataInput, DropdownInput, IntInput
 
 
+# 语言递归文本分割器组件，根据语言将文本分割为指定长度的块
+# Language recursive text splitter component for splitting text into chunks based on language
 class LanguageRecursiveTextSplitterComponent(LCTextSplitterComponent):
     display_name: str = "Language Recursive Text Splitter"
     description: str = "Split text into chunks of a specified length based on language."
@@ -38,9 +40,11 @@ class LanguageRecursiveTextSplitterComponent(LCTextSplitterComponent):
         ),
     ]
 
+    # 获取数据输入
     def get_data_input(self) -> Any:
         return self.data_input
 
+    # 构建语言递归文本分割器实例
     def build_text_splitter(self) -> TextSplitter:
         return RecursiveCharacterTextSplitter.from_language(
             language=Language(self.code_language),

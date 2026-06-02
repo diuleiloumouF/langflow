@@ -11,6 +11,11 @@ import type { AllNodeType } from "@/types/flow";
 import CanvasControlsDropdown from "./CanvasControlsDropdown";
 import HelpDropdown from "./HelpDropdown";
 
+/**
+ * 画布控制组件
+ * 提供画布右下角的控制按钮区域，包括助手按钮、添加注释按钮、
+ * 检查面板切换按钮和帮助下拉菜单。
+ */
 const CanvasControls = ({
   children,
   selectedNode,

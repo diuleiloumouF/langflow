@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from langchain_core.runnables import Runnable
 
 
+# SQL 生成器组件，从自然语言生成 SQL 查询
+# SQL generator component for generating SQL from natural language
 class SQLGeneratorComponent(LCChainComponent):
     display_name = "Natural Language to SQL"
     description = "Generate SQL from natural language."
@@ -53,6 +55,7 @@ class SQLGeneratorComponent(LCChainComponent):
 
     outputs = [Output(display_name="Message", name="text", method="invoke_chain")]
 
+    # 调用 SQL 生成链生成 SQL 查询
     def invoke_chain(self) -> Message:
         prompt_template = PromptTemplate.from_template(template=self.prompt) if self.prompt else None
 

@@ -1,3 +1,6 @@
+# AI/ML API 模型组件
+# 用于通过 AI/ML API 调用大语言模型生成文本
+
 from langchain_openai import ChatOpenAI
 from pydantic.v1 import SecretStr
 from typing_extensions import override
@@ -16,6 +19,9 @@ from lfx.inputs.inputs import (
 )
 
 
+# AI/ML API 模型组件类
+# 继承自 LCModelComponent，封装了 AI/ML API 的调用逻辑
+# 支持配置模型名称、API 密钥、温度等参数
 class AIMLModelComponent(LCModelComponent):
     display_name = "AI/ML API"
     description = "Generates text using AI/ML API LLMs."
@@ -23,6 +29,8 @@ class AIMLModelComponent(LCModelComponent):
     name = "AIMLModel"
     documentation = "https://docs.aimlapi.com/api-reference"
 
+    # 组件输入参数定义
+    # 包含基础模型输入参数、最大 token 数、模型参数、模型名称、API 基础地址、API 密钥和温度
     inputs = [
         *LCModelComponent.get_base_inputs(),
         IntInput(
@@ -63,6 +71,7 @@ class AIMLModelComponent(LCModelComponent):
         ),
     ]
 
+    # 当 API 密钥、API 基础地址或模型名称发生变化时，动态刷新模型列表
     @override
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None):
         if field_name in {"api_key", "aiml_api_base", "model_name"}:
@@ -71,6 +80,7 @@ class AIMLModelComponent(LCModelComponent):
             build_config["model_name"]["options"] = aiml.chat_models
         return build_config
 
+    # 构建并返回配置好的 ChatOpenAI 模型实例
     def build_model(self) -> LanguageModel:  # type: ignore[type-var]
         aiml_api_key = self.api_key
         temperature = self.temperature
@@ -95,6 +105,7 @@ class AIMLModelComponent(LCModelComponent):
             **model_kwargs,
         )
 
+    # 从 OpenAI 异常中提取错误信息
     def _get_exception_message(self, e: Exception):
         """Get a message from an OpenAI exception.
 

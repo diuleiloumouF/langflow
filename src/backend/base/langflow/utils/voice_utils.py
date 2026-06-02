@@ -1,3 +1,5 @@
+# 语音处理工具模块
+# 提供音频重采样（24kHz 到 16kHz）和异步音频文件写入等功能
 import asyncio
 import base64
 from pathlib import Path
@@ -6,15 +8,18 @@ import numpy as np
 from lfx.log import logger
 from scipy.signal import resample
 
-SAMPLE_RATE_24K = 24000
-VAD_SAMPLE_RATE_16K = 16000
-FRAME_DURATION_MS = 20
-BYTES_PER_SAMPLE = 2
+# 音频采样率常量
+SAMPLE_RATE_24K = 24000  # 24kHz 采样率
+VAD_SAMPLE_RATE_16K = 16000  # 16kHz VAD 采样率
+FRAME_DURATION_MS = 20  # 帧持续时间（毫秒）
+BYTES_PER_SAMPLE = 2  # 每个采样点的字节数（16位）
 
+# 每帧的字节数
 BYTES_PER_24K_FRAME = int(SAMPLE_RATE_24K * FRAME_DURATION_MS / 1000) * BYTES_PER_SAMPLE
 BYTES_PER_16K_FRAME = int(VAD_SAMPLE_RATE_16K * FRAME_DURATION_MS / 1000) * BYTES_PER_SAMPLE
 
 
+# 将 24kHz 音频帧重采样为 16kHz（用于 VAD 检测）
 def resample_24k_to_16k(frame_24k_bytes):
     """Resample a 20ms frame from 24kHz to 16kHz.
 
@@ -74,6 +79,7 @@ def resample_24k_to_16k(frame_24k_bytes):
 #
 
 
+# 异步将 Base64 编码的音频数据写入文件（追加模式）
 async def write_audio_to_file(audio_base64: str, filename: str = "output_audio.raw") -> None:
     """Decode the base64-encoded audio and write (append) it to a file asynchronously."""
     try:
@@ -85,6 +91,7 @@ async def write_audio_to_file(audio_base64: str, filename: str = "output_audio.r
         await logger.aerror(f"Error writing audio to file: {e}")
 
 
+# 将字节数据写入文件的辅助函数（使用上下文管理器）
 def _write_bytes_to_file(data: bytes, filename: str) -> None:
     """Helper function to write bytes to a file using a context manager."""
     with Path(filename).open("ab") as f:

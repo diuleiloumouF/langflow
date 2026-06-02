@@ -1,3 +1,4 @@
+// Google Docs 图标组件 - 用于 Google Docs 在线文档协作平台相关组件的标识
 import React, { forwardRef } from "react";
 import GoogledocsIconSVG from "./googledocs";
 

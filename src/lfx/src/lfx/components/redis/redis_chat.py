@@ -7,12 +7,18 @@ from lfx.field_typing.constants import Memory
 from lfx.inputs.inputs import IntInput, MessageTextInput, SecretStrInput, StrInput
 
 
+# Redis 聊天记忆组件，从 Redis 检索和存储聊天消息
 class RedisIndexChatMemory(LCChatMemoryComponent):
+    # 组件显示名称
     display_name = "Redis Chat Memory"
+    # 组件描述信息
     description = "Retrieves and store chat messages from Redis."
+    # 组件内部名称
     name = "RedisChatMemory"
+    # 组件图标
     icon = "Redis"
 
+    # 组件输入参数定义
     inputs = [
         StrInput(
             name="host", display_name="hostname", required=True, value="localhost", info="IP address or hostname."
@@ -31,6 +37,7 @@ class RedisIndexChatMemory(LCChatMemoryComponent):
         ),
     ]
 
+    # 构建 Redis 聊天消息历史记录实例
     def build_message_history(self) -> Memory:
         kwargs = {}
         password: str | None = self.password

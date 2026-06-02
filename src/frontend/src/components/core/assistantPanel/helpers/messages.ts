@@ -1,8 +1,11 @@
 /**
- * Randomized messages for the assistant panel.
- * Each array contains 8 paraphrased variations with the same meaning.
+ * 助手面板随机消息
+ * 每个数组包含 8 个含义相同但表述不同的变体，用于在处理过程中显示随机提示文本。
  */
+// Randomized messages for the assistant panel.
+// Each array contains 8 paraphrased variations with the same meaning.
 
+// 推理加载状态的标题文本（"思考中"的同义词）
 // Header text for the reasoning loading state (synonyms of "Thinking")
 const REASONING_HEADER_MESSAGES = [
   "Thinking...",
@@ -15,6 +18,7 @@ const REASONING_HEADER_MESSAGES = [
   "Almost there...",
 ];
 
+// 推理步骤消息：分析组件需求
 // Reasoning step messages
 const ANALYZING_MESSAGES = [
   "Analyzing component requirements...",
@@ -60,6 +64,7 @@ const GENERATING_CODE_MESSAGES = [
   "Constructing the component...",
 ];
 
+// 验证消息
 // Validation messages
 const VALIDATING_MESSAGES = [
   "Validating component...",
@@ -94,15 +99,18 @@ const RETRYING_MESSAGES = [
   "Applying fixes and trying again...",
 ];
 
+// 从消息数组中随机获取一条消息
 function getRandomMessage(messages: string[]): string {
   const index = Math.floor(Math.random() * messages.length);
   return messages[index];
 }
 
+// 获取随机的思考中提示消息
 export function getRandomThinkingMessage(): string {
   return getRandomMessage(REASONING_HEADER_MESSAGES);
 }
 
+// 生成后步骤中显示在输入框占位符的描述性消息
 // Descriptive messages shown in the input placeholder during post-generation steps
 const PLACEHOLDER_PROGRESS_MESSAGES = [
   ...ANALYZING_MESSAGES,
@@ -112,6 +120,7 @@ const PLACEHOLDER_PROGRESS_MESSAGES = [
   ...VALIDATING_MESSAGES,
 ];
 
+// 获取随机的占位符进度消息
 export function getRandomPlaceholderMessage(): string {
   return getRandomMessage(PLACEHOLDER_PROGRESS_MESSAGES);
 }

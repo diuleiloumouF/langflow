@@ -1,3 +1,4 @@
+// YouTube 图标组件 - 用于 YouTube 视频平台相关组件的标识
 import React, { forwardRef } from "react";
 import YoutubeIconSVG from "./youtube";
 

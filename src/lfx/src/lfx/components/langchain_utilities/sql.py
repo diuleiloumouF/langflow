@@ -10,6 +10,8 @@ from lfx.inputs.inputs import DropdownInput, HandleInput, MessageTextInput, Mode
 from lfx.io import Output, SecretStrInput, StrInput
 
 
+# SQL Agent 组件，用于从 LLM 和工具构建 SQL Agent
+# SQL agent component for building an SQL agent from an LLM and tools
 class SQLAgentComponent(LCAgentComponent):
     display_name = "SQLAgent"
     description = "Construct an SQL agent from an LLM and tools."
@@ -62,6 +64,7 @@ class SQLAgentComponent(LCAgentComponent):
         Output(display_name="Agent", name="agent", method="build_agent", tool_mode=False),
     ]
 
+    # 从下拉选择或连接的组件解析语言模型
     def _get_llm(self):
         """Resolve the language model from dropdown selection or connected component."""
         return get_llm(
@@ -72,6 +75,7 @@ class SQLAgentComponent(LCAgentComponent):
             watsonx_project_id=getattr(self, "project_id", None),
         )
 
+    # 动态更新构建配置，使用用户过滤的模型选项（支持工具调用的模型）
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None) -> dict:
         """Dynamically update build config with user-filtered model options (tool-calling capable models)."""
         return handle_model_input_update(
@@ -83,6 +87,7 @@ class SQLAgentComponent(LCAgentComponent):
             get_options_func=lambda user_id=None: get_language_model_options(user_id=user_id, tool_calling=True),
         )
 
+    # 构建 SQL Agent 执行器
     def build_agent(self) -> AgentExecutor:
         llm = self._get_llm()
         db = SQLDatabase.from_uri(self.database_uri)

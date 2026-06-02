@@ -4,6 +4,8 @@ from lfx.schema.data import Data
 from lfx.schema.message import Message
 
 
+# JigsawStack AI 网页搜索组件，使用 AI 进行高质量网页搜索
+# JigsawStack AI web search component for high-quality AI-powered web search
 class JigsawStackAIWebSearchComponent(Component):
     display_name = "AI Web Search"
     description = "Effortlessly search the Web and get access to high-quality results powered with AI."
@@ -53,6 +55,7 @@ class JigsawStackAIWebSearchComponent(Component):
         Output(display_name="Content Text", name="content_text", method="get_content_text"),
     ]
 
+    # 执行 AI 网页搜索操作
     def search(self) -> Data:
         try:
             from jigsawstack import JigsawStack, JigsawStackError
@@ -102,6 +105,7 @@ class JigsawStackAIWebSearchComponent(Component):
             self.status = f"Error: {e!s}"
             return Data(data=error_data)
 
+    # 获取搜索结果的文本内容
     def get_content_text(self) -> Message:
         try:
             from jigsawstack import JigsawStack, JigsawStackError

@@ -11,6 +11,10 @@ type InputSearchComponentProps = {
   onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
 };
 
+/**
+ * 输入搜索组件
+ * 提供流程和组件的搜索功能，根据当前页面路径显示不同的搜索提示
+ */
 const InputSearchComponent = ({
   loading,
   divClasses,

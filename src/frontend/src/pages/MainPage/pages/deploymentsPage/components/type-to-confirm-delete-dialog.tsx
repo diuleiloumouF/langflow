@@ -18,6 +18,10 @@ interface TypeToConfirmDeleteDialogProps {
   onConfirm: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
+/**
+ * 输入确认删除对话框
+ * 要求用户输入部署名称以确认删除操作，防止误删
+ */
 export default function TypeToConfirmDeleteDialog({
   open,
   onOpenChange,

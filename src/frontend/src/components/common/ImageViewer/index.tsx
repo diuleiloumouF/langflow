@@ -6,6 +6,12 @@ import useAlertStore from "../../../stores/alertStore";
 import { Separator } from "../../ui/separator";
 import ForwardedIconComponent from "../genericIconComponent";
 
+/**
+ * 图片查看器组件
+ * 使用 OpenSeadragon 库实现高质量的图片查看功能。
+ * 支持缩放、全屏、重置视图和下载图片等操作。
+ * 当图片URL为空时显示占位提示。
+ */
 export default function ImageViewer({ image }: { image: string }) {
   const { t } = useTranslation();
   const viewerRef = useRef(null);

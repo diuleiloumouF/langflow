@@ -1,5 +1,6 @@
 import type { FlowType } from "../../../types/flow";
 
+/** 文件夹类型定义 */
 export type FolderType = {
   name: string;
   description: string;
@@ -9,6 +10,7 @@ export type FolderType = {
   components: string[];
 };
 
+/** 分页文件夹类型定义 */
 export type PaginatedFolderType = {
   folder: {
     name: string;
@@ -26,6 +28,7 @@ export type PaginatedFolderType = {
   };
 };
 
+/** 添加文件夹的请求类型 */
 export type AddFolderType = {
   name: string;
   description: string;
@@ -35,6 +38,7 @@ export type AddFolderType = {
   components?: string[];
 };
 
+/** 入门项目类型定义 */
 export type StarterProjectsType = {
   name?: string;
   description?: string;

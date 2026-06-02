@@ -1,4 +1,5 @@
 """Name validation, error helpers, and misc utilities for the Watsonx Orchestrate adapter."""
+# Watsonx Orchestrate 适配器的名称验证、错误辅助工具及杂项实用函数。
 
 from __future__ import annotations
 
@@ -37,11 +38,13 @@ logger = logging.getLogger(__name__)
 
 
 def normalize_wxo_name(s: str) -> str:
+    # 对 Watsonx Orchestrate 资源名称进行标准化处理：先通过翻译映射替换字符，再移除非法字符。
     return WXO_SANITIZE_RE.sub("", s.translate(WXO_TRANSLATE))
 
 
 def validate_wxo_name(name: str) -> str:
     """Normalize and validate a wxO resource name."""
+    # 标准化并验证 wxO 资源名称，确保名称合法（非空且以字母开头）。
     normalized_name = normalize_wxo_name(str(name))
     if not normalized_name:
         msg = "Deployment name must include at least one alphanumeric character."
@@ -53,6 +56,7 @@ def validate_wxo_name(name: str) -> str:
 
 
 def require_tool_id(tool_response: dict[str, Any]) -> str:
+    # 从工具响应字典中提取 tool id，若不存在则抛出 InvalidContentError。
     tool_id = tool_response.get("id")
     if not tool_id:
         msg = "wxO did not return a tool id for snapshot creation."
@@ -61,11 +65,13 @@ def require_tool_id(tool_response: dict[str, Any]) -> str:
 
 
 def dedupe_list(items: list[str]) -> list[str]:
+    # 对字符串列表去重，同时保留原始顺序。
     return list(dict.fromkeys(items))
 
 
 def normalize_and_dedupe_ids(values: list[Any] | None, *, field_name: str) -> list[str]:
     """Normalize id values to non-empty strings and dedupe while preserving order."""
+    # 将 ID 值标准化为非空字符串并去重，同时保留原始顺序。
     if not values:
         return []
     return dedupe_list([_normalize_and_validate_id(str(value), field_name=field_name) for value in values])
@@ -76,6 +82,8 @@ def require_single_deployment_id(
     *,
     resource_label: str,
 ) -> str:
+    # 要求参数中恰好包含一个 deployment_id，否则抛出异常。
+    # watsonx Orchestrate 当前仅支持按单个 deployment_id 进行资源列表查询。
     deployment_ids = params.deployment_ids if params else None
     if not deployment_ids:
         msg = f"watsonx Orchestrate {resource_label} listing requires exactly one deployment_id."
@@ -96,6 +104,9 @@ def extract_error_detail(response_text: str) -> str:
     with a ``msg`` key, or a list of such dicts.  This helper normalises all
     three shapes into a single value suitable for inclusion in an error message.
     """
+    # 从 ClientAPIException 响应体中提取可读的错误详情。
+    # 响应体中的 ``detail`` 字段可能是字符串、含 ``msg`` 键的字典、
+    # 或上述字典的列表。本函数将这三种格式统一为可用于错误消息的字符串。
     fallback = response_text or "<empty response body>"
     try:
         payload = json.loads(response_text)
@@ -122,6 +133,7 @@ def extract_error_detail(response_text: str) -> str:
 
 
 def _resolve_exc_detail(exc: ClientAPIException | HTTPException) -> str:
+    # 从异常对象中解析出错误详情字符串。
     if isinstance(exc, ClientAPIException):
         raw_text = getattr(exc.response, "text", "")
         return extract_error_detail(raw_text)
@@ -129,6 +141,7 @@ def _resolve_exc_detail(exc: ClientAPIException | HTTPException) -> str:
 
 
 def _resolve_exc_status_code(exc: ClientAPIException | HTTPException) -> int:
+    # 从异常对象中获取 HTTP 状态码。
     if isinstance(exc, ClientAPIException):
         return int(exc.response.status_code)
     return int(exc.status_code)
@@ -143,6 +156,11 @@ def raise_as_deployment_error(
     resource_name: str | None = None,
     pass_through: tuple[type[DeploymentServiceError], ...] = (),
 ) -> NoReturn:
+    # 将各类异常统一封装为 DeploymentError 后重新抛出。
+    # - 若异常类型在 pass_through 中，直接透传不处理。
+    # - 若已经是 DeploymentServiceError，记录日志后包装为 DeploymentError。
+    # - 若是 ClientAPIException 或 HTTPException，根据状态码生成对应的部署错误。
+    # - 其他未知异常统一包装为 DeploymentError。
     if isinstance(exc, pass_through):
         raise exc
     if isinstance(exc, DeploymentServiceError):
@@ -174,6 +192,7 @@ def build_agent_payload_from_values(
     tool_ids: Sequence[str],
     llm: str,
 ) -> dict[str, Any]:
+    # 根据给定参数构建用于 Watsonx Orchestrate 的 agent 请求体字典。
     return {
         "name": agent_name,
         "display_name": agent_display_name,
@@ -187,4 +206,5 @@ def build_agent_payload_from_values(
 def extract_agent_tool_ids(agent: dict[str, Any]) -> list[str]:
     # Shape source:
     # - SDK/API agent payload uses "tools" as list[str] in this adapter flow.
+    # 从 agent 字典中提取关联的 tool id 列表。
     return [str(tool_id) for tool_id in agent.get("tools", []) if tool_id]

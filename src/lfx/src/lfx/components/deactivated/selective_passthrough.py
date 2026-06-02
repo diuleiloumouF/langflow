@@ -1,10 +1,13 @@
+# 组件基类、类型定义、输入组件
 from lfx.custom.custom_component.component import Component
 from lfx.field_typing import Text
 from lfx.io import BoolInput, DropdownInput, MessageTextInput, Output
 
 
+# 选择性透传组件，当满足指定条件时透传指定值（已弃用）
 class SelectivePassThroughComponent(Component):
     display_name = "Selective Pass Through"
+    # 组件描述：当满足指定条件时透传指定值
     description = "Passes the specified value if a specified condition is met."
     icon = "filter"
     name = "SelectivePassThrough"
@@ -44,6 +47,7 @@ class SelectivePassThroughComponent(Component):
         Output(display_name="Passed Output", name="passed_output", method="pass_through"),
     ]
 
+    # 评估条件是否满足
     def evaluate_condition(
         self, input_value: str, comparison_value: str, operator: str, *, case_sensitive: bool
     ) -> bool:
@@ -63,6 +67,7 @@ class SelectivePassThroughComponent(Component):
             return input_value.endswith(comparison_value)
         return False
 
+    # 执行条件评估并返回结果
     def pass_through(self) -> Text:
         input_value = self.input_value
         comparison_value = self.comparison_value

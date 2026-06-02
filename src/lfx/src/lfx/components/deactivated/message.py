@@ -1,13 +1,17 @@
+# 自定义组件基类、消息模型、常量定义
 from lfx.custom.custom_component.custom_component import CustomComponent
 from lfx.schema.message import Message
 from lfx.utils.constants import MESSAGE_SENDER_AI, MESSAGE_SENDER_USER
 
 
+# 消息创建组件，根据会话 ID 创建消息对象（已弃用）
 class MessageComponent(CustomComponent):
     display_name = "Message"
+    # 组件描述：给定会话 ID 创建消息对象
     description = "Creates a Message object given a Session ID."
     name = "Message"
 
+    # 构建配置
     def build_config(self):
         return {
             "sender": {

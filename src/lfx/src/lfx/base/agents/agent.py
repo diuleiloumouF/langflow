@@ -30,12 +30,17 @@ if TYPE_CHECKING:
     from lfx.schema.log import OnTokenFunctionType, SendMessageFunctionType
 
 
+# 默认的工具描述文本，用于 Agent 在工具模式下的描述
 DEFAULT_TOOLS_DESCRIPTION = "A helpful assistant with access to the following tools:"
+# 默认的 Agent 名称模板，{tools_names} 会在运行时被替换为实际的工具名列表
 DEFAULT_AGENT_NAME = "Agent ({tools_names})"
 
 
+# LCAgentComponent 是所有 Agent 组件的基类，提供 Agent 执行的核心逻辑和通用输入输出定义
 class LCAgentComponent(Component):
+    # 跟踪类型标识为 "agent"，用于在回调和追踪系统中识别 Agent 组件
     trace_type = "agent"
+    # Agent 组件的基础输入定义列表，子类可在此基础上扩展
     _base_inputs: list[InputTypes] = [
         MessageInput(
             name="input_value",
@@ -71,12 +76,14 @@ class LCAgentComponent(Component):
         ),
     ]
 
+    # 输出定义：Response 输出用于返回消息响应，Agent 输出用于获取构建好的 Agent 实例（仅在非工具模式下可用）
     outputs = [
         Output(display_name="Response", name="response", method="message_response"),
         Output(display_name="Agent", name="agent", method="build_agent", tool_mode=False),
     ]
 
     # Get shared callbacks for tracing and save them to self.shared_callbacks
+    # 获取共享的回调处理器列表，用于追踪和日志记录；结果缓存到 self.shared_callbacks 避免重复创建
     def _get_shared_callbacks(self) -> list[BaseCallbackHandler]:
         if not hasattr(self, "shared_callbacks"):
             self.shared_callbacks = self.get_langchain_callbacks()
@@ -94,6 +101,7 @@ class LCAgentComponent(Component):
         self.status = message
         return message
 
+    # 验证 Agent 组件的输出定义是否完整，确保必需的输出方法已定义且存在对应的方法实现
     def _validate_outputs(self) -> None:
         required_output_methods = ["build_agent"]
         output_names = [output.name for output in self.outputs]
@@ -105,6 +113,7 @@ class LCAgentComponent(Component):
                 msg = f"Method '{method_name}' must be defined."
                 raise ValueError(msg)
 
+    # 构建传递给 AgentExecutor 的参数字典，flatten=True 时将所有参数合并到顶层，False 时嵌套在 agent_executor_kwargs 中
     def get_agent_kwargs(self, *, flatten: bool = False) -> dict:
         base = {
             "handle_parsing_errors": self.handle_parsing_errors,
@@ -122,10 +131,12 @@ class LCAgentComponent(Component):
             }
         return {**base, "agent_executor_kwargs": agent_kwargs}
 
+    # 获取聊天历史数据，子类可重写此方法以提供历史记录
     def get_chat_history_data(self) -> list[Data] | None:
         # might be overridden in subclasses
         return None
 
+    # 将 Data 列表转换为 LangChain BaseMessage 列表，跳过文本内容为空的消息（保留非文本内容如图片等）
     def _data_to_messages_skip_empty(self, data: list[Data]) -> list[BaseMessage]:
         """Convert data to messages, filtering only empty text while preserving non-text content.
 
@@ -144,6 +155,7 @@ class LCAgentComponent(Component):
 
         return messages
 
+    # 异步执行 Agent，接收输入消息，调用 Agent 执行器运行推理循环，处理多模态输入，返回 Agent 响应消息
     async def run_agent(
         self,
         agent: Runnable | BaseSingleActionAgent | BaseMultiActionAgent | AgentExecutor,
@@ -310,10 +322,12 @@ class LCAgentComponent(Component):
         self.status = result
         return result
 
+    # 创建 Agent 的 Runnable 实例，子类必须实现此方法来定义具体的 Agent 行为
     @abstractmethod
     def create_agent_runnable(self) -> Runnable:
         """Create the agent."""
 
+    # 验证所有工具名称是否符合命名规范（仅允许字母、数字、下划线和连字符）
     def validate_tool_names(self) -> None:
         """Validate tool names to ensure they match the required pattern."""
         pattern = re.compile(r"^[a-zA-Z0-9_-]+$")
@@ -327,7 +341,10 @@ class LCAgentComponent(Component):
                     raise ValueError(msg)
 
 
+# LCToolsAgentComponent 是支持工具调用的 Agent 组件基类，在 LCAgentComponent
+# 基础上增加了工具输入和工具暴露为组件输出的能力
 class LCToolsAgentComponent(LCAgentComponent):
+    # 工具 Agent 的输入定义，在基类输入基础上增加了 Tools 输入
     _base_inputs = [
         HandleInput(
             name="tools",
@@ -340,6 +357,7 @@ class LCToolsAgentComponent(LCAgentComponent):
         *LCAgentComponent.get_base_inputs(),
     ]
 
+    # 构建 Agent 执行器：验证工具名称，创建 Agent Runnable，然后用工具和参数构建 AgentExecutor
     def build_agent(self) -> AgentExecutor:
         self.validate_tool_names()
         agent = self.create_agent_runnable()

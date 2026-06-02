@@ -5,6 +5,8 @@ from lfx.inputs.inputs import HandleInput, MultilineInput
 from lfx.schema import Message
 
 
+# LLM 检查器链组件，用于带自验证的问答
+# LLM checker chain component for question-answering with self-verification
 class LLMCheckerChainComponent(LCChainComponent):
     display_name = "LLMCheckerChain"
     description = "Chain for question-answering with self-verification."
@@ -27,6 +29,7 @@ class LLMCheckerChainComponent(LCChainComponent):
         ),
     ]
 
+    # 调用 LLM 检查器链执行问答
     def invoke_chain(self) -> Message:
         chain = LLMCheckerChain.from_llm(llm=self.llm)
         response = chain.invoke(

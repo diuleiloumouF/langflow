@@ -3,6 +3,7 @@ import math
 from lfx.log.logger import logger
 
 
+# 替换数据中无效值（None、null、NaN、NaT）为空字符串或默认值的函数
 def replace_none_and_null_with_empty_str(data: list[dict], required_fields: list[str] | None = None) -> list[dict]:
     """Replaces all None, 'null' (case-insensitive), and NaN/NaT float values with empty strings in a list of dicts.
 
@@ -16,6 +17,7 @@ def replace_none_and_null_with_empty_str(data: list[dict], required_fields: list
         and "NaN", "Infinity", "-Infinity" string values replaced with None.
     """
 
+    # 将单个值中的无效值转换为 "Not available" 字符串
     def convert_value(v):
         if v is None:
             return "Not available"
@@ -34,8 +36,11 @@ def replace_none_and_null_with_empty_str(data: list[dict], required_fields: list
             return "Not available"
         return v
 
+    # 不可用值的占位字符串
     not_avail = "Not available"
+    # 将必需字段列表转换为集合，便于快速查找
     required_fields_set = set(required_fields) if required_fields else set()
+    # 存储处理后的字典列表
     result = []
     for d in data:
         if not isinstance(d, dict):

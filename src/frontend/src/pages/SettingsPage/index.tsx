@@ -1,5 +1,5 @@
-import { Outlet, type To } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Outlet, type To } from "react-router-dom";
 import SideBarButtonsComponent from "@/components/core/sidebarComponent";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { CustomStoreSidebar } from "@/customization/components/custom-store-sidebar";
@@ -12,6 +12,11 @@ import useAuthStore from "@/stores/authStore";
 import { useStoreStore } from "@/stores/storeStore";
 import ForwardedIconComponent from "../../components/common/genericIconComponent";
 import PageLayout from "../../components/common/pageLayout";
+/**
+ * 设置页面组件
+ * 提供设置页面的侧边栏导航和子路由内容的布局容器
+ * 根据功能标志动态显示不同的设置选项
+ */
 export default function SettingsPage(): JSX.Element {
   const { t } = useTranslation();
   const autoLogin = useAuthStore((state) => state.autoLogin);

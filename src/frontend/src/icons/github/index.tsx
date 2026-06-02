@@ -1,3 +1,4 @@
+// GitHub 图标组件 - 用于 GitHub 代码托管平台相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import GithubIconSVG from "./github";

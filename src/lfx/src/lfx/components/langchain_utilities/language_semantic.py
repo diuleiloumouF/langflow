@@ -13,6 +13,8 @@ from lfx.io import (
 from lfx.schema.data import Data
 
 
+# 语义文本分割器组件，使用语义相似度将文本分割为有意义的块
+# Semantic text splitter component for splitting text into semantically meaningful chunks
 class SemanticTextSplitterComponent(LCTextSplitterComponent):
     """Split text into semantically meaningful chunks using semantic similarity."""
 
@@ -20,7 +22,8 @@ class SemanticTextSplitterComponent(LCTextSplitterComponent):
     name: str = "SemanticTextSplitter"
     description: str = "Split text into semantically meaningful chunks using semantic similarity."
     documentation = "https://python.langchain.com/docs/how_to/semantic-chunker/"
-    beta = True  # this component is beta because it is imported from langchain_experimental
+    beta = True  # 此组件为 beta 版本，因为它从 langchain_experimental 导入
+    # this component is beta because it is imported from langchain_experimental
     icon = "LangChain"
 
     inputs = [
@@ -82,10 +85,12 @@ class SemanticTextSplitterComponent(LCTextSplitterComponent):
         Output(display_name="Chunks", name="chunks", method="split_text"),
     ]
 
+    # 将 Document 对象列表转换为 Data 对象列表
     def _docs_to_data(self, docs: list[Document]) -> list[Data]:
         """Convert a list of Document objects to Data objects."""
         return [Data(text=doc.page_content, data=doc.metadata) for doc in docs]
 
+    # 将输入数据分割为语义上有意义的块
     def split_text(self) -> list[Data]:
         """Split the input data into semantically meaningful chunks."""
         try:

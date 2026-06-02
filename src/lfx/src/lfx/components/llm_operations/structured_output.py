@@ -1,4 +1,7 @@
+# 导入 Pydantic 相关工具，用于构建和创建数据模型
 from pydantic import BaseModel, Field, create_model
+
+# 导入 trustcall 库，用于通过工具调用方式提取结构化输出
 from trustcall import create_extractor
 
 from lfx.base.agents.token_callback import TokenUsageCallbackHandler
@@ -23,6 +26,8 @@ from lfx.schema.dataframe import DataFrame
 from lfx.schema.table import EditMode
 
 
+# 结构化输出组件：利用 LLM 从非结构化文本中提取结构化 JSON 数据
+# 根据用户定义的 schema（字段名、类型、描述）提取数据并输出为 Data 或 DataFrame 格式
 class StructuredOutputComponent(Component):
     display_name = "Structured Output"
     description = "Uses an LLM to generate structured data. Ideal for extraction and consistency."
@@ -30,6 +35,7 @@ class StructuredOutputComponent(Component):
     name = "StructuredOutput"
     icon = "braces"
 
+    # 组件输入参数定义
     inputs = [
         ModelInput(
             name="model",
@@ -74,6 +80,7 @@ class StructuredOutputComponent(Component):
             info="Provide a name for the output data schema.",
             advanced=True,
         ),
+        # 输出 schema 定义表格，用户通过表格配置提取字段的名称、描述、类型和是否为列表
         TableInput(
             name="output_schema",
             display_name="Output Schema",
@@ -126,6 +133,7 @@ class StructuredOutputComponent(Component):
         ),
     ]
 
+    # 组件输出定义：支持 Data 格式和 DataFrame 格式两种输出方式
     outputs = [
         Output(
             name="structured_output",
@@ -139,15 +147,20 @@ class StructuredOutputComponent(Component):
         ),
     ]
 
+    # 动态更新构建配置，根据用户选择的模型刷新可用选项
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None):
         """Dynamically update build config with user-filtered model options."""
         return handle_model_input_update(self, build_config, field_value, field_name)
 
+    # 构建结构化输出的核心逻辑：先尝试 trustcall 方式，失败后回退到 LangChain 方式
     def build_structured_output_base(self):
+        # 获取 schema 名称，默认为 "OutputModel"
         schema_name = self.schema_name or "OutputModel"
 
+        # 获取 LLM 模型实例
         llm = get_llm(model=self.model, user_id=self.user_id, api_key=self.api_key)
 
+        # 检查模型是否支持结构化输出
         if not hasattr(llm, "with_structured_output"):
             msg = "Language model does not support structured output."
             raise TypeError(msg)
@@ -155,7 +168,9 @@ class StructuredOutputComponent(Component):
             msg = "Output schema cannot be empty"
             raise ValueError(msg)
 
+        # 根据用户定义的 schema 构建 Pydantic 模型
         output_model_ = build_model_from_schema(self.output_schema)
+        # 创建一个包含列表字段的包装模型，用于接收多条结构化输出
         output_model = create_model(
             schema_name,
             __doc__=f"A list of {schema_name}.",
@@ -167,9 +182,8 @@ class StructuredOutputComponent(Component):
                 ),
             ),
         )
-        # Tracing config with token usage handler injected into the callbacks chain.
-        # get_chat_result() reads "get_langchain_callbacks" as a callable, so we wrap
-        # the list in a lambda to match its expected interface.
+        # 追踪配置：将 token 用量处理器注入回调链中
+        # get_chat_result() 将 "get_langchain_callbacks" 作为可调用对象读取，因此用 lambda 包装列表以匹配其接口
         token_handler = TokenUsageCallbackHandler()
         base_callbacks = self.get_langchain_callbacks()
         config_dict = {
@@ -177,59 +191,64 @@ class StructuredOutputComponent(Component):
             "get_project_name": self.get_project_name,
             "get_langchain_callbacks": lambda: [*base_callbacks, token_handler],
         }
-        # Generate structured output using Trustcall first, then fallback to Langchain if it fails
+        # 优先使用 Trustcall 提取结构化输出，失败后回退到 LangChain 方式
         result = self._extract_output_with_trustcall(llm, output_model, config_dict)
         if result is None:
             result = self._extract_output_with_langchain(llm, output_model, config_dict)
         self._token_usage = token_handler.get_usage()
 
-        # OPTIMIZATION NOTE: Simplified processing based on trustcall response structure
-        # Handle non-dict responses (shouldn't happen with trustcall, but defensive)
+        # 以下为基于 trustcall 响应结构的简化后处理逻辑
+        # 处理非字典类型的响应（trustcall 通常返回字典，此处为防御性处理）
         if not isinstance(result, dict):
             return result
 
-        # Extract first response and convert BaseModel to dict
+        # 从响应中提取第一条结果并转换为字典
         responses = result.get("responses", [])
         if not responses:
             return result
 
-        # Convert BaseModel to dict (creates the "objects" key)
+        # 将 BaseModel 实例转换为字典（会创建 "objects" 键）
         first_response = responses[0]
         structured_data = first_response
         if isinstance(first_response, BaseModel):
             structured_data = first_response.model_dump()
-        # Extract the objects array (guaranteed to exist due to our Pydantic model structure)
+        # 提取 objects 数组（由于我们的 Pydantic 模型结构，该字段一定存在）
         return structured_data.get("objects", structured_data)
 
+    # 以 Data 格式返回结构化输出：单条结果直接返回，多条结果包装在 results 中
     def build_structured_output(self) -> Data:
         output = self.build_structured_output_base()
         if not isinstance(output, list) or not output:
-            # handle empty or unexpected type case
+            # 处理空输出或非预期类型的情况
             msg = "No structured output returned"
             raise ValueError(msg)
         if len(output) == 1:
             return Data(data=output[0])
         if len(output) > 1:
-            # Multiple outputs - wrap them in a results container
+            # 多条输出时，将它们包装在 results 容器中
             return Data(data={"results": output})
         return Data()
 
+    # 以 DataFrame 格式返回结构化输出：适合表格形式展示多条提取结果
     def build_structured_dataframe(self) -> DataFrame:
         output = self.build_structured_output_base()
         if not isinstance(output, list) or not output:
-            # handle empty or unexpected type case
+            # 处理空输出或非预期类型的情况
             msg = "No structured output returned"
             raise ValueError(msg)
         if len(output) == 1:
-            # For single dictionary, wrap in a list to create DataFrame with one row
+            # 单条结果包装在列表中，以创建包含一行的 DataFrame
             return DataFrame([output[0]])
         if len(output) > 1:
-            # Multiple outputs - convert to DataFrame directly
+            # 多条输出直接转换为 DataFrame
             return DataFrame(output)
         return DataFrame()
 
+    # 使用 Trustcall 通过工具调用方式提取结构化输出
+    # 如果模型不支持工具调用或提取失败，返回 None 以便回退到 LangChain 方式
     def _extract_output_with_trustcall(self, llm, schema: BaseModel, config_dict: dict) -> list[BaseModel] | None:
         try:
+            # 创建带有结构化输出能力的 LLM 提取器，指定工具和工具选择
             llm_with_structured_output = create_extractor(llm, tools=[schema], tool_choice=schema.__name__)
             result = get_chat_result(
                 runnable=llm_with_structured_output,
@@ -244,10 +263,13 @@ class StructuredOutputComponent(Component):
                 "Falling back is normal in such cases.)"
             )
             return None
-        return result or None  # langchain fallback is used if error occurs or the result is empty
+        return result or None  # 发生错误或结果为空时，返回 None 以触发 LangChain 回退
 
+    # 使用 LangChain 的 with_structured_output 方法提取结构化输出
+    # 作为 Trustcall 失败后的回退方案
     def _extract_output_with_langchain(self, llm, schema: BaseModel, config_dict: dict) -> list[BaseModel] | None:
         try:
+            # 使用 LangChain 的 with_structured_output 方法将 LLM 绑定到指定 schema
             llm_with_structured_output = llm.with_structured_output(schema)
             result = get_chat_result(
                 runnable=llm_with_structured_output,
@@ -255,10 +277,12 @@ class StructuredOutputComponent(Component):
                 input_value=self.input_value,
                 config=config_dict,
             )
+            # 如果结果是 BaseModel 实例，先转换为字典再提取 objects 字段
             if isinstance(result, BaseModel):
                 result = result.model_dump()
                 result = result.get("objects", result)
         except Exception as fallback_error:
+            # Trustcall 和 LangChain 回退均失败时，抛出包含两个错误信息的异常
             msg = (
                 f"Model does not support tool calling (trustcall failed) "
                 f"and fallback with_structured_output also failed: {fallback_error}"

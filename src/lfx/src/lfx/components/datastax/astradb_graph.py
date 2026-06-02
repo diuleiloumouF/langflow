@@ -1,5 +1,7 @@
+# 高性能 JSON 序列化库
 import orjson
 
+# AstraDB 基础组件、向量存储组件基类、数据转换工具
 from lfx.base.datastax.astradb_base import AstraDBBaseComponent
 from lfx.base.vectorstores.model import LCVectorStoreComponent, check_cached_vector_store
 from lfx.helpers.data import docs_to_data
@@ -13,12 +15,15 @@ from lfx.inputs.inputs import (
 from lfx.schema.data import Data
 
 
+# Astra DB 图向量存储组件，基于 Astra DB 实现图向量存储（已弃用，推荐使用 GraphRAG）
 class AstraDBGraphVectorStoreComponent(AstraDBBaseComponent, LCVectorStoreComponent):
     display_name: str = "Astra DB Graph"
+    # 组件描述：使用 Astra DB 实现图向量存储
     description: str = "Implementation of Graph Vector Store using Astra DB"
     name = "AstraDBGraph"
     documentation: str = "https://docs.langflow.org/bundles-datastax"
     icon: str = "AstraDB"
+    # 标记为已弃用组件
     legacy: bool = True
     replacement = ["datastax.GraphRAG"]
 
@@ -69,6 +74,7 @@ class AstraDBGraphVectorStoreComponent(AstraDBBaseComponent, LCVectorStoreCompon
         ),
     ]
 
+    # 构建 Astra DB 图向量存储实例（带缓存检查）
     @check_cached_vector_store
     def build_vector_store(self):
         try:
@@ -123,6 +129,7 @@ class AstraDBGraphVectorStoreComponent(AstraDBBaseComponent, LCVectorStoreCompon
 
         return vector_store
 
+    # 向向量存储中添加文档
     def _add_documents_to_vector_store(self, vector_store) -> None:
         self.ingest_data = self._prepare_ingest_data()
 
@@ -144,6 +151,7 @@ class AstraDBGraphVectorStoreComponent(AstraDBBaseComponent, LCVectorStoreCompon
         else:
             self.log("No documents to add to the Vector Store.")
 
+    # 将用户选择的搜索类型映射为 LangChain 内部搜索类型字符串
     def _map_search_type(self) -> str:
         match self.search_type:
             case "Similarity":
@@ -159,6 +167,7 @@ class AstraDBGraphVectorStoreComponent(AstraDBBaseComponent, LCVectorStoreCompon
             case _:
                 return "similarity"
 
+    # 构建搜索参数字典
     def _build_search_args(self):
         args = {
             "k": self.number_of_results,
@@ -171,6 +180,7 @@ class AstraDBGraphVectorStoreComponent(AstraDBBaseComponent, LCVectorStoreCompon
                 args["filter"] = clean_filter
         return args
 
+    # 搜索文档并返回结果
     def search_documents(self, vector_store=None) -> list[Data]:
         if not vector_store:
             vector_store = self.build_vector_store()
@@ -209,6 +219,7 @@ class AstraDBGraphVectorStoreComponent(AstraDBBaseComponent, LCVectorStoreCompon
         self.log("No search input provided. Skipping search.")
         return []
 
+    # 获取检索器参数，供 LangChain 检索器使用
     def get_retriever_kwargs(self):
         search_args = self._build_search_args()
         return {

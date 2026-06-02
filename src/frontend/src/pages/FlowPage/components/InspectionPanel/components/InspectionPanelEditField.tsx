@@ -7,6 +7,7 @@ import type { NodeDataType } from "@/types/flow";
 import { scapeJSONParse } from "@/utils/reactflowUtils";
 import { cn } from "@/utils/utils";
 
+/** 检查面板编辑字段的属性定义 */
 interface InspectionPanelEditFieldProps {
   data: NodeDataType;
   name: string;
@@ -15,6 +16,11 @@ interface InspectionPanelEditFieldProps {
   isOnCanvas: boolean;
 }
 
+/**
+ * 检查面板编辑字段组件
+ * 用于编辑模式下显示字段名称和可见性切换按钮
+ * 已连接的字段不允许切换可见性
+ */
 export default function InspectionPanelEditField({
   data,
   name,

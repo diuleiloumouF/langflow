@@ -2,6 +2,10 @@ import { useTypesStore } from "@/stores/typesStore";
 import type { FlowType } from "@/types/flow";
 import { iconExists } from "@/utils/styleUtils";
 
+/**
+ * 获取模板样式 Hook
+ * 根据流程数据确定显示的图标，支持组件类型和分组图标的识别
+ */
 export const useGetTemplateStyle = (
   flowData: FlowType,
 ): { getIcon: () => Promise<string> } => {

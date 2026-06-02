@@ -1,5 +1,7 @@
+# LangChain Cassandra 向量存储集成
 from langchain_community.vectorstores import Cassandra
 
+# 向量存储组件基类、缓存检查装饰器、数据转换工具
 from lfx.base.vectorstores.model import LCVectorStoreComponent, check_cached_vector_store
 from lfx.helpers.data import docs_to_data
 from lfx.inputs.inputs import BoolInput, DictInput, FloatInput
@@ -13,47 +15,57 @@ from lfx.io import (
 from lfx.schema.data import Data
 
 
+# Cassandra 向量存储组件，支持 Apache Cassandra 和 Astra DB 的向量存储与检索
 class CassandraVectorStoreComponent(LCVectorStoreComponent):
     display_name = "Cassandra"
+    # 组件描述：Cassandra 向量存储，支持搜索功能
     description = "Cassandra Vector Store with search capabilities"
     documentation = "https://python.langchain.com/docs/modules/data_connection/vectorstores/integrations/cassandra"
     name = "Cassandra"
     icon = "Cassandra"
 
+    # 输入参数定义
     inputs = [
+        # 数据库连接点或 Astra DB 数据库 ID
         MessageTextInput(
             name="database_ref",
             display_name="Contact Points / Astra Database ID",
             info="Contact points for the database (or Astra DB database ID)",
             required=True,
         ),
+        # 数据库用户名（Astra DB 可留空）
         MessageTextInput(
             name="username", display_name="Username", info="Username for the database (leave empty for Astra DB)."
         ),
+        # 数据库密码或 Astra DB Token
         SecretStrInput(
             name="token",
             display_name="Password / Astra DB Token",
             info="User password for the database (or Astra DB token).",
             required=True,
         ),
+        # 键空间（Astra DB 命名空间）
         MessageTextInput(
             name="keyspace",
             display_name="Keyspace",
             info="Table Keyspace (or Astra DB namespace).",
             required=True,
         ),
+        # 表名（Astra DB 集合名称）
         MessageTextInput(
             name="table_name",
             display_name="Table Name",
             info="The name of the table (or Astra DB collection) where vectors will be stored.",
             required=True,
         ),
+        # 文本过期时间（秒）
         IntInput(
             name="ttl_seconds",
             display_name="TTL Seconds",
             info="Optional time-to-live for the added texts.",
             advanced=True,
         ),
+        # 批量处理大小
         IntInput(
             name="batch_size",
             display_name="Batch Size",
@@ -61,6 +73,7 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             value=16,
             advanced=True,
         ),
+        # 表初始化模式：同步/异步/关闭
         DropdownInput(
             name="setup_mode",
             display_name="Setup Mode",
@@ -69,6 +82,7 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             value="Sync",
             advanced=True,
         ),
+        # Cassandra 集群额外参数
         DictInput(
             name="cluster_kwargs",
             display_name="Cluster arguments",
@@ -77,7 +91,9 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             list=True,
         ),
         *LCVectorStoreComponent.inputs,
+        # 嵌入模型输入
         HandleInput(name="embedding", display_name="Embedding", input_types=["Embeddings"]),
+        # 返回结果数量
         IntInput(
             name="number_of_results",
             display_name="Number of Results",
@@ -85,6 +101,7 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             value=4,
             advanced=True,
         ),
+        # 搜索类型选择
         DropdownInput(
             name="search_type",
             display_name="Search Type",
@@ -93,6 +110,7 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             value="Similarity",
             advanced=True,
         ),
+        # 搜索分数阈值
         FloatInput(
             name="search_score_threshold",
             display_name="Search Score Threshold",
@@ -101,6 +119,7 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             value=0,
             advanced=True,
         ),
+        # 搜索元数据过滤器
         DictInput(
             name="search_filter",
             display_name="Search Metadata Filter",
@@ -108,12 +127,14 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             advanced=True,
             list=True,
         ),
+        # 全文搜索关键词
         MessageTextInput(
             name="body_search",
             display_name="Search Body",
             info="Document textual search terms to apply to the search query.",
             advanced=True,
         ),
+        # 启用全文搜索开关（需在建表前开启）
         BoolInput(
             name="enable_body_search",
             display_name="Enable Body Search",
@@ -123,6 +144,7 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
         ),
     ]
 
+    # 构建 Cassandra 向量存储实例（带缓存检查）
     @check_cached_vector_store
     def build_vector_store(self) -> Cassandra:
         try:
@@ -201,6 +223,7 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             )
         return table
 
+    # 将用户选择的搜索类型映射为 LangChain 内部搜索类型字符串
     def _map_search_type(self) -> str:
         if self.search_type == "Similarity with score threshold":
             return "similarity_score_threshold"
@@ -208,6 +231,7 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             return "mmr"
         return "similarity"
 
+    # 搜索文档并返回结果
     def search_documents(self) -> list[Data]:
         vector_store = self.build_vector_store()
 
@@ -239,6 +263,7 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             return data
         return []
 
+    # 构建搜索参数字典
     def _build_search_args(self):
         args = {
             "k": self.number_of_results,
@@ -256,6 +281,7 @@ class CassandraVectorStoreComponent(LCVectorStoreComponent):
             args["body_search"] = self.body_search
         return args
 
+    # 获取检索器参数，供 LangChain 检索器使用
     def get_retriever_kwargs(self):
         search_args = self._build_search_args()
         return {

@@ -6,13 +6,20 @@ from lfx.schema.message import Message
 from lfx.utils.constants import MESSAGE_SENDER_AI
 
 
+# Needle 检索器组件，使用 Needle API 搜索集合中的文档
 class NeedleComponent(Component):
+    # 组件显示名称
     display_name = "Needle Retriever"
+    # 组件描述信息
     description = "A retriever that uses the Needle API to search collections."
+    # 组件文档链接
     documentation = "https://docs.needle-ai.com"
+    # 组件图标
     icon = "Needle"
+    # 组件内部名称
     name = "needle"
 
+    # 组件输入参数定义
     inputs = [
         SecretStrInput(
             name="needle_api_key",
@@ -42,8 +49,10 @@ class NeedleComponent(Component):
         ),
     ]
 
+    # 组件输出参数定义
     outputs = [Output(display_name="Result", name="result", type_="Message", method="run")]
 
+    # 执行检索操作，返回包含查询结果的消息
     def run(self) -> Message:
         # Extract query and top_k
         query_input = self.query

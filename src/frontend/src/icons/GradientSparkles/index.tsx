@@ -1,3 +1,5 @@
+// GradientSparkles 图标组件 - 包含渐变效果的工具图标集合
+// GradientInfinity: 渐变无限符号图标，用于代码相关操作
 import { Code } from "lucide-react";
 import { forwardRef } from "react";
 import ForwardedIconComponent from "../../components/common/genericIconComponent";
@@ -21,6 +23,7 @@ export const GradientInfinity = forwardRef<
   );
 });
 
+// GradientSave: 渐变保存图标，用于保存操作
 export const GradientSave = forwardRef<
   SVGSVGElement,
   React.PropsWithChildren<{}>
@@ -37,6 +40,7 @@ export const GradientSave = forwardRef<
   );
 });
 
+// GradientGroup: 渐变分组图标，用于组合操作
 export const GradientGroup = (props) => {
   return (
     <>
@@ -57,6 +61,7 @@ export const GradientGroup = (props) => {
   );
 };
 
+// GradientUngroup: 渐变取消分组图标，用于取消组合操作
 export const GradientUngroup = forwardRef<
   SVGSVGElement,
   React.PropsWithChildren<{}>

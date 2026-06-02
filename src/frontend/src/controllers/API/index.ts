@@ -5,6 +5,10 @@ import {
   customGetLatestVersion,
 } from "@/customization/utils/custom-get-app-latest-version";
 import { getBaseUrl } from "@/customization/utils/urls";
+/**
+ * API 控制器入口模块
+ * 导出所有与后端 API 交互的函数
+ */
 import { api } from "../../controllers/API/api";
 import type {
   VertexBuildTypeAPI,
@@ -13,10 +17,18 @@ import type {
 import type { FlowStyleType, FlowType } from "../../types/flow";
 import type { StoreComponentResponse } from "../../types/store";
 
+// GitHub API 基础 URL
 const GITHUB_API_URL = "https://api.github.com";
+// Discord 邀请链接 API URL
 const DISCORD_API_URL =
   "https://discord.com/api/v9/invites/EqksyE2EX9?with_counts=true";
 
+/**
+ * 获取 GitHub 仓库的星标数量
+ * @param owner - 仓库所有者
+ * @param repo - 仓库名称
+ * @returns 星标数量，获取失败时返回 null
+ */
 export async function getRepoStars(owner: string, repo: string) {
   try {
     const response = await axios.get(
@@ -29,6 +41,10 @@ export async function getRepoStars(owner: string, repo: string) {
   }
 }
 
+/**
+ * 获取 Discord 服务器的成员数量
+ * @returns 成员数量，获取失败时返回 null
+ */
 export async function getDiscordCount() {
   try {
     const response = await axios.get(DISCORD_API_URL);
@@ -39,9 +55,16 @@ export async function getDiscordCount() {
   }
 }
 
+// 获取应用版本信息
 export const getAppVersions = customGetAppVersions;
+// 获取最新版本信息
 export const getLatestVersion = customGetLatestVersion;
 
+/**
+ * 创建新的 API 密钥
+ * @param name - API 密钥名称
+ * @returns 创建的 API 密钥数据
+ */
 export async function createApiKey(name: string) {
   try {
     const res = await api.post(`${getBaseUrl()}api_key/`, { name });
@@ -96,6 +119,11 @@ export async function saveFlowStore(
   }
 }
 
+/**
+ * 从组件商店获取组件列表
+ * @param options - 查询参数，包括分页、排序、标签过滤等
+ * @returns 组件列表数据
+ */
 export async function getStoreComponents({
   component_id = null,
   page = 1,
@@ -177,6 +205,11 @@ export async function getStoreComponents({
   }
 }
 
+/**
+ * 根据 ID 获取单个组件详情
+ * @param component_id - 组件 ID
+ * @returns 组件详细数据
+ */
 export async function getComponent(component_id: string) {
   try {
     const res = await api.get(
@@ -190,6 +223,10 @@ export async function getComponent(component_id: string) {
   }
 }
 
+/**
+ * 检查用户是否已配置 API 密钥
+ * @returns 布尔值表示是否已配置
+ */
 export async function checkHasApiKey() {
   try {
     const res = await api.get(`${getBaseUrl()}store/check/api_key`);
@@ -201,6 +238,10 @@ export async function checkHasApiKey() {
   }
 }
 
+/**
+ * 检查组件商店是否可用
+ * @returns 布尔值表示商店是否可用
+ */
 export async function checkHasStore() {
   try {
     const res = await api.get(`${getBaseUrl()}store/check/`);
@@ -255,6 +296,15 @@ export async function updateFlowStore(
   }
 }
 
+/**
+ * 获取流程中顶点的执行顺序
+ * @param flowId - 流程 ID
+ * @param startNodeId - 可选的起始节点 ID
+ * @param stopNodeId - 可选的停止节点 ID
+ * @param nodes - 节点数组
+ * @param Edges - 边数组
+ * @returns 顶点执行顺序数据
+ */
 export async function getVerticesOrder(
   flowId: string,
   startNodeId?: string | null,
@@ -284,6 +334,14 @@ export async function getVerticesOrder(
   );
 }
 
+/**
+ * 构建单个顶点
+ * @param flowId - 流程 ID
+ * @param vertexId - 顶点 ID
+ * @param input_value - 输入值
+ * @param files - 可选的文件列表
+ * @returns 顶点构建结果
+ */
 export async function postBuildVertex(
   flowId: string,
   vertexId: string,

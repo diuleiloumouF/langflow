@@ -1,3 +1,4 @@
+// Fireflies 图标组件 - 用于 Fireflies AI 会议记录服务相关组件的标识
 import React, { forwardRef } from "react";
 import FirefliesIconSVG from "./fireflies.jsx";
 

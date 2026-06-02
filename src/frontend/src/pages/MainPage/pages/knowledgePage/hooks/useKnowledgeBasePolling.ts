@@ -6,6 +6,7 @@ import { getURL } from "@/controllers/API/helpers/constants";
 import type { KnowledgeBaseInfo } from "@/controllers/API/queries/knowledge-bases/use-get-knowledge-bases";
 import { isBusyStatus } from "../config/statusConfig";
 
+/** 轮询间隔（毫秒） */
 const POLLING_INTERVAL_MS = 6000;
 
 export interface KnowledgeBaseStatusTransition {
@@ -20,6 +21,9 @@ interface UseKnowledgeBasePollingOptions {
 }
 
 /**
+ * 知识库轮询 Hook
+ * 当任何知识库处于忙碌状态时自动轮询更新
+ * 直接更新 ag-grid 以避免不必要的重渲染，并在状态变化时更新 React Query 缓存
  * Polls for knowledge base updates when any KB is in a busy state (ingesting/cancelling).
  * Updates the ag-grid directly for numeric-only changes to avoid re-renders,
  * and updates the React Query cache when a status transition occurs.

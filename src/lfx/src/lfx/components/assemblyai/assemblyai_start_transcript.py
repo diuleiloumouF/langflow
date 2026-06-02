@@ -1,26 +1,34 @@
+# 标准库：文件路径处理
 from pathlib import Path
 
+# AssemblyAI SDK
 import assemblyai as aai
 
+# 组件基类、输入/输出定义、日志、数据模型
 from lfx.custom.custom_component.component import Component
 from lfx.io import BoolInput, DropdownInput, FileInput, MessageTextInput, Output, SecretStrInput
 from lfx.log.logger import logger
 from lfx.schema.data import Data
 
 
+# AssemblyAI 转录任务创建组件，用于提交音频文件到 AssemblyAI 进行转录
 class AssemblyAITranscriptionJobCreator(Component):
     display_name = "AssemblyAI Start Transcript"
+    # 组件描述：使用 AssemblyAI 创建音频文件转录任务，支持高级选项
     description = "Create a transcription job for an audio file using AssemblyAI with advanced options"
     documentation = "https://www.assemblyai.com/docs"
     icon = "AssemblyAI"
 
+    # 输入参数定义
     inputs = [
+        # AssemblyAI API 密钥
         SecretStrInput(
             name="api_key",
             display_name="Assembly API Key",
             info="Your AssemblyAI API key. You can get one from https://www.assemblyai.com/",
             required=True,
         ),
+        # 音频文件上传输入，支持多种音频格式
         FileInput(
             name="audio_file",
             display_name="Audio File",
@@ -68,12 +76,14 @@ class AssemblyAITranscriptionJobCreator(Component):
             info="The audio file to transcribe",
             required=True,
         ),
+        # 音频文件 URL（可替代文件上传）
         MessageTextInput(
             name="audio_file_url",
             display_name="Audio File URL",
             info="The URL of the audio file to transcribe (Can be used instead of a File)",
             advanced=True,
         ),
+        # 语音模型选择：最佳模型或轻量模型
         DropdownInput(
             name="speech_model",
             display_name="Speech Model",
@@ -85,12 +95,14 @@ class AssemblyAITranscriptionJobCreator(Component):
             info="The speech model to use for the transcription",
             advanced=True,
         ),
+        # 自动语言检测开关
         BoolInput(
             name="language_detection",
             display_name="Automatic Language Detection",
             info="Enable automatic language detection",
             advanced=True,
         ),
+        # 手动指定语言代码（当自动检测关闭时使用）
         MessageTextInput(
             name="language_code",
             display_name="Language",
@@ -102,17 +114,20 @@ class AssemblyAITranscriptionJobCreator(Component):
             ),
             advanced=True,
         ),
+        # 说话人标签（声纹分离）开关
         BoolInput(
             name="speaker_labels",
             display_name="Enable Speaker Labels",
             info="Enable speaker diarization",
         ),
+        # 预期说话人数量（可选）
         MessageTextInput(
             name="speakers_expected",
             display_name="Expected Number of Speakers",
             info="Set the expected number of speakers (optional, enter a number)",
             advanced=True,
         ),
+        # 自动标点符号开关
         BoolInput(
             name="punctuate",
             display_name="Punctuate",
@@ -120,6 +135,7 @@ class AssemblyAITranscriptionJobCreator(Component):
             advanced=True,
             value=True,
         ),
+        # 文本格式化开关
         BoolInput(
             name="format_text",
             display_name="Format Text",
@@ -129,10 +145,12 @@ class AssemblyAITranscriptionJobCreator(Component):
         ),
     ]
 
+    # 输出参数：转录任务 ID
     outputs = [
         Output(display_name="Transcript ID", name="transcript_id", method="create_transcription_job"),
     ]
 
+    # 创建转录任务
     def create_transcription_job(self) -> Data:
         aai.settings.api_key = self.api_key
 

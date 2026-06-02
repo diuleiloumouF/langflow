@@ -4,6 +4,8 @@ from lfx.schema.data import Data
 from lfx.schema.message import Message
 
 
+# JigsawStack 情感分析组件，使用 AI 分析文本的情感倾向
+# JigsawStack sentiment analysis component for analyzing text sentiment using AI
 class JigsawStackSentimentComponent(Component):
     display_name = "Sentiment Analysis"
     description = "Analyze sentiment of text using JigsawStack AI"
@@ -32,6 +34,7 @@ class JigsawStackSentimentComponent(Component):
         Output(display_name="Sentiment Text", name="sentiment_text", method="get_sentiment_text"),
     ]
 
+    # 分析文本情感，返回结构化数据
     def analyze_sentiment(self) -> Data:
         try:
             from jigsawstack import JigsawStack, JigsawStackError
@@ -73,6 +76,7 @@ class JigsawStackSentimentComponent(Component):
             self.status = f"Error: {e!s}"
             return Data(data=error_data)
 
+    # 获取情感分析的文本格式结果
     def get_sentiment_text(self) -> Message:
         try:
             from jigsawstack import JigsawStack, JigsawStackError

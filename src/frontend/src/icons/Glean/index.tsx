@@ -1,3 +1,4 @@
+// Glean 图标组件 - 用于 Glean 企业搜索平台相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import SvgGlean from "./Glean";

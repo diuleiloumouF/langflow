@@ -5,6 +5,10 @@ interface DeploymentsEmptyStateProps {
   onAction: () => void;
 }
 
+/**
+ * 部署空状态组件
+ * 当没有部署时显示的引导界面，提示用户创建第一个部署
+ */
 export default function DeploymentsEmptyState({
   onAction,
 }: DeploymentsEmptyStateProps) {

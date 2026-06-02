@@ -7,6 +7,8 @@ from lfx.inputs.inputs import DataInput, IntInput, MessageTextInput
 from lfx.utils.util import unescape_string
 
 
+# 字符文本分割器组件，按字符数量分割文本
+# Character text splitter component for splitting text by number of characters
 class CharacterTextSplitterComponent(LCTextSplitterComponent):
     display_name = "Character Text Splitter"
     description = "Split text by number of characters."
@@ -41,9 +43,11 @@ class CharacterTextSplitterComponent(LCTextSplitterComponent):
         ),
     ]
 
+    # 获取数据输入
     def get_data_input(self) -> Any:
         return self.data_input
 
+    # 构建字符文本分割器实例
     def build_text_splitter(self) -> TextSplitter:
         separator = unescape_string(self.separator) if self.separator else "\n\n"
         return CharacterTextSplitter(

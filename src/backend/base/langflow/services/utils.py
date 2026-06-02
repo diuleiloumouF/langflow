@@ -25,9 +25,11 @@ if TYPE_CHECKING:
     from sqlmodel.ext.asyncio.session import AsyncSession
 
 
+# 获取或创建超级用户，返回创建的用户对象，若超级用户已存在则返回 None
 async def get_or_create_super_user(session: AsyncSession, username, password, is_default):
     from langflow.services.database.models.user.model import User
 
+    # 查询数据库中是否存在指定用户名的用户
     stmt = select(User).where(User.username == username)
     result = await session.exec(stmt)
     user = result.first()
@@ -69,9 +71,11 @@ async def get_or_create_super_user(session: AsyncSession, username, password, is
     return await auth.create_super_user(username, password, db=session)
 
 
+# 设置超级用户：根据 AUTO_LOGIN 配置决定使用默认凭据还是自定义凭据
 async def setup_superuser(settings_service: SettingsService, session: AsyncSession) -> None:
     if settings_service.auth_settings.AUTO_LOGIN:
         await logger.adebug("AUTO_LOGIN is set to True. Creating default superuser.")
+        # 自动登录模式下使用默认超级用户名和密码
         username = DEFAULT_SUPERUSER
         password = DEFAULT_SUPERUSER_PASSWORD.get_secret_value()
     else:
@@ -86,6 +90,7 @@ async def setup_superuser(settings_service: SettingsService, session: AsyncSessi
         msg = "Username and password must be set"
         raise ValueError(msg)
 
+    # 判断当前使用的是否是默认凭据
     is_default = (username == DEFAULT_SUPERUSER) and (password == DEFAULT_SUPERUSER_PASSWORD.get_secret_value())
 
     try:
@@ -100,9 +105,11 @@ async def setup_superuser(settings_service: SettingsService, session: AsyncSessi
         raise RuntimeError(msg) from exc
     finally:
         # Scrub credentials from in-memory settings after setup
+        # 设置完成后清除内存中的凭据信息，避免泄露
         settings_service.auth_settings.reset_credentials()
 
 
+# 拆除超级用户：在 AUTO_LOGIN 关闭时移除未登录过的默认超级用户
 async def teardown_superuser(settings_service, session: AsyncSession) -> None:
     """Teardown the superuser."""
     # If AUTO_LOGIN is True, we will remove the default superuser
@@ -119,6 +126,7 @@ async def teardown_superuser(settings_service, session: AsyncSession) -> None:
             user = result.first()
             # Check if super was ever logged in, if not delete it
             # if it has logged in, it means the user is using it to login
+            # 仅当超级用户从未登录过时才删除，避免删除用户正在使用的账号
             if user and user.is_superuser is True and not user.last_login_at:
                 await session.delete(user)
                 await logger.adebug("Default superuser removed successfully.")
@@ -129,6 +137,7 @@ async def teardown_superuser(settings_service, session: AsyncSession) -> None:
             raise RuntimeError(msg) from exc
 
 
+# 拆除所有服务：先拆除超级用户，再拆除服务管理器中的所有服务
 async def teardown_services() -> None:
     """Teardown all the services."""
     async with session_scope() as session:
@@ -140,6 +149,7 @@ async def teardown_services() -> None:
     await service_manager.teardown()
 
 
+# 初始化设置服务（Settings Service）
 def initialize_settings_service() -> None:
     """Initialize the settings manager."""
     from lfx.services.settings import factory as settings_factory
@@ -147,6 +157,7 @@ def initialize_settings_service() -> None:
     get_service(ServiceType.SETTINGS_SERVICE, settings_factory.SettingsServiceFactory())
 
 
+# 初始化会话服务：依次初始化设置服务、缓存服务和会话服务
 def initialize_session_service() -> None:
     """Initialize the session manager."""
     from langflow.services.cache import factory as cache_factory
@@ -165,6 +176,7 @@ def initialize_session_service() -> None:
     )
 
 
+# 清理旧事务记录：删除超过配置上限的最早事务
 async def clean_transactions(settings_service: SettingsService, session: AsyncSession) -> None:
     """Clean up old transactions from the database.
 
@@ -177,6 +189,7 @@ async def clean_transactions(settings_service: SettingsService, session: AsyncSe
     """
     try:
         # Delete transactions using bulk delete
+        # 构建批量删除语句：选取超出保留数量的最旧事务 ID 进行删除
         delete_stmt = delete(TransactionTable).where(
             col(TransactionTable.id).in_(
                 select(TransactionTable.id)
@@ -190,8 +203,10 @@ async def clean_transactions(settings_service: SettingsService, session: AsyncSe
     except (sqlalchemy_exc.SQLAlchemyError, asyncio.TimeoutError) as exc:
         logger.error(f"Error cleaning up transactions: {exc!s}")
         # Don't re-raise since this is a cleanup task
+        # 清理任务不应抛出异常，仅记录错误日志
 
 
+# 清理旧的顶点构建记录：删除超过配置上限的最早构建记录
 async def clean_vertex_builds(settings_service: SettingsService, session: AsyncSession) -> None:
     """Clean up old vertex builds from the database.
 
@@ -204,6 +219,7 @@ async def clean_vertex_builds(settings_service: SettingsService, session: AsyncS
     """
     try:
         # Delete vertex builds using bulk delete
+        # 构建批量删除语句：选取超出保留数量的最旧顶点构建记录 ID 进行删除
         delete_stmt = delete(VertexBuildTable).where(
             col(VertexBuildTable.id).in_(
                 select(VertexBuildTable.id)
@@ -217,8 +233,10 @@ async def clean_vertex_builds(settings_service: SettingsService, session: AsyncS
     except (sqlalchemy_exc.SQLAlchemyError, asyncio.TimeoutError) as exc:
         logger.error(f"Error cleaning up vertex builds: {exc!s}")
         # Don't re-raise since this is a cleanup task
+        # 清理任务不应抛出异常，仅记录错误日志
 
 
+# 注册所有内置服务工厂到服务管理器
 def register_all_service_factories() -> None:
     """Register all available service factories with the service manager."""
     # Import all service factories
@@ -247,6 +265,7 @@ def register_all_service_factories() -> None:
     from langflow.services.variable import factory as variable_factory
 
     # Register all factories
+    # 注册各个服务的工厂实例
     service_manager.register_factory(settings_factory.SettingsServiceFactory())
     service_manager.register_factory(cache_factory.CacheServiceFactory())
     service_manager.register_factory(chat_factory.ChatServiceFactory())
@@ -263,12 +282,14 @@ def register_all_service_factories() -> None:
     service_manager.register_factory(store_factory.StoreServiceFactory())
     service_manager.register_factory(shared_component_cache_factory.SharedComponentCacheServiceFactory())
     # Override LFX's no-op auth service with Langflow's full JWT implementation
+    # 用 Langflow 的完整 JWT 实现覆盖 LFX 的空操作认证服务
     service_manager.register_service_class(ServiceType.AUTH_SERVICE, AuthService, override=True)
     service_manager.register_factory(auth_factory.AuthServiceFactory())
     service_manager.register_factory(mcp_composer_factory.MCPComposerServiceFactory())
     service_manager.set_factory_registered()
 
 
+# 注册内置适配器模块，触发 @register_adapter 装饰器的副作用
 def register_builtin_adapters() -> None:
     """Import built-in adapter modules so ``@register_adapter`` decorators fire.
 
@@ -289,11 +310,13 @@ def register_builtin_adapters() -> None:
         return
 
     try:
+        # 动态导入 Watsonx Orchestrate 适配器模块
         import_module("langflow.services.adapters.deployment.watsonx_orchestrate")
     except ModuleNotFoundError as exc:
         logger.info("Skipping Watsonx Orchestrate adapter registration: %s", exc)
 
 
+# 注册内置部署映射器模块，触发模块级别的注册副作用
 def register_builtin_deployment_mappers() -> None:
     """Import built-in deployment mapper modules so registration side effects fire."""
     if not FEATURE_FLAGS.wxo_deployments:
@@ -301,29 +324,35 @@ def register_builtin_deployment_mappers() -> None:
         return
 
     try:
+        # 动态导入 Watsonx Orchestrate 部署映射器模块
         import_module("langflow.api.v1.mappers.deployments.watsonx_orchestrate")
     except ModuleNotFoundError as exc:
         logger.info("Skipping Watsonx Orchestrate deployment mapper registration: %s", exc)
 
 
+# 初始化所有服务：注册工厂、测试缓存连接、初始化数据库、设置超级用户、清理旧数据
 async def initialize_services(*, fix_migration: bool = False) -> None:
     """Initialize all the services needed."""
     from langflow.helpers.windows_postgres_helper import configure_windows_postgres_event_loop
 
+    # 配置 Windows 环境下 PostgreSQL 的事件循环策略
     configure_windows_postgres_event_loop(source="initialize_services")
 
     # Register all service factories first
+    # 注册所有服务工厂、适配器和部署映射器
     register_all_service_factories()
     register_builtin_adapters()
     register_builtin_deployment_mappers()
 
     cache_service = get_service(ServiceType.CACHE_SERVICE, default=CacheServiceFactory())
     # Test external cache connection
+    # 如果使用外部缓存服务，测试连接是否成功
     if isinstance(cache_service, ExternalAsyncBaseCacheService) and not (await cache_service.is_connected()):
         msg = "Cache service failed to connect to external database"
         raise ConnectionError(msg)
 
     # Setup the superuser
+    # 初始化数据库并设置超级用户
     await initialize_database(fix_migration=fix_migration)
     db_service = get_db_service()
     await db_service.initialize_alembic_log_file()
@@ -331,10 +360,12 @@ async def initialize_services(*, fix_migration: bool = False) -> None:
         settings_service = get_service(ServiceType.SETTINGS_SERVICE)
         await setup_superuser(settings_service, session)
     try:
+        # 将无主的 flows 分配给超级用户
         await get_db_service().assign_orphaned_flows_to_superuser()
     except sqlalchemy_exc.IntegrityError as exc:
         await logger.awarning(f"Error assigning orphaned flows to the superuser: {exc!s}")
 
+    # 清理超过保留上限的旧事务和旧顶点构建记录
     async with session_scope() as session:
         await clean_transactions(settings_service, session)
         await clean_vertex_builds(settings_service, session)

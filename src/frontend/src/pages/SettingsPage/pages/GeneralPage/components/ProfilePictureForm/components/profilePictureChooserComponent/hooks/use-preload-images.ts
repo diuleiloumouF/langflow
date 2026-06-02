@@ -1,6 +1,10 @@
 import { useEffect } from "react";
 import { customPreLoadImageUrl } from "@/customization/utils/custom-pre-load-image-url";
 
+/**
+ * 预加载图片 Hook
+ * 预加载头像图片 URL，确保图片在显示前已缓存
+ */
 const usePreloadImages = (
   setImagesLoaded: (value: boolean) => void,
   loading: boolean,

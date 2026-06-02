@@ -6,12 +6,20 @@ import { api } from "../../api";
 import { getURL } from "../../helpers/constants";
 import { UseRequestProcessor } from "../../services/request-processor";
 
+/**
+ * 刷新访问令牌响应接口
+ */
 interface IRefreshAccessToken {
   access_token: string;
   refresh_token: string;
   token_type: string;
 }
 
+/**
+ * 刷新访问令牌的自定义 Hook
+ * 用于在令牌过期时获取新的访问令牌
+ * @returns 刷新令牌的 mutation 函数
+ */
 export const useRefreshAccessToken: useMutationFunctionType<
   undefined,
   undefined | void,

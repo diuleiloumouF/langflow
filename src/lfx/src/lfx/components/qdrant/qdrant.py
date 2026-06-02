@@ -13,11 +13,16 @@ from lfx.io import (
 from lfx.schema.data import Data
 
 
+# Qdrant 向量存储组件，提供基于 Qdrant 的向量搜索和存储功能
 class QdrantVectorStoreComponent(LCVectorStoreComponent):
+    # 组件显示名称
     display_name = "Qdrant"
+    # 组件描述信息
     description = "Qdrant Vector Store with search capabilities"
+    # 组件图标
     icon = "Qdrant"
 
+    # 组件输入参数定义
     inputs = [
         StrInput(name="collection_name", display_name="Collection Name", required=True),
         StrInput(name="host", display_name="Host", value="localhost", advanced=True),
@@ -48,6 +53,7 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
         ),
     ]
 
+    # 构建 Qdrant 向量存储实例
     @check_cached_vector_store
     def build_vector_store(self) -> QdrantVectorStore:
         qdrant_kwargs = {
@@ -96,6 +102,7 @@ class QdrantVectorStoreComponent(LCVectorStoreComponent):
 
         return qdrant
 
+    # 搜索文档，使用相似度搜索在 Qdrant 向量存储中查找相关文档
     def search_documents(self) -> list[Data]:
         vector_store: QdrantVectorStore = self.build_vector_store()
 

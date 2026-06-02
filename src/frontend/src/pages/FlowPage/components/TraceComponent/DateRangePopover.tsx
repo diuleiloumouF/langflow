@@ -16,6 +16,10 @@ import {
 import { formatDateLabel } from "./traceViewHelpers";
 import { DateRangePopoverProps } from "./types";
 
+/**
+ * 日期范围选择器组件
+ * 提供开始日期和结束日期的选择，支持清除日期和无效日期范围提示
+ */
 export function DateRangePopover({
   startDate,
   endDate,

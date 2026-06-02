@@ -5,6 +5,8 @@ from lfx.io import BoolInput, FileInput, Output, SecretStrInput, StrInput
 from lfx.schema.data import Data
 
 
+# JigsawStack 文件上传组件，将文件存储到 JigsawStack 文件存储中
+# JigsawStack file upload component for storing files on JigsawStack File Storage
 class JigsawStackFileUploadComponent(Component):
     display_name = "File Upload"
     description = "Store any file seamlessly on JigsawStack File Storage and use it in your AI applications. \
@@ -58,6 +60,7 @@ class JigsawStackFileUploadComponent(Component):
         Output(display_name="File Store Result", name="file_upload_result", method="upload_file"),
     ]
 
+    # 上传文件到 JigsawStack 文件存储
     def upload_file(self) -> Data:
         try:
             from jigsawstack import JigsawStack, JigsawStackError

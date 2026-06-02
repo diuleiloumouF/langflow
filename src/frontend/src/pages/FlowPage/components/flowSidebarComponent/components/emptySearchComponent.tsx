@@ -11,6 +11,10 @@ interface NoResultsMessageProps {
   setShowConfig?: (show: boolean) => void;
 }
 
+/**
+ * 空搜索结果组件
+ * 当搜索没有匹配结果时显示的提示信息
+ */
 const NoResultsMessage = ({
   onClearSearch,
   message,

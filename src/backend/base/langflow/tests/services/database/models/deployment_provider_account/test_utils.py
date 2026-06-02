@@ -1,4 +1,6 @@
 """Tests for deployment_provider_account.utils URL validation."""
+# 部署提供商账户工具函数测试模块
+# 测试 URL 验证、域名白名单检查、租户 ID 提取和租户 URL 一致性验证
 
 from __future__ import annotations
 

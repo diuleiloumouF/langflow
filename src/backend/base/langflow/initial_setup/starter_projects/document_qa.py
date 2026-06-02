@@ -1,3 +1,6 @@
+# 文档问答入门项目
+# 该模块构建一个文档问答流程：文件加载 -> 用户输入 -> 提示词模板 -> 语言模型 -> 输出
+
 from lfx.components.data import FileComponent
 from lfx.components.input_output import ChatInput, ChatOutput
 from lfx.components.models import LanguageModelComponent
@@ -6,6 +9,7 @@ from lfx.graph import Graph
 
 
 def document_qa_graph(template: str | None = None):
+    """构建文档问答示例图。"""
     if template is None:
         template = """Answer user's questions based on the document below:
 

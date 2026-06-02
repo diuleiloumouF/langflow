@@ -5,6 +5,10 @@ import {
   WEBHOOK_COMPONENT,
 } from "./constants";
 
+/**
+ * 判断组件项是否应被禁用
+ * 根据唯一输入组件的排他性规则，检查组件是否可以添加到画布
+ */
 export const disableItem = (
   SBItemName: string,
   uniqueInputsComponents: UniqueInputsComponents,

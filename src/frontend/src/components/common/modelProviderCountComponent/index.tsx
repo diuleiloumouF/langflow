@@ -6,10 +6,15 @@ import ModelProviderModal from "@/modals/modelProviderModal";
 import { cn } from "@/utils/utils";
 import ForwardedIconComponent from "../genericIconComponent";
 
+/**
+ * 模型提供商数量组件
+ * 显示当前启用的模型数量，并提供点击打开模型提供商设置弹窗的功能。
+ */
 export const ModelProviderCount = () => {
   const [open, setOpen] = useState(false);
   const { data: enabledModelsData } = useGetEnabledModels();
 
+  // 计算已启用模型的总数
   const enabledCount = useMemo(() => {
     if (!enabledModelsData?.enabled_models) return 0;
     return Object.values(enabledModelsData.enabled_models).reduce(

@@ -3,6 +3,11 @@ import ShadTooltip from "@/components/common/shadTooltipComponent";
 import { formatSeconds } from "@/components/core/playgroundComponent/chat-view/chat-messages/utils/format";
 import { formatTokenCount } from "@/utils/format-token-count";
 
+/**
+ * 消息元数据组件
+ * 显示聊天消息的元数据信息，包括持续时间、Token 用量和时间戳。
+ * 悬停时显示详细的 Tooltip 信息。
+ */
 interface MessageMetadataProps {
   /** Duration in milliseconds */
   duration?: number;

@@ -1,3 +1,4 @@
+// Canva 图标组件 - 用于 Canva 在线设计平台相关组件的标识
 import React, { forwardRef } from "react";
 import CanvaIconSVG from "./canva";
 

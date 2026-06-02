@@ -1,5 +1,7 @@
+# 模块文档：精简的 WatsonxOrchestrateDeploymentService，将任务委托给子模块。
 """Slim WatsonxOrchestrateDeploymentService that delegates to submodules."""
 
+# 导入未来注解以支持类型提示中的前向引用
 from __future__ import annotations
 
 import asyncio
@@ -61,6 +63,7 @@ from lfx.services.adapters.deployment.schema import (
 )
 from lfx.services.adapters.payload import AdapterPayloadMissingError, AdapterPayloadValidationError
 
+# 导入 Watsonx Orchestrate 适配器相关的模块和类
 from langflow.services.adapters.deployment.watsonx_orchestrate.client import get_authenticator, get_provider_clients
 from langflow.services.adapters.deployment.watsonx_orchestrate.constants import (
     SUPPORTED_ADAPTER_DEPLOYMENT_TYPES,
@@ -121,8 +124,10 @@ from langflow.services.adapters.deployment.watsonx_orchestrate.utils import (
 )
 from langflow.services.deps import get_settings_service
 
+# 日志记录器，用于记录该模块的日志信息
 logger = logging.getLogger(__name__)
 
+# 类型检查时的条件导入，避免循环导入和运行时开销
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
@@ -132,6 +137,7 @@ if TYPE_CHECKING:
 
 
 class WatsonxOrchestrateDeploymentService(BaseDeploymentService):
+    # 部署适配器类，用于 Watsonx Orchestrate 平台的部署管理
     """Deployment adapter for Watsonx Orchestrate."""
 
     name = "deployment_service"

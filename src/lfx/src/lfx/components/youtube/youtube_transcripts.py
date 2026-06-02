@@ -1,3 +1,4 @@
+# YouTube 转录组件，从 YouTube 视频中提取字幕/转录文本
 import re
 
 import pandas as pd
@@ -11,15 +12,22 @@ from lfx.schema.message import Message
 from lfx.template.field.base import Output
 
 
+# YouTube 转录组件，提取视频的语音内容并支持多种输出格式
 class YouTubeTranscriptsComponent(Component):
     """A component that extracts spoken content from YouTube videos as transcripts."""
 
+    # 组件显示名称
     display_name: str = "YouTube Transcripts"
+    # 组件描述
     description: str = "Extracts spoken content from YouTube videos with multiple output options."
+    # 组件图标
     icon: str = "YouTube"
+    # 组件内部名称
     name = "YouTubeTranscripts"
 
+    # 组件输入参数定义
     inputs = [
+        # YouTube 视频 URL
         MultilineInput(
             name="url",
             display_name="Video URL",
@@ -27,12 +35,14 @@ class YouTubeTranscriptsComponent(Component):
             tool_mode=True,
             required=True,
         ),
+        # 转录分块大小（秒），每个分块包含的时间长度
         IntInput(
             name="chunk_size_seconds",
             display_name="Chunk Size (seconds)",
             value=60,
             info="The size of each transcript chunk in seconds.",
         ),
+        # 翻译目标语言（可选）
         DropdownInput(
             name="translation",
             display_name="Translation Language",
@@ -42,12 +52,14 @@ class YouTubeTranscriptsComponent(Component):
         ),
     ]
 
+    # 组件输出定义：DataFrame 格式、消息格式、数据格式
     outputs = [
         Output(name="dataframe", display_name="Chunks", method="get_dataframe_output"),
         Output(name="message", display_name="Transcript", method="get_message_output"),
         Output(name="data_output", display_name="Transcript + Source", method="get_data_output"),
     ]
 
+    # 从 YouTube URL 中提取视频 ID
     def _extract_video_id(self, url: str) -> str:
         """Extract video ID from YouTube URL."""
         patterns = [
@@ -61,6 +73,7 @@ class YouTubeTranscriptsComponent(Component):
         msg = f"Could not extract video ID from URL: {url}"
         raise ValueError(msg)
 
+    # 从 YouTube 加载转录数据
     def _load_transcripts(self, *, as_chunks: bool = True):
         """Internal method to load transcripts from YouTube."""
         try:
@@ -71,12 +84,14 @@ class YouTubeTranscriptsComponent(Component):
 
         try:
             # Use new v1.0+ API - create instance
+            # 使用 v1.0+ 新版 API 创建实例
             api = YouTubeTranscriptApi()
             transcript_list = api.list(video_id)
 
             # Get transcript in specified language or default to English
             if self.translation:
                 # Get any available transcript and translate it
+                # 获取可用字幕并翻译为目标语言
                 transcript = transcript_list.find_transcript(["en"])
                 transcript = transcript.translate(self.translation)
             else:
@@ -85,6 +100,7 @@ class YouTubeTranscriptsComponent(Component):
                     transcript = transcript_list.find_transcript(["en"])
                 except NoTranscriptFound:
                     # Try auto-generated English
+                    # 尝试获取自动生成的英文字幕
                     transcript = transcript_list.find_generated_transcript(["en"])
 
             # Fetch the transcript data
@@ -114,10 +130,12 @@ class YouTubeTranscriptsComponent(Component):
 
         if as_chunks:
             # Group into chunks based on chunk_size_seconds
+            # 按时间窗口分块
             return self._chunk_transcript(transcript_data)
         # Return as continuous text
         return transcript_data
 
+    # 将转录片段按时间窗口分组为块
     def _chunk_transcript(self, transcript_data):
         """Group transcript segments into time-based chunks."""
         chunks = []
@@ -126,9 +144,11 @@ class YouTubeTranscriptsComponent(Component):
 
         for segment in transcript_data:
             # Handle both dict (old API) and object (new API) formats
+            # 兼容新旧 API 格式
             segment_start = segment.start if hasattr(segment, "start") else segment["start"]
 
             # If this segment starts beyond the current chunk window, start a new chunk
+            # 如果当前片段超出当前块的时间窗口，则开始新的块
             if segment_start - chunk_start >= self.chunk_size_seconds and current_chunk:
                 chunk_text = " ".join(s.text if hasattr(s, "text") else s["text"] for s in current_chunk)
                 chunks.append({"start": chunk_start, "text": chunk_text})
@@ -144,6 +164,7 @@ class YouTubeTranscriptsComponent(Component):
 
         return chunks
 
+    # 以 DataFrame 格式输出转录内容（包含时间戳和文本列）
     def get_dataframe_output(self) -> DataFrame:
         """Provides transcript output as a DataFrame with timestamp and text columns."""
         try:
@@ -164,11 +185,13 @@ class YouTubeTranscriptsComponent(Component):
             error_msg = f"Failed to get YouTube transcripts: {exc!s}"
             return DataFrame(pd.DataFrame({"error": [error_msg]}))
 
+    # 以连续文本消息格式输出转录内容
     def get_message_output(self) -> Message:
         """Provides transcript output as continuous text."""
         try:
             transcript_data = self._load_transcripts(as_chunks=False)
             # Handle both dict (old API) and object (new API) formats
+            # 兼容新旧 API 格式，拼接所有文本
             result = " ".join(
                 segment.text if hasattr(segment, "text") else segment["text"] for segment in transcript_data
             )
@@ -178,8 +201,11 @@ class YouTubeTranscriptsComponent(Component):
             error_msg = f"Failed to get YouTube transcripts: {exc!s}"
             return Message(text=error_msg)
 
+    # 以结构化 Data 对象输出转录内容和元数据
     def get_data_output(self) -> Data:
-        """Creates a structured data object with transcript and metadata.
+        """创建包含转录文本和元数据的结构化数据对象。
+
+        Creates a structured data object with transcript and metadata.
 
         Returns a Data object containing transcript text, video URL, and any error
         messages that occurred during processing. The object includes:
@@ -196,6 +222,7 @@ class YouTubeTranscriptsComponent(Component):
                 return Data(data=default_data)
 
             # Combine all transcript segments - handle both dict and object formats
+            # 合并所有转录片段，兼容新旧 API 格式
             full_transcript = " ".join(
                 segment.text if hasattr(segment, "text") else segment["text"] for segment in transcript_data
             )

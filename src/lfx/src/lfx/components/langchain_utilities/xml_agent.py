@@ -15,11 +15,13 @@ from lfx.inputs.inputs import (
 from lfx.schema.data import Data
 
 
+# XML Agent 组件，使用 XML 格式的工具指令与语言模型交互
+# XML agent component for using XML formatted tool instructions with language models
 class XMLAgentComponent(LCToolsAgentComponent):
     display_name: str = "XML Agent"
     description: str = "Agent that uses tools formatting instructions as xml to the Language Model."
     icon = "LangChain"
-    beta = True
+    beta = True  # 此组件为 beta 版本
     name = "XMLAgent"
     inputs = [
         *LCToolsAgentComponent.get_base_inputs(),
@@ -88,6 +90,7 @@ Question: {input}
         ),
     ]
 
+    # 从下拉选择或连接的组件解析语言模型
     def _get_llm(self):
         """Resolve the language model from dropdown selection or connected component."""
         return get_llm(
@@ -98,6 +101,7 @@ Question: {input}
             watsonx_project_id=getattr(self, "project_id", None),
         )
 
+    # 动态更新构建配置，使用用户过滤的模型选项（支持工具调用的模型）
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None) -> dict:
         """Dynamically update build config with user-filtered model options (tool-calling capable models)."""
         return handle_model_input_update(
@@ -109,9 +113,11 @@ Question: {input}
             get_options_func=lambda user_id=None: get_language_model_options(user_id=user_id, tool_calling=True),
         )
 
+    # 获取聊天历史数据
     def get_chat_history_data(self) -> list[Data] | None:
         return self.chat_history
 
+    # 创建 XML Agent 可运行对象
     def create_agent_runnable(self):
         if "input" not in self.user_prompt:
             msg = "Prompt must contain 'input' key."

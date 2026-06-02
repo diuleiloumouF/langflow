@@ -1,7 +1,10 @@
+# 模板数据处理工具模块
+# 从流程图的节点模板中提取输入变量、获取根节点和构建 JSON 数据
 import contextlib
 import re
 
 
+# 从节点模板中提取输入变量并填充到 input_variables 字段
 def extract_input_variables(nodes):
     """Extracts input variables from the template and adds them to the input_variables field."""
     for node in nodes:
@@ -24,6 +27,7 @@ def extract_input_variables(nodes):
     return nodes
 
 
+# 获取流程图的根节点（没有入边的节点）
 def get_root_vertex(graph):
     """Returns the root node of the template."""
     incoming_edges = {edge.source_id for edge in graph.edges}
@@ -34,6 +38,7 @@ def get_root_vertex(graph):
     return next((node for node in graph.vertices if node.id not in incoming_edges), None)
 
 
+# 从根节点递归构建完整的 JSON 数据结构
 def build_json(root, graph) -> dict:
     if "node" not in root.data:
         # If the root node has no "node" key, then it has only one child,

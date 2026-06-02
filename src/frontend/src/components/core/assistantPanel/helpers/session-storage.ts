@@ -1,6 +1,8 @@
 /**
- * Serialization and deserialization of assistant sessions for localStorage.
+ * 助手会话的序列化和反序列化工具
+ * 用于将会话数据存储到 localStorage 和从 localStorage 加载。
  */
+// Serialization and deserialization of assistant sessions for localStorage.
 
 import type {
   AssistantMessage,
@@ -8,6 +10,7 @@ import type {
   SessionHistoryEntry,
 } from "../assistant-panel.types";
 
+// 从 localStorage 加载会话列表
 export function loadSessionsFromStorage(
   storageKey: string,
 ): SessionHistoryEntry[] {
@@ -22,6 +25,7 @@ export function loadSessionsFromStorage(
   }
 }
 
+// 保存会话列表到 localStorage
 export function saveSessionsToStorage(
   storageKey: string,
   sessions: SessionHistoryEntry[],
@@ -33,6 +37,7 @@ export function saveSessionsToStorage(
   }
 }
 
+// 将消息数组序列化为可存储的格式
 export function serializeMessages(
   messages: AssistantMessage[],
 ): SerializedAssistantMessage[] {
@@ -54,6 +59,7 @@ export function serializeMessages(
   });
 }
 
+// 将序列化的消息数组反序列化为 AssistantMessage 格式
 export function deserializeMessages(
   serialized: SerializedAssistantMessage[],
 ): AssistantMessage[] {

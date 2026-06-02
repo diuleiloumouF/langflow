@@ -15,6 +15,10 @@ function formatDate(iso: string) {
   });
 }
 
+/**
+ * 部署信息网格组件
+ * 以网格布局显示部署的关键信息，如类型、提供商、LLM 等
+ */
 export default function DeploymentInfoGrid({
   deployment,
   providerName,

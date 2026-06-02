@@ -1,3 +1,4 @@
+// Figma 图标组件 - 用于 Figma 协作设计工具相关组件的标识
 import React, { forwardRef } from "react";
 import FigmaIconSVG from "./figma";
 

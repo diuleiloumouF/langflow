@@ -1,3 +1,4 @@
+// Linear 图标组件 - 用于 Linear 项目管理工具相关组件的标识
 import React, { forwardRef } from "react";
 import LinearIconSVG from "./linear";
 

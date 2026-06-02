@@ -12,6 +12,8 @@ from lfx.log.logger import logger
 from lfx.schema.dotdict import dotdict
 
 
+# IBM WatsonX 嵌入组件，用于 IBM watsonx.ai 的嵌入向量生成
+# IBM WatsonX embeddings component for generating embeddings
 class WatsonxEmbeddingsComponent(LCEmbeddingsModel):
     """LFX component for IBM watsonx.ai embeddings."""
 
@@ -20,6 +22,7 @@ class WatsonxEmbeddingsComponent(LCEmbeddingsModel):
     icon = "WatsonxAI"
     name = "WatsonxEmbeddingsComponent"
 
+    # 所有区域中可用的默认模型
     # models present in all the regions
     _default_models = [
         "sentence-transformers/all-minilm-l12-v2",
@@ -86,6 +89,7 @@ class WatsonxEmbeddingsComponent(LCEmbeddingsModel):
         ),
     ]
 
+    # 从 watsonx.ai API 获取可用的嵌入模型列表
     @staticmethod
     def fetch_models(base_url: str) -> list[str]:
         """Fetch available models from the watsonx.ai API.
@@ -94,6 +98,7 @@ class WatsonxEmbeddingsComponent(LCEmbeddingsModel):
         """
         return get_watsonx_embedding_models(base_url, default_models=WatsonxEmbeddingsComponent._default_models)
 
+    # 当 URL 或 API 密钥更改时更新模型选项
     def update_build_config(self, build_config: dotdict, field_value: Any, field_name: str | None = None):
         """Update model options when URL or API key changes."""
         logger.debug(
@@ -115,6 +120,7 @@ class WatsonxEmbeddingsComponent(LCEmbeddingsModel):
 
         return build_config
 
+    # 构建 WatsonxEmbeddings 嵌入模型实例
     def build_embeddings(self) -> Embeddings:
         params = {
             EmbedTextParamsMetaNames.TRUNCATE_INPUT_TOKENS: self.truncate_input_tokens,

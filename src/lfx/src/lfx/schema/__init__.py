@@ -1,35 +1,46 @@
 """Schema modules for lfx package."""
+# lfx 包的 Schema 模块，定义了数据模型、请求/响应结构体以及序列化工具。
 
 __all__ = [
+    # 工作流相关的 HTTP 响应模型
     "WORKFLOW_EXECUTION_RESPONSES",
     "WORKFLOW_STATUS_RESPONSES",
     "ComponentOutput",
+    # 核心数据类型
     "Data",
     "DataFrame",
+    # 错误相关
     "ErrorDetail",
+    # 输入值与调整参数
     "InputValue",
     "JobStatus",
     "Message",
+    # OpenAI Responses API 相关的请求/响应模型
     "OpenAIErrorResponse",
     "OpenAIResponsesRequest",
     "OpenAIResponsesResponse",
     "OpenAIResponsesStreamChunk",
     "Tweaks",
+    # 序列化工具
     "UUIDstr",
+    # 工作流执行相关的请求/响应/事件模型
     "WorkflowExecutionRequest",
     "WorkflowExecutionResponse",
     "WorkflowJobResponse",
     "WorkflowStopRequest",
     "WorkflowStopResponse",
     "WorkflowStreamEvent",
+    # OpenAI 错误构造辅助函数
     "create_openai_error",
     "create_openai_error_chunk",
+    # 点号访问字典
     "dotdict",
 ]
 
 
 def __getattr__(name: str):
     # Import to avoid circular dependencies
+    # 使用延迟导入（lazy import）来避免循环依赖，仅在实际访问时才从子模块导入对应的符号。
     if name == "Data":
         from .data import Data
 
@@ -127,5 +138,6 @@ def __getattr__(name: str):
 
         return ComponentOutput
 
+    # 当访问的属性不在已知导出列表中时，抛出 AttributeError。
     msg = f"module '{__name__}' has no attribute '{name}'"
     raise AttributeError(msg)

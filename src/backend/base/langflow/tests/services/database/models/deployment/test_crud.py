@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+# 部署 CRUD 操作测试
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+
+# 导入部署相关的 CRUD 操作函数
 from langflow.services.database.models.deployment.crud import (
     create_deployment,
     delete_deployment_by_id,
@@ -34,34 +37,41 @@ from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 _TEST_PASSWORD = "hashed"  # noqa: S105  # pragma: allowlist secret
+# 测试用的哈希密码
 
 
 # ---------------------------------------------------------------------------
 # Mock helper (for pure-validation tests that raise before touching DB)
+# 模拟辅助工具（用于在访问数据库之前抛出异常的纯验证测试）
 # ---------------------------------------------------------------------------
 
 
 def _make_db() -> AsyncMock:
+    """创建模拟数据库对象。"""
     db = AsyncMock()
     db.add = MagicMock()
     return db
 
 
 class _ExecResult:
+    """模拟数据库查询结果的辅助类。"""
+
     def __init__(self, rows):
         self._rows = rows
 
     def all(self):
+        """返回所有结果行。"""
         return self._rows
 
 
 # ---------------------------------------------------------------------------
-# In-memory SQLite fixtures
+# In-memory SQLite fixtures（内存 SQLite 固定装置）
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture(name="db_engine")
 def db_engine_fixture():
+    """创建内存 SQLite 数据库引擎的固定装置。"""
     engine = create_async_engine(
         "sqlite+aiosqlite://",
         connect_args={"check_same_thread": False},
@@ -79,6 +89,7 @@ def db_engine_fixture():
 
 @pytest.fixture(name="db")
 async def db_fixture(db_engine):
+    """创建数据库会话的固定装置。"""
     async with db_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     async with AsyncSession(db_engine, expire_on_commit=False) as session:
@@ -90,6 +101,7 @@ async def db_fixture(db_engine):
 
 @pytest.fixture
 async def user(db: AsyncSession) -> User:
+    """创建测试用户的固定装置。"""
     u = User(username="testuser", password=_TEST_PASSWORD, is_active=True)
     db.add(u)
     await db.commit()
@@ -99,6 +111,7 @@ async def user(db: AsyncSession) -> User:
 
 @pytest.fixture
 async def folder(db: AsyncSession, user: User) -> Folder:
+    """创建测试文件夹（项目）的固定装置。"""
     f = Folder(name="test-project", user_id=user.id)
     db.add(f)
     await db.commit()
@@ -108,6 +121,7 @@ async def folder(db: AsyncSession, user: User) -> Folder:
 
 @pytest.fixture
 async def provider_account(db: AsyncSession, user: User) -> DeploymentProviderAccount:
+    """创建测试部署提供商账户的固定装置。"""
     acct = DeploymentProviderAccount(
         user_id=user.id,
         provider_tenant_id="tenant-1",
@@ -124,11 +138,13 @@ async def provider_account(db: AsyncSession, user: User) -> DeploymentProviderAc
 
 # ---------------------------------------------------------------------------
 # Pure-validation tests (raise before any DB call)
+# 纯验证测试（在任何数据库调用之前抛出异常）
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
 async def test_create_deployment_empty_resource_key_raises():
+    """测试创建部署时，空资源键会抛出 ValueError。"""
     db = _make_db()
     with pytest.raises(ValueError, match="resource_key must not be empty"):
         await create_deployment(
@@ -144,6 +160,7 @@ async def test_create_deployment_empty_resource_key_raises():
 
 @pytest.mark.asyncio
 async def test_create_deployment_empty_name_raises():
+    """测试创建部署时，空名称会抛出 ValueError。"""
     db = _make_db()
     with pytest.raises(ValueError, match="name must not be empty"):
         await create_deployment(
@@ -159,6 +176,7 @@ async def test_create_deployment_empty_name_raises():
 
 @pytest.mark.asyncio
 async def test_get_deployment_invalid_uuid_raises():
+    """测试获取部署时，无效的 UUID 会抛出 ValueError。"""
     db = _make_db()
     with pytest.raises(ValueError, match="deployment_id is not a valid UUID"):
         await get_deployment(db, user_id=uuid4(), deployment_id="not-a-uuid")
@@ -166,6 +184,7 @@ async def test_get_deployment_invalid_uuid_raises():
 
 @pytest.mark.asyncio
 async def test_list_deployments_page_negative_offset_raises():
+    """测试列出部署分页时，负偏移量会抛出 ValueError。"""
     db = _make_db()
     with pytest.raises(ValueError, match="offset must be greater than or equal to 0"):
         await list_deployments_page(
@@ -179,6 +198,7 @@ async def test_list_deployments_page_negative_offset_raises():
 
 @pytest.mark.asyncio
 async def test_list_deployments_page_zero_limit_raises():
+    """测试列出部署分页时，零限制会抛出 ValueError。"""
     db = _make_db()
     with pytest.raises(ValueError, match="limit must be greater than 0"):
         await list_deployments_page(
@@ -192,6 +212,7 @@ async def test_list_deployments_page_zero_limit_raises():
 
 @pytest.mark.asyncio
 async def test_list_deployments_page_negative_limit_raises():
+    """测试列出部署分页时，负限制会抛出 ValueError。"""
     db = _make_db()
     with pytest.raises(ValueError, match="limit must be greater than 0"):
         await list_deployments_page(
@@ -205,6 +226,7 @@ async def test_list_deployments_page_negative_limit_raises():
 
 @pytest.mark.asyncio
 async def test_list_deployments_page_attachment_count_only_counts_live_flow_versions():
+    """测试列出部署分页时，附件计数只计算实时流程版本。"""
     db = _make_db()
     db.exec = AsyncMock(return_value=_ExecResult([]))
     await list_deployments_page(
@@ -216,12 +238,14 @@ async def test_list_deployments_page_attachment_count_only_counts_live_flow_vers
     )
 
     # String-match on compiled SQL because these tests use mocked sessions.
+    # 由于这些测试使用模拟会话，因此对编译后的 SQL 进行字符串匹配
     statement_text = str(db.exec.await_args.args[0]).lower()
     assert "join flow_version" in statement_text
 
 
 @pytest.mark.asyncio
 async def test_update_deployment_empty_name_raises():
+    """测试更新部署时，空名称会抛出 ValueError。"""
     db = _make_db()
     deploy = MagicMock()
     with pytest.raises(ValueError, match="name must not be empty"):
@@ -230,11 +254,13 @@ async def test_update_deployment_empty_name_raises():
 
 # ---------------------------------------------------------------------------
 # Mock-based tests (can't trigger with real SQLite)
+# 基于模拟的测试（无法用真实 SQLite 触发）
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
 async def test_delete_by_resource_key_none_rowcount_logs_error():
+    """测试通过资源键删除时，空行数会记录错误日志。"""
     db = _make_db()
     lookup_result = MagicMock()
     lookup_result.first.return_value = uuid4()
@@ -266,6 +292,7 @@ async def test_delete_by_resource_key_none_rowcount_logs_error():
 
 @pytest.mark.asyncio
 async def test_delete_by_resource_key_missing_row_skips_attachment_delete():
+    """测试通过资源键删除时，缺少行会跳过附件删除。"""
     db = _make_db()
     lookup_result = MagicMock()
     lookup_result.first.return_value = None
@@ -294,6 +321,7 @@ async def test_delete_by_resource_key_missing_row_skips_attachment_delete():
 
 @pytest.mark.asyncio
 async def test_delete_by_id_none_rowcount_logs_error():
+    """测试通过 ID 删除时，空行数会记录错误日志。"""
     db = _make_db()
     attachment_delete_result = MagicMock()
     attachment_delete_result.rowcount = 1
@@ -320,11 +348,13 @@ async def test_delete_by_id_none_rowcount_logs_error():
 
 # ---------------------------------------------------------------------------
 # FK-disabled safety test (real SQLite, FK off)
+# 外键禁用安全测试（真实 SQLite，外键关闭）
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
 async def test_delete_by_id_prunes_attachments_when_fk_disabled():
+    """测试外键禁用时，通过 ID 删除会清理附件。"""
     engine = create_async_engine(
         "sqlite+aiosqlite://",
         connect_args={"check_same_thread": False},
@@ -419,7 +449,7 @@ async def test_delete_by_id_prunes_attachments_when_fk_disabled():
 
 
 # ---------------------------------------------------------------------------
-# In-memory SQLite tests
+# In-memory SQLite tests（内存 SQLite 测试）
 # ---------------------------------------------------------------------------
 
 
@@ -427,6 +457,7 @@ async def test_delete_by_id_prunes_attachments_when_fk_disabled():
 async def test_create_deployment_strips_whitespace(
     db: AsyncSession, user: User, folder: Folder, provider_account: DeploymentProviderAccount
 ):
+    """测试创建部署时，会去除首尾空白字符。"""
     assert folder.id is not None
     row = await create_deployment(
         db,
@@ -449,6 +480,7 @@ async def test_create_deployment_strips_whitespace(
 async def test_update_deployment_strips_whitespace(
     db: AsyncSession, user: User, folder: Folder, provider_account: DeploymentProviderAccount
 ):
+    """测试更新部署时，会去除首尾空白字符。"""
     assert folder.id is not None
     row = await create_deployment(
         db,
@@ -473,6 +505,7 @@ async def test_update_deployment_strips_whitespace(
 async def test_delete_by_id_removes_attached_rows_with_fk_on(
     db: AsyncSession, user: User, folder: Folder, provider_account: DeploymentProviderAccount
 ):
+    """测试通过 ID 删除时，外键开启会删除关联行。"""
     flow = Flow(name="flow-del-id", user_id=user.id, folder_id=folder.id, data={"nodes": [], "edges": []})
     db.add(flow)
     await db.flush()
@@ -531,6 +564,7 @@ async def test_delete_by_id_removes_attached_rows_with_fk_on(
 async def test_delete_by_ids_removes_multiple_deployments_and_attached_rows(
     db: AsyncSession, user: User, folder: Folder, provider_account: DeploymentProviderAccount
 ):
+    """测试通过多个 ID 删除时，会删除多个部署和关联行。"""
     flow = Flow(name="flow-del-ids", user_id=user.id, folder_id=folder.id, data={"nodes": [], "edges": []})
     db.add(flow)
     await db.flush()
@@ -604,6 +638,7 @@ async def test_delete_by_ids_removes_multiple_deployments_and_attached_rows(
 async def test_delete_by_resource_key_removes_attached_rows_with_fk_on(
     db: AsyncSession, user: User, folder: Folder, provider_account: DeploymentProviderAccount
 ):
+    """测试通过资源键删除时，外键开启会删除关联行。"""
     flow = Flow(name="flow-del-rk", user_id=user.id, folder_id=folder.id, data={"nodes": [], "edges": []})
     db.add(flow)
     await db.flush()
@@ -658,6 +693,7 @@ async def test_delete_by_resource_key_removes_attached_rows_with_fk_on(
 async def test_deployment_name_exists_returns_true_when_found(
     db: AsyncSession, user: User, folder: Folder, provider_account: DeploymentProviderAccount
 ):
+    """测试部署名称存在时返回 True。"""
     assert folder.id is not None
     await create_deployment(
         db,
@@ -683,6 +719,7 @@ async def test_deployment_name_exists_returns_true_when_found(
 async def test_deployment_name_exists_returns_false_when_not_found(
     db: AsyncSession, user: User, provider_account: DeploymentProviderAccount
 ):
+    """测试部署名称不存在时返回 False。"""
     result = await deployment_name_exists(
         db,
         user_id=user.id,
@@ -696,6 +733,7 @@ async def test_deployment_name_exists_returns_false_when_not_found(
 async def test_deployment_name_exists_strips_whitespace(
     db: AsyncSession, user: User, folder: Folder, provider_account: DeploymentProviderAccount
 ):
+    """测试部署名称存在时，会去除首尾空白字符。"""
     assert folder.id is not None
     await create_deployment(
         db,

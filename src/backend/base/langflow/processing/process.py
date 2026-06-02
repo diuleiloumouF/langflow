@@ -19,7 +19,11 @@ if TYPE_CHECKING:
 
 
 class Result(BaseModel):
+    """流程运行结果的模型，包含结果数据和会话 ID。"""
+
+    # 结果数据
     result: Any
+    # 会话标识符
     session_id: str
 
 

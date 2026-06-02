@@ -2,6 +2,10 @@ import { Outlet } from "react-router-dom";
 import AppHeader from "@/components/core/appHeaderComponent";
 import useTheme from "@/customization/hooks/use-custom-theme";
 
+/**
+ * 仪表盘页面包装组件
+ * 提供应用头部导航栏和子路由内容的布局容器
+ */
 export function DashboardWrapperPage() {
   useTheme();
 

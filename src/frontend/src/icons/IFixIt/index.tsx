@@ -1,3 +1,4 @@
+// IFixIt 图标组件 - 用于 IFixIt 维修指南平台相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import SvgIfixitSeeklogocom from "./IfixitSeeklogoCom";

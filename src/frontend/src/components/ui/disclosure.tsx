@@ -18,6 +18,11 @@ import {
 } from "react";
 import { cn } from "../../utils/utils";
 
+/**
+ * 披露（Disclosure）组件
+ * 基于 framer-motion 的可折叠面板组件，支持展开/折叠动画。
+ * 由 Disclosure（容器）、DisclosureTrigger（触发器）和 DisclosureContent（内容）组成。
+ */
 type DisclosureContextType = {
   open: boolean;
   toggle: () => void;
@@ -154,6 +159,7 @@ const DisclosureTrigger = memo(function DisclosureTrigger({
   );
 });
 
+// 默认的展开/折叠动画变体
 const BASE_VARIANTS: Variants = {
   expanded: {
     height: "auto",

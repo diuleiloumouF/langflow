@@ -1,6 +1,11 @@
 import type { ConnectionLineComponentProps } from "@xyflow/react";
 import useFlowStore from "@/stores/flowStore";
 
+/**
+ * 连接线组件
+ * 在用户拖拽连接时绘制贝塞尔曲线连接线和目标圆点
+ * 连接线颜色根据拖拽目标的数据类型自动适配
+ */
 const ConnectionLineComponent = ({
   fromX,
   fromY,

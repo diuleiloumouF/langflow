@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "../../../../../../components/ui/card";
 
+/** 密码表单组件的属性定义 */
 type PasswordFormComponentProps = {
   password: string;
   cnfPassword: string;

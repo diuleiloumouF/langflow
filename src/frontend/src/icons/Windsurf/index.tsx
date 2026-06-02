@@ -1,3 +1,4 @@
+// Windsurf 图标组件 - 用于 Windsurf AI 代码编辑器相关组件的标识
 import React, { forwardRef } from "react";
 import SvgWindsurf from "./Windsurf";
 

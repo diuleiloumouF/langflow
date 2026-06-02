@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .huggingface import HuggingFaceEndpointsComponent
     from .huggingface_inference_api import HuggingFaceInferenceAPIEmbeddingsComponent
 
+# HuggingFace 组件的动态导入映射表
 _dynamic_imports = {
     "HuggingFaceEndpointsComponent": "huggingface",
     "HuggingFaceInferenceAPIEmbeddingsComponent": "huggingface_inference_api",
@@ -21,6 +22,7 @@ __all__ = [
 
 def __getattr__(attr_name: str) -> Any:
     """Lazily import huggingface components on attribute access."""
+    # 在属性访问时延迟导入 HuggingFace 组件
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)

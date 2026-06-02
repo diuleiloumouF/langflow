@@ -12,6 +12,11 @@ import { useUtilityStore } from "@/stores/utilityStore";
 import { type CookieOptions, getCookie, setCookie } from "@/utils/utils";
 import useFlowsManagerStore from "../../stores/flowsManagerStore";
 import { getInputsAndOutputs } from "../../utils/storeUtils";
+/**
+ * Playground 页面组件
+ * 独立的流程运行页面，加载指定 ID 的流程并显示聊天交互界面
+ * 支持公开流程的访问和客户端 ID 管理
+ */
 export default function PlaygroundPage() {
   useGetConfig({});
   const setCurrentFlow = useFlowsManagerStore((state) => state.setCurrentFlow);

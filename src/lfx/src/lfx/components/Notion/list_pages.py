@@ -13,6 +13,8 @@ from lfx.schema.data import Data
 
 
 class NotionListPages(LCToolComponent):
+    """Notion 数据库页面列表查询组件，支持过滤和排序查询 Notion 数据库中的页面。"""
+
     display_name: str = "List Pages "
     description: str = (
         "Query a Notion database with filtering and sorting. "
@@ -24,6 +26,7 @@ class NotionListPages(LCToolComponent):
     documentation: str = "https://docs.langflow.org/bundles-notion"
     icon = "NotionDirectoryLoader"
 
+    # 组件输入参数定义
     inputs = [
         SecretStrInput(
             name="notion_secret",
@@ -44,6 +47,7 @@ class NotionListPages(LCToolComponent):
         ),
     ]
 
+    # Notion 查询参数的 Pydantic 数据模型
     class NotionListPagesSchema(BaseModel):
         database_id: str = Field(..., description="The ID of the Notion database to query.")
         query_json: str | None = Field(
@@ -53,10 +57,12 @@ class NotionListPages(LCToolComponent):
         )
 
     def run_model(self) -> list[Data]:
+        """执行 Notion 数据库查询，返回页面数据列表。"""
         result = self._query_notion_database(self.database_id, self.query_json)
 
         if isinstance(result, str):
             # An error occurred, return it as a single record
+            # 发生错误时，将错误信息作为单条记录返回
             return [Data(text=result)]
 
         records = []
@@ -86,6 +92,7 @@ class NotionListPages(LCToolComponent):
         return records
 
     def build_tool(self) -> Tool:
+        """构建 LangChain StructuredTool，供 Agent 调用 Notion 数据库查询。"""
         return StructuredTool.from_function(
             name="notion_list_pages",
             description=self.description,
@@ -94,6 +101,7 @@ class NotionListPages(LCToolComponent):
         )
 
     def _query_notion_database(self, database_id: str, query_json: str | None = None) -> list[dict[str, Any]] | str:
+        """调用 Notion API 查询数据库，返回页面列表或错误信息字符串。"""
         url = f"https://api.notion.com/v1/databases/{database_id}/query"
         headers = {
             "Authorization": f"Bearer {self.notion_secret}",
@@ -101,6 +109,7 @@ class NotionListPages(LCToolComponent):
             "Notion-Version": "2022-06-28",
         }
 
+        # 构建查询请求体
         query_payload = {}
         if query_json and query_json.strip():
             try:

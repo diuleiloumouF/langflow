@@ -5,6 +5,8 @@ from lfx.io import MultilineInput, Output
 from lfx.schema.data import Data
 
 
+# Webhook 组件，用于接收外部系统通过 HTTP POST 发送的负载数据
+# Webhook component for receiving payloads from external systems via HTTP POST
 class WebhookComponent(Component):
     display_name = "Webhook"
     documentation: str = "https://docs.langflow.org/component-webhook"
@@ -38,6 +40,7 @@ class WebhookComponent(Component):
         Output(display_name="JSON", name="output_data", method="build_data"),
     ]
 
+    # 构建数据方法，解析 JSON 负载并返回 Data 对象
     def build_data(self) -> Data:
         message: str | Data = ""
         if not self.data:

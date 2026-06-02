@@ -1,3 +1,4 @@
+# YouTube 热门视频组件，获取 YouTube 各地区和分类的热门视频
 from contextlib import contextmanager
 
 import pandas as pd
@@ -10,19 +11,26 @@ from lfx.log.logger import logger
 from lfx.schema.dataframe import DataFrame
 from lfx.template.field.base import Output
 
+# HTTP 状态码常量
 HTTP_FORBIDDEN = 403
 HTTP_NOT_FOUND = 404
+# API 单次最大返回结果数
 MAX_API_RESULTS = 50
 
 
+# YouTube 热门视频组件，获取指定地区和分类的热门视频并返回 DataFrame
 class YouTubeTrendingComponent(Component):
     """A component that retrieves trending videos from YouTube."""
 
+    # 组件显示名称
     display_name: str = "YouTube Trending"
+    # 组件描述
     description: str = "Retrieves trending videos from YouTube with filtering options."
+    # 组件图标
     icon: str = "YouTube"
 
     # Dictionary of country codes and names
+    # 国家/地区代码映射表
     COUNTRY_CODES = {
         "Global": "US",  # Default to US for global
         "United States": "US",
@@ -45,6 +53,7 @@ class YouTubeTrendingComponent(Component):
     }
 
     # Dictionary of video categories
+    # 视频分类映射表
     VIDEO_CATEGORIES = {
         "All": "0",
         "Film & Animation": "1",
@@ -63,13 +72,16 @@ class YouTubeTrendingComponent(Component):
         "Nonprofits & Activism": "29",
     }
 
+    # 组件输入参数定义
     inputs = [
+        # YouTube Data API 密钥
         SecretStrInput(
             name="api_key",
             display_name="YouTube API Key",
             info="Your YouTube Data API key.",
             required=True,
         ),
+        # 地区选择
         DropdownInput(
             name="region",
             display_name="Region",
@@ -77,6 +89,7 @@ class YouTubeTrendingComponent(Component):
             value="Global",
             info="The region to get trending videos from.",
         ),
+        # 视频分类选择
         DropdownInput(
             name="category",
             display_name="Category",
@@ -84,18 +97,21 @@ class YouTubeTrendingComponent(Component):
             value="All",
             info="The category of videos to retrieve.",
         ),
+        # 最大返回结果数（1-50）
         IntInput(
             name="max_results",
             display_name="Max Results",
             value=10,
             info="Maximum number of trending videos to return (1-50).",
         ),
+        # 是否包含统计数据
         BoolInput(
             name="include_statistics",
             display_name="Include Statistics",
             value=True,
             info="Include video statistics (views, likes, comments).",
         ),
+        # 是否包含视频内容详情
         BoolInput(
             name="include_content_details",
             display_name="Include Content Details",
@@ -103,6 +119,7 @@ class YouTubeTrendingComponent(Component):
             info="Include video duration and quality info.",
             advanced=True,
         ),
+        # 是否包含缩略图
         BoolInput(
             name="include_thumbnails",
             display_name="Include Thumbnails",
@@ -112,12 +129,14 @@ class YouTubeTrendingComponent(Component):
         ),
     ]
 
+    # 组件输出定义
     outputs = [
         Output(name="trending_videos", display_name="Trending Videos", method="get_trending_videos"),
     ]
 
     max_results: int
 
+    # 将 ISO 8601 格式时长转换为可读格式
     def _format_duration(self, duration: str) -> str:
         """Formats ISO 8601 duration to readable format."""
         import re
@@ -130,6 +149,7 @@ class YouTubeTrendingComponent(Component):
         seconds = 0
 
         # Extract hours, minutes and seconds
+        # 提取时、分、秒
         time_dict = {}
         for time_unit in ["H", "M", "S"]:
             match = re.search(r"(\d+)" + time_unit, duration)
@@ -148,6 +168,7 @@ class YouTubeTrendingComponent(Component):
             return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
         return f"{minutes:02d}:{seconds:02d}"
 
+    # YouTube API 客户端上下文管理器
     @contextmanager
     def youtube_client(self):
         """Context manager for YouTube API client."""
@@ -157,10 +178,12 @@ class YouTubeTrendingComponent(Component):
         finally:
             client.close()
 
+    # 获取 YouTube 热门视频并返回 DataFrame
     def get_trending_videos(self) -> DataFrame:
         """Retrieves trending videos from YouTube and returns as DataFrame."""
         try:
             # Validate max_results
+            # 验证并限制返回结果数在有效范围内
             if not 1 <= self.max_results <= MAX_API_RESULTS:
                 self.max_results = min(max(1, self.max_results), MAX_API_RESULTS)
 
@@ -170,6 +193,7 @@ class YouTubeTrendingComponent(Component):
                 region_code = self.COUNTRY_CODES[self.region]
 
                 # Prepare API request parts
+                # 准备 API 请求的 part 参数
                 parts = ["snippet"]
                 if self.include_statistics:
                     parts.append("statistics")
@@ -185,6 +209,7 @@ class YouTubeTrendingComponent(Component):
                 }
 
                 # Add category filter if not "All"
+                # 添加分类过滤（如果不是"全部"）
                 if self.category != "All":
                     request_params["videoCategoryId"] = self.VIDEO_CATEGORIES[self.category]
 
@@ -242,6 +267,7 @@ class YouTubeTrendingComponent(Component):
                 videos_df = pd.DataFrame(videos_data)
 
                 # Organize columns
+                # 整理列顺序
                 column_order = [
                     "video_id",
                     "title",

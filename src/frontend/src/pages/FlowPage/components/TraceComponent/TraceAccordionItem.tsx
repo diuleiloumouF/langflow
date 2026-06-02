@@ -21,6 +21,10 @@ import {
 } from "./traceViewHelpers";
 import { Span, TraceAccordionItemProps } from "./types";
 
+/**
+ * 追踪手风琴项组件
+ * 显示单个追踪的摘要信息，展开后加载并显示完整的 Span 树和详情
+ */
 export function TraceAccordionItem({
   traceId,
   traceName,

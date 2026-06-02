@@ -3,6 +3,10 @@ import useFlowStore from "@/stores/flowStore";
 import { useShortcutsStore } from "@/stores/shortcuts";
 import isWrappedWithClass from "../../PageComponent/utils/is-wrapped-with-class";
 
+/**
+ * 节点工具栏快捷键 Hook
+ * 绑定节点操作的键盘快捷键，如编辑、删除、下载、文档查看等
+ */
 export default function useShortcuts({
   showOverrideModal,
   showModalAdvanced,

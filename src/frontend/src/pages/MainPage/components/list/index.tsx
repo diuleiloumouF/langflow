@@ -26,6 +26,11 @@ import { useGetTemplateStyle } from "../../utils/get-template-style";
 import { timeElapsed } from "../../utils/time-elapse";
 import DropdownComponent from "../dropdown";
 
+/**
+ * 流程列表项组件
+ * 以列表视图显示单个流程的图标、名称、描述、更新时间等信息
+ * 支持点击导航、多选、右键菜单和拖拽
+ */
 const ListComponent = ({
   flowData,
   selected,

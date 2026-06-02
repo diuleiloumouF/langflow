@@ -1,3 +1,5 @@
+# Gmail 邮件加载组件，用于从 Gmail 加载邮件数据
+
 import base64
 import json
 import re
@@ -21,13 +23,16 @@ from lfx.template.field.base import Output
 
 
 class GmailLoaderComponent(Component):
+    # Gmail 邮件加载组件，通过提供的 OAuth 2.0 凭证从 Gmail 加载邮件
     display_name = "Gmail Loader"
     description = "Loads emails from Gmail using provided credentials."
     icon = "Google"
     legacy: bool = True
     replacement = ["composio.ComposioGmailAPIComponent"]
 
+    # 组件输入参数定义
     inputs = [
+        # OAuth 2.0 服务账号令牌的 JSON 字符串，包含访问令牌信息
         SecretStrInput(
             name="json_string",
             display_name="JSON String of the Service Account Token",
@@ -47,6 +52,7 @@ class GmailLoaderComponent(Component):
                 "universe_domain": "googleapis.com"
             }""",
         ),
+        # 标签 ID 列表，用于筛选邮件（逗号分隔）
         MessageTextInput(
             name="label_ids",
             display_name="Label IDs",
@@ -54,6 +60,7 @@ class GmailLoaderComponent(Component):
             required=True,
             value="INBOX,SENT,UNREAD,IMPORTANT",
         ),
+        # 最大返回结果数
         MessageTextInput(
             name="max_results",
             display_name="Max Results",
@@ -63,12 +70,15 @@ class GmailLoaderComponent(Component):
         ),
     ]
 
+    # 组件输出定义
     outputs = [
         Output(display_name="JSON", name="data", method="load_emails"),
     ]
 
     def load_emails(self) -> Data:
+        # 加载 Gmail 邮件并返回数据对象
         class CustomGMailLoader(GMailLoader):
+            # 自定义 Gmail 加载器，扩展了原生加载器以支持标签筛选功能
             def __init__(
                 self, creds: Any, *, n: int = 100, label_ids: list[str] | None = None, raise_error: bool = False
             ) -> None:
@@ -77,19 +87,24 @@ class GmailLoaderComponent(Component):
 
             def clean_message_content(self, message):
                 # Remove URLs
+                # 移除 URL 链接
                 message = re.sub(r"http\S+|www\S+|https\S+", "", message, flags=re.MULTILINE)
 
                 # Remove email addresses
+                # 移除邮箱地址
                 message = re.sub(r"\S+@\S+", "", message)
 
                 # Remove special characters and excessive whitespace
+                # 移除特殊字符和多余的空白字符
                 message = re.sub(r"[^A-Za-z0-9\s]+", " ", message)
                 message = re.sub(r"\s{2,}", " ", message)
 
                 # Trim leading and trailing whitespace
+                # 去除首尾空白
                 return message.strip()
 
             def _extract_email_content(self, msg: Any) -> HumanMessage:
+                # 从邮件消息中提取纯文本内容并返回 HumanMessage 对象
                 from_email = None
                 for values in msg["payload"]["headers"]:
                     name = values["name"]
@@ -115,6 +130,7 @@ class GmailLoaderComponent(Component):
                 raise ValueError(msg)
 
             def _get_message_data(self, service: Any, message: Any) -> ChatSession:
+                # 获取单条邮件的完整数据，包括线程中的上下文邮件
                 msg = service.users().messages().get(userId="me", id=message["id"]).execute()
                 message_content = self._extract_email_content(msg)
 
@@ -127,6 +143,7 @@ class GmailLoaderComponent(Component):
 
                 thread_id = msg["threadId"]
 
+                # 如果邮件是回复邮件，加载原始邮件以构建完整的对话上下文
                 if in_reply_to:
                     thread = service.users().threads().get(userId="me", id=thread_id).execute()
                     messages = thread["messages"]
@@ -147,6 +164,7 @@ class GmailLoaderComponent(Component):
                 return ChatSession(messages=[message_content])
 
             def lazy_load(self) -> Iterator[ChatSession]:
+                # 延迟加载邮件，逐条返回 ChatSession 对象
                 service = build("gmail", "v1", credentials=self.creds)
                 results = (
                     service.users().messages().list(userId="me", labelIds=self.label_ids, maxResults=self.n).execute()
@@ -163,20 +181,24 @@ class GmailLoaderComponent(Component):
                         else:
                             logger.exception(f"Error processing message {message['id']}")
 
+        # 解析组件输入参数
         json_string = self.json_string
         label_ids = self.label_ids.split(",") if self.label_ids else ["INBOX"]
         max_results = int(self.max_results) if self.max_results else 100
 
         # Load the token information from the JSON string
+        # 从 JSON 字符串中加载令牌信息
         try:
             token_info = json.loads(json_string)
         except JSONDecodeError as e:
             msg = "Invalid JSON string"
             raise ValueError(msg) from e
 
+        # 使用令牌信息创建 OAuth 2.0 凭证对象
         creds = Credentials.from_authorized_user_info(token_info)
 
         # Initialize the custom loader with the provided credentials
+        # 使用提供的凭证初始化自定义加载器
         loader = CustomGMailLoader(creds=creds, n=max_results, label_ids=label_ids)
 
         try:
@@ -189,5 +211,6 @@ class GmailLoaderComponent(Component):
             raise ValueError(msg) from e
 
         # Return the loaded documents
+        # 设置组件状态并返回加载的文档数据
         self.status = docs
         return Data(data={"text": docs})

@@ -1,15 +1,20 @@
 from __future__ import annotations
 
+# 启用延迟注解评估，允许在运行时解析类型注解
 import json
 import re
 from typing import TYPE_CHECKING
 
 from pydantic import ValidationError
 
+# Pydantic 数据验证错误类
 from lfx.components.models_and_agents.memory import MemoryComponent
+
+# 记忆组件，用于管理对话历史
 
 if TYPE_CHECKING:
     from langchain_core.tools import Tool
+    # 仅在类型检查时导入，避免循环依赖
 
 from lfx.base.agents.agent import LCToolsAgentComponent
 from lfx.base.agents.events import ExceptionWithMessageError
@@ -35,11 +40,19 @@ from lfx.schema.table import EditMode
 
 
 def set_advanced_true(component_input):
+    """将组件输入标记为高级选项，在 UI 中默认折叠显示"""
     component_input.advanced = True
     return component_input
 
 
 class AgentComponent(ToolCallingAgentComponent):
+    """Agent 组件 - 核心代理组件
+
+    该组件允许用户定义代理指令，然后使用工具完成任务。
+    支持多种语言模型提供商，包括 OpenAI、Anthropic、IBM watsonx 等。
+    可配置记忆系统、输出模式（消息/JSON）、结构化输出模式。
+    """
+
     display_name: str = "Agent"
     description: str = "Define the agent's instructions, then enter a task to complete using tools."
     documentation: str = "https://docs.langflow.org/agents"
@@ -47,9 +60,11 @@ class AgentComponent(ToolCallingAgentComponent):
     beta = False
     name = "Agent"
 
+    # 从 MemoryComponent 获取记忆输入配置，并标记为高级选项
     memory_inputs = [set_advanced_true(component_input) for component_input in MemoryComponent().inputs]
 
     inputs = [
+        # 语言模型选择输入 - 核心配置项
         ModelInput(
             name="model",
             display_name="Language Model",
@@ -57,6 +72,7 @@ class AgentComponent(ToolCallingAgentComponent):
             real_time_refresh=True,
             required=True,
         ),
+        # API 密钥 - 可选，覆盖全局配置
         SecretStrInput(
             name="api_key",
             display_name="API Key",
@@ -64,6 +80,7 @@ class AgentComponent(ToolCallingAgentComponent):
             real_time_refresh=True,
             advanced=True,
         ),
+        # IBM watsonx API 端点配置 - 仅针对 watsonx 用户
         DropdownInput(
             name="base_url_ibm_watsonx",
             display_name="watsonx API Endpoint",
@@ -74,6 +91,7 @@ class AgentComponent(ToolCallingAgentComponent):
             show=False,
             real_time_refresh=True,
         ),
+        # IBM watsonx 项目 ID - 仅针对 watsonx 用户
         StrInput(
             name="project_id",
             display_name="watsonx Project ID",
@@ -81,6 +99,7 @@ class AgentComponent(ToolCallingAgentComponent):
             show=False,
             required=False,
         ),
+        # 系统提示词 - 定义代理行为的核心指令
         MultilineInput(
             name="system_prompt",
             display_name="Agent Instructions",
@@ -88,6 +107,7 @@ class AgentComponent(ToolCallingAgentComponent):
             value="You are a helpful assistant that can use tools to answer questions and perform tasks.",
             advanced=False,
         ),
+        # 上下文 ID - 用于聊天会话的唯一标识
         MessageTextInput(
             name="context_id",
             display_name="Context ID",
@@ -95,6 +115,7 @@ class AgentComponent(ToolCallingAgentComponent):
             value="",
             advanced=True,
         ),
+        # 聊天历史消息数量 - 控制记忆长度
         IntInput(
             name="n_messages",
             display_name="Number of Chat History Messages",
@@ -103,6 +124,7 @@ class AgentComponent(ToolCallingAgentComponent):
             advanced=True,
             show=True,
         ),
+        # 最大 token 数 - 限制模型输出长度
         IntInput(
             name="max_tokens",
             display_name="Max Tokens",
@@ -110,6 +132,7 @@ class AgentComponent(ToolCallingAgentComponent):
             advanced=True,
             range_spec=RangeSpec(min=1, max=128000, step=1, step_type="int"),
         ),
+        # 输出格式指令 - 用于结构化输出的模板
         MultilineInput(
             name="format_instructions",
             display_name="Output Format Instructions",
@@ -125,6 +148,7 @@ class AgentComponent(ToolCallingAgentComponent):
             ),
             advanced=True,
         ),
+        # 输出 schema 配置表 - 定义结构化输出的字段结构
         TableInput(
             name="output_schema",
             display_name="Output Schema",
@@ -171,9 +195,11 @@ class AgentComponent(ToolCallingAgentComponent):
                 },
             ],
         ),
+        # 继承父类的基础输入
         *LCToolsAgentComponent.get_base_inputs(),
         # removed memory inputs from agent component
         # *memory_inputs,
+        # 当前日期工具 - 向代理提供当前日期信息
         BoolInput(
             name="add_current_date_tool",
             display_name="Current Date",
@@ -182,12 +208,13 @@ class AgentComponent(ToolCallingAgentComponent):
             value=True,
         ),
     ]
+    # 组件输出配置
     outputs = [
         Output(name="response", display_name="Response", method="message_response"),
     ]
 
     def _resolve_selected_model(self):
-        """Resolve the selected model, including legacy agent_llm/model_name inputs."""
+        """解析选中的模型，包括对旧版 agent_llm/model_name 输入的兼容处理"""
         try:
             from langchain_core.language_models import BaseLanguageModel
 
@@ -199,16 +226,19 @@ class AgentComponent(ToolCallingAgentComponent):
         if isinstance(self.model, list) and self.model:
             return self.model
 
+        # 兼容旧版输入格式
         legacy_provider = getattr(self, "agent_llm", None)
         legacy_model_name = getattr(self, "model_name", None)
         if not legacy_provider or not legacy_model_name:
             return self.model
 
+        # 从语言模型选项中查找匹配的模型
         options = get_language_model_options(user_id=self.user_id)
         for option in options:
             if option.get("provider") == legacy_provider and option.get("name") == legacy_model_name:
                 return [option]
 
+        # 未找到匹配项时返回基本格式
         return [
             {
                 "name": legacy_model_name,
@@ -218,14 +248,14 @@ class AgentComponent(ToolCallingAgentComponent):
         ]
 
     def _get_max_tokens_value(self):
-        """Return the user-supplied max_tokens or None when unset/zero."""
+        """获取最大 token 数值，未设置或为 0 时返回 None"""
         val = getattr(self, "max_tokens", None)
         if val in {"", 0}:
             return None
         return val
 
     def _get_llm(self):
-        """Override parent to include max_tokens from the Agent's input field."""
+        """获取语言模型实例，重写父类方法以支持 max_tokens 参数"""
         return get_llm(
             model=self.model,
             user_id=self.user_id,
@@ -236,7 +266,7 @@ class AgentComponent(ToolCallingAgentComponent):
         )
 
     async def get_agent_requirements(self):
-        """Get the agent requirements for the agent."""
+        """获取代理运行所需的配置：语言模型、聊天历史和工具列表"""
         from langchain_core.tools import StructuredTool
 
         selected_model = self._resolve_selected_model()
@@ -247,6 +277,7 @@ class AgentComponent(ToolCallingAgentComponent):
         except ImportError:
             is_connected_model = False
 
+        # 验证模型选择是否有效
         if not is_connected_model:
             validate_model_selection(selected_model)
 
@@ -280,6 +311,7 @@ class AgentComponent(ToolCallingAgentComponent):
         return llm_model, self.chat_history, self.tools
 
     async def message_response(self) -> Message:
+        """执行代理并返回消息响应"""
         try:
             llm_model, self.chat_history, self.tools = await self.get_agent_requirements()
             # Set up and run agent
@@ -310,7 +342,7 @@ class AgentComponent(ToolCallingAgentComponent):
             return result
 
     def _preprocess_schema(self, schema):
-        """Preprocess schema to ensure correct data types for build_model_from_schema."""
+        """预处理 schema，确保数据类型正确以供 build_model_from_schema 使用"""
         processed_schema = []
         for field in schema:
             processed_field = {
@@ -332,7 +364,7 @@ class AgentComponent(ToolCallingAgentComponent):
         return processed_schema
 
     async def build_structured_output_base(self, content: str):
-        """Build structured output with optional BaseModel validation."""
+        """构建结构化输出，支持 BaseModel 验证"""
         json_pattern = r"\{.*\}"
         schema_error_msg = "Try setting an output schema"
 
@@ -387,7 +419,7 @@ class AgentComponent(ToolCallingAgentComponent):
             return json_data
 
     async def json_response(self) -> Data:
-        """Convert agent response to structured JSON Data output with schema validation."""
+        """将代理响应转换为结构化 JSON Data 输出，支持 schema 验证"""
         # Always use structured chat agent for JSON response mode for better JSON formatting
         try:
             system_components = []
@@ -488,6 +520,7 @@ class AgentComponent(ToolCallingAgentComponent):
             return Data(data={"content": content, "error": str(e)})
 
     async def get_memory_data(self):
+        """获取记忆数据，返回聊天历史消息列表"""
         # TODO: This is a temporary fix to avoid message duplication. We should develop a function for this.
         messages = (
             await MemoryComponent(**self.get_base_args())
@@ -504,7 +537,7 @@ class AgentComponent(ToolCallingAgentComponent):
         ]
 
     def update_input_types(self, build_config: dotdict) -> dotdict:
-        """Update input types for all fields in build_config."""
+        """更新 build_config 中所有字段的输入类型"""
         for key, value in build_config.items():
             if isinstance(value, dict):
                 if value.get("input_types") is None:
@@ -519,6 +552,7 @@ class AgentComponent(ToolCallingAgentComponent):
         field_value: list[dict],
         field_name: str | None = None,
     ) -> dotdict:
+        """更新构建配置，处理模型选择变更等事件"""
         # Update model options with caching (for all field changes)
         # Agents require tool calling, so filter for only tool-calling capable models
         build_config = handle_model_input_update(
@@ -555,6 +589,7 @@ class AgentComponent(ToolCallingAgentComponent):
         return dotdict({k: v.to_dict() if hasattr(v, "to_dict") else v for k, v in build_config.items()})
 
     async def _get_tools(self) -> list[Tool]:
+        """获取代理可用的工具列表，将组件封装为工具"""
         component_toolkit = get_component_toolkit()
         tools_names = self._build_tools_names()
         agent_description = self.get_tool_description()

@@ -1,3 +1,6 @@
+# 基础提示词入门项目
+# 该模块构建一个简单的聊天流程：用户输入 -> 提示词模板 -> OpenAI 模型 -> 输出
+
 from lfx.components.input_output import ChatInput, ChatOutput
 from lfx.components.models_and_agents import PromptComponent
 from lfx.components.openai.openai_chat_model import OpenAIModelComponent
@@ -5,6 +8,7 @@ from lfx.graph import Graph
 
 
 def basic_prompting_graph(template: str | None = None):
+    """构建基础提示词示例图。"""
     if template is None:
         template = """Answer the user as if you were a pirate.
 

@@ -5,10 +5,15 @@ import { usePostCreateSnapshot } from "@/controllers/API/queries/flow-version";
 import useAlertStore from "@/stores/alertStore";
 import CanvasBanner, { CanvasBannerButton } from "./CanvasBanner";
 
+/** 保存快照按钮的属性定义 */
 interface SaveSnapshotButtonProps {
   flowId: string;
 }
 
+/**
+ * 保存快照按钮组件
+ * 在画布底部显示保存版本横幅，允许用户将当前流程状态保存为版本快照
+ */
 export default function SaveSnapshotButton({
   flowId,
 }: SaveSnapshotButtonProps) {

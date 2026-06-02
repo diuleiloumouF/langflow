@@ -3,6 +3,7 @@ import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import { Button } from "@/components/ui/button";
 import type { FlowVersionEntry } from "@/types/flow/version";
 
+/** 删除确认对话框的属性定义 */
 interface DeleteConfirmDialogProps {
   entry: FlowVersionEntry | null;
   onClose: () => void;
@@ -10,6 +11,10 @@ interface DeleteConfirmDialogProps {
   isDeleting: boolean;
 }
 
+/**
+ * 删除确认对话框组件
+ * 使用 Portal 渲染的模态对话框，用于确认删除流程版本
+ */
 export default function DeleteConfirmDialog({
   entry,
   onClose,

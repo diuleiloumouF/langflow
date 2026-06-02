@@ -2,6 +2,11 @@ import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import { IS_MAC } from "@/constants/constants";
 import { cn } from "@/utils/utils";
 
+/**
+ * 按键渲染组件
+ * 将单个快捷键名称渲染为对应的图标或文字。
+ * 根据操作系统（Mac/Windows）显示不同的修饰键符号。
+ */
 export default function RenderKey({
   value,
   tableRender,

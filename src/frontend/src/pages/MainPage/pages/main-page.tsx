@@ -14,6 +14,11 @@ import { useFolderStore } from "@/stores/foldersStore";
 import ModalsComponent from "../components/modalsComponent";
 import { shouldShowMainContent } from "./main-page-utils";
 
+/**
+ * 主页面组件（流程集合页面）
+ * 提供文件夹侧边栏和子路由内容的布局容器
+ * 管理文件夹的创建、编辑、删除等操作
+ */
 export default function CollectionPage(): JSX.Element {
   const [openModal, setOpenModal] = useState(false);
   const [openDeleteFolderModal, setOpenDeleteFolderModal] = useState(false);

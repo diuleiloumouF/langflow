@@ -1,5 +1,8 @@
 """Common input field definitions shared across Agentics components."""
 
+# 该模块定义了 Agentics 组件之间共享的通用输入字段，
+# 包括模型提供商配置、API 密钥、WatsonX 特定字段、Ollama URL 以及生成字段的表格模式定义。
+
 from __future__ import annotations
 
 from lfx.base.models.watsonx_constants import IBM_WATSONX_URLS
@@ -14,6 +17,7 @@ from lfx.io import (
 )
 from lfx.schema.table import EditMode
 
+# 生成字段表格的模式定义，用于配置 AI 生成输出的结构（字段名、描述、类型、是否为列表）
 GENERATED_FIELDS_TABLE_SCHEMA = [
     {
         "name": "name",
@@ -50,9 +54,11 @@ GENERATED_FIELDS_TABLE_SCHEMA = [
     },
 ]
 
+# 生成字段的默认空值，用户可在此基础上添加自定义字段
 GENERATED_FIELDS_DEFAULT_VALUE: list[dict[str, str | bool]] = []
 
 
+# 返回模型提供商配置的标准输入字段集合（模型选择、API 密钥、WatsonX 和 Ollama 特定字段）
 def get_model_provider_inputs() -> list:
     """Return the standard set of model provider configuration inputs.
 
@@ -73,6 +79,7 @@ def get_model_provider_inputs() -> list:
     ]
 
 
+# 返回用于提供商身份验证的 API 密钥输入字段
 def get_api_key_input() -> SecretStrInput:
     """Return the API key input field for provider authentication."""
     return SecretStrInput(
@@ -84,6 +91,7 @@ def get_api_key_input() -> SecretStrInput:
     )
 
 
+# 返回 IBM WatsonX 特定的配置输入字段（API 端点选择和项目 ID）
 def get_watsonx_inputs() -> list:
     """Return IBM WatsonX-specific configuration inputs.
 
@@ -109,6 +117,7 @@ def get_watsonx_inputs() -> list:
     ]
 
 
+# 返回用于本地模型部署的 Ollama 基础 URL 输入字段
 def get_ollama_url_input() -> MessageInput:
     """Return the Ollama base URL input for local model deployment."""
     return MessageInput(
@@ -122,6 +131,7 @@ def get_ollama_url_input() -> MessageInput:
     )
 
 
+# 返回用于定义生成字段的输出 schema 表格输入
 def get_generated_fields_input(
     name: str = "schema",
     display_name: str = "Schema",

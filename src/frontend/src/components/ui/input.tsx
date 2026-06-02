@@ -2,17 +2,22 @@ import * as React from "react";
 import { cn } from "../../utils/utils";
 import ForwardedIconComponent from "../common/genericIconComponent";
 
+/**
+ * 输入框属性类型
+ * 扩展原生 HTML input 属性，添加图标支持
+ */
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
-  icon?: string;
-  inputClassName?: string;
-  placeholder?: string;
-  placeholderClassName?: string;
-  endIcon?: React.ReactNode;
+  icon?: string; // 左侧图标名称
+  inputClassName?: string; // 输入框自定义类名
+  placeholder?: string; // 占位符文本
+  placeholderClassName?: string; // 占位符自定义类名
+  endIcon?: React.ReactNode; // 右侧图标
   /** @deprecated use endIcon with JSX directly */
-  endIconClassName?: string;
+  endIconClassName?: string; // 右侧图标类名（已弃用）
 }
 
+// 输入框组件，支持左右图标和自定义样式
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
     {

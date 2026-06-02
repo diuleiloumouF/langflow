@@ -15,6 +15,11 @@ import {
   SelectValue,
 } from "../../ui/select";
 
+/**
+ * 分页组件
+ * 提供分页导航功能，支持页面切换、每页条数选择和页码跳转。
+ * 显示当前页码范围和总条数信息。
+ */
 export default function PaginatorComponent({
   pageSize = PAGINATION_SIZE,
   pageIndex = PAGINATION_PAGE,
@@ -24,7 +29,7 @@ export default function PaginatorComponent({
   pages,
   isComponent,
 }: PaginatorComponentType) {
-  const [size, setPageSize] = useState(pageSize);
+  const [size, setPageSize] = useState(pageSize); // 每页显示条数
   const [maxIndex, setMaxPageIndex] = useState(
     Math.ceil(totalRowsCount / pageSize),
   );

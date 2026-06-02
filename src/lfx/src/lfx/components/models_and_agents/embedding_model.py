@@ -18,10 +18,13 @@ from lfx.io import (
     StrInput,
 )
 
+# Ollama 本地服务的默认地址
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 
 
 class EmbeddingModelComponent(LCEmbeddingsModel):
+    """Embedding 模型组件，支持多种模型提供商（OpenAI、Ollama、Watsonx 等）生成文本嵌入向量。"""
+
     display_name = "Embedding Model"
     description = "Generate embeddings using a specified provider."
     documentation: str = "https://docs.langflow.org/components-embedding-models"
@@ -30,7 +33,7 @@ class EmbeddingModelComponent(LCEmbeddingsModel):
     category = "models"
 
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None):
-        """Dynamically update build config with user-filtered model options."""
+        """根据用户选择的模型提供商，动态更新构建配置中的可用模型选项。"""
         return handle_model_input_update(
             self,
             dict(build_config),
@@ -40,7 +43,9 @@ class EmbeddingModelComponent(LCEmbeddingsModel):
             get_options_func=get_embedding_model_options,
         )
 
+    # 组件输入参数定义
     inputs = [
+        # 模型选择：支持实时刷新的下拉框，类型为嵌入模型
         ModelInput(
             name="model",
             display_name="Embedding Model",
@@ -50,6 +55,7 @@ class EmbeddingModelComponent(LCEmbeddingsModel):
             model_type="embedding",
             input_types=["Embeddings"],  # Override default to accept Embeddings instead of LanguageModel
         ),
+        # API 密钥：可选，覆盖全局提供商设置
         SecretStrInput(
             name="api_key",
             display_name="API Key",
@@ -57,13 +63,15 @@ class EmbeddingModelComponent(LCEmbeddingsModel):
             real_time_refresh=True,
             advanced=True,
         ),
+        # API 基础地址：可选，留空使用默认值
         MessageTextInput(
             name="api_base",
             display_name="API Base URL",
             info="Base URL for the API. Leave empty for default.",
             advanced=True,
         ),
-        # Watson-specific inputs
+        # 以下为 IBM Watsonx 专用输入参数
+        # Watsonx API 端点地址（组合框，支持手动输入）
         DropdownInput(
             name="base_url_ibm_watsonx",
             display_name="watsonx API Endpoint",
@@ -74,13 +82,14 @@ class EmbeddingModelComponent(LCEmbeddingsModel):
             show=False,
             real_time_refresh=True,
         ),
+        # Watsonx 项目 ID
         MessageTextInput(
             name="project_id",
             display_name="Project ID",
             info="IBM watsonx.ai Project ID (required for IBM watsonx.ai)",
             show=False,
         ),
-        # Ollama-specific input
+        # 以下为 Ollama 专用输入参数
         StrInput(
             name="ollama_base_url",
             display_name="Ollama API URL",
@@ -89,6 +98,7 @@ class EmbeddingModelComponent(LCEmbeddingsModel):
             show=False,
             real_time_refresh=True,
         ),
+        # 嵌入向量维度（仅部分模型支持）
         IntInput(
             name="dimensions",
             display_name="Dimensions",
@@ -96,28 +106,33 @@ class EmbeddingModelComponent(LCEmbeddingsModel):
             "Only supported by certain models.",
             advanced=True,
         ),
+        # 文本分块大小，用于处理长文本
         IntInput(
             name="chunk_size",
             display_name="Chunk Size",
             advanced=True,
             value=1000,
         ),
+        # 请求超时时间（秒）
         FloatInput(
             name="request_timeout",
             display_name="Request Timeout",
             advanced=True,
         ),
+        # 最大重试次数
         IntInput(
             name="max_retries",
             display_name="Max Retries",
             advanced=True,
             value=3,
         ),
+        # 是否显示进度条
         BoolInput(
             name="show_progress_bar",
             display_name="Show Progress Bar",
             advanced=True,
         ),
+        # 模型额外参数（字典形式），传递给支持该参数的提供商
         DictInput(
             name="model_kwargs",
             display_name="Model Kwargs",
@@ -128,6 +143,7 @@ class EmbeddingModelComponent(LCEmbeddingsModel):
                 "Ignored for providers that do not include it in their parameter mapping."
             ),
         ),
+        # Watsonx 输入截断 token 数（默认隐藏）
         IntInput(
             name="truncate_input_tokens",
             display_name="Truncate Input Tokens",
@@ -135,6 +151,7 @@ class EmbeddingModelComponent(LCEmbeddingsModel):
             value=200,
             show=False,
         ),
+        # 是否在输出中包含原始文本（默认隐藏）
         BoolInput(
             name="input_text",
             display_name="Include the original text in the output",
@@ -145,7 +162,7 @@ class EmbeddingModelComponent(LCEmbeddingsModel):
     ]
 
     def build_embeddings(self) -> Embeddings:
-        """Build and return an embeddings instance based on the selected model."""
+        """根据选定的模型构建并返回嵌入实例。"""
         return get_embeddings(
             model=self.model,
             user_id=self.user_id,

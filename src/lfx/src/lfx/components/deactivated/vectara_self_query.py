@@ -1,14 +1,22 @@
 # mypy: disable-error-code="attr-defined"
+# JSON 处理
 import json
 
+# LangChain 查询构造器和自查询检索器
 from langchain_classic.chains.query_constructor.base import AttributeInfo
 from langchain_classic.retrievers.self_query.base import SelfQueryRetriever
 
+# 缓存检查装饰器
 from lfx.base.vectorstores.model import check_cached_vector_store
+
+# 自定义组件基类
 from lfx.custom.custom_component.custom_component import CustomComponent
+
+# 输入组件类型
 from lfx.io import HandleInput, StrInput
 
 
+# Vectara 自查询检索器组件，使用向量存储实现 Vectara 自查询检索
 class VectaraSelfQueryRetriverComponent(CustomComponent):
     """A custom component for implementing Vectara Self Query Retriever using a vector store."""
 
@@ -18,12 +26,15 @@ class VectaraSelfQueryRetriverComponent(CustomComponent):
     icon = "Vectara"
     legacy = True
 
+    # 输入参数定义
     inputs = [
+        # Vectara 向量存储
         HandleInput(
             name="vectorstore",
             display_name="Vector Store",
             info="Input Vectara Vector Store",
         ),
+        # 语言模型（用于自查询检索）
         HandleInput(
             name="llm",
             display_name="LLM",

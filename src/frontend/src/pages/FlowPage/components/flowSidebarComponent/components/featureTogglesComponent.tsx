@@ -2,6 +2,10 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 
+/**
+ * 功能开关组件
+ * 提供 Beta 和 Legacy 组件的显示/隐藏切换开关
+ */
 const FeatureToggles = ({
   showBeta,
   setShowBeta,

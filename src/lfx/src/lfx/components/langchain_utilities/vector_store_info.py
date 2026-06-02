@@ -5,6 +5,8 @@ from lfx.inputs.inputs import HandleInput, MessageTextInput, MultilineInput
 from lfx.template.field.base import Output
 
 
+# 向量存储信息组件，提供关于向量存储的元数据信息
+# Vector store info component for providing metadata information about a vector store
 class VectorStoreInfoComponent(Component):
     display_name = "VectorStoreInfo"
     description = "Information about a VectorStore"
@@ -37,6 +39,7 @@ class VectorStoreInfoComponent(Component):
         Output(display_name="Vector Store Info", name="info", method="build_info"),
     ]
 
+    # 构建向量存储信息对象
     def build_info(self) -> VectorStoreInfo:
         self.status = {
             "name": self.vectorstore_name,

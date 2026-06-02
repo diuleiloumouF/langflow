@@ -14,6 +14,10 @@ import type {
   loginInputStateType,
 } from "../../../types/components";
 
+/**
+ * 管理员登录页面组件
+ * 提供管理员专用的登录表单，包含用户名和密码输入框以及登录按钮
+ */
 export default function LoginAdminPage() {
   const [inputState, setInputState] =
     useState<loginInputStateType>(CONTROL_LOGIN_STATE);
@@ -22,6 +26,7 @@ export default function LoginAdminPage() {
   const queryClient = useQueryClient();
   const { password, username } = inputState;
   const setErrorData = useAlertStore((state) => state.setErrorData);
+  // 处理表单输入变化，更新对应的输入状态
   function handleInput({
     target: { name, value },
   }: inputHandlerEventType): void {
@@ -30,6 +35,7 @@ export default function LoginAdminPage() {
 
   const { mutate } = useLoginUser();
 
+  // 执行管理员登录操作
   function signIn() {
     const user: LoginType = {
       username: username,

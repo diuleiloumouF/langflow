@@ -1,9 +1,12 @@
+# Composio 组件包：提供各种第三方服务 API 的 Langflow 组件集成
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+# 动态模块导入工具函数
 from lfx.components._importing import import_mod
 
+# 仅在类型检查时导入各组件类，避免运行时不必要的加载开销
 if TYPE_CHECKING:
     from .agentql_composio import ComposioAgentQLAPIComponent
     from .agiled_composio import ComposioAgiledAPIComponent
@@ -69,6 +72,7 @@ if TYPE_CHECKING:
     from .youtube_composio import ComposioYoutubeAPIComponent
 
 
+# 动态导入映射表：组件类名 -> 对应的模块文件名（不含扩展名）
 _dynamic_imports = {
     "ComposioAPIComponent": "composio_api",
     "ComposioCanvaAPIComponent": "canva_composio",
@@ -134,6 +138,7 @@ _dynamic_imports = {
     "ComposioWrikeAPIComponent": "wrike_composio",
 }
 
+# 始终导出所有组件，单个导入失败将在实际访问时处理
 # Always expose all components - individual failures will be handled on import
 __all__ = [
     "ComposioAPIComponent",
@@ -204,19 +209,24 @@ __all__ = [
 ]
 
 
+# 模块级属性懒加载：通过 __getattr__ 实现按需导入，避免启动时加载所有组件
 def __getattr__(attr_name: str) -> Any:
     """Lazily import composio components on attribute access."""
+    # 检查请求的属性名是否在动态导入映射表中
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)
+    # 根据映射表动态导入对应的组件模块
     try:
         result = import_mod(attr_name, _dynamic_imports[attr_name], __spec__.parent)
     except (ModuleNotFoundError, ImportError, AttributeError) as e:
         msg = f"Could not import '{attr_name}' from '{__name__}': {e}"
         raise AttributeError(msg) from e
+    # 将导入的结果缓存到全局命名空间中，后续访问不再重复导入
     globals()[attr_name] = result
     return result
 
 
+# 自定义 __dir__ 以确保 dir() 返回所有已导出的组件名
 def __dir__() -> list[str]:
     return list(__all__)

@@ -1,3 +1,4 @@
+# YouTube 搜索组件，通过 YouTube Data API 搜索视频
 from contextlib import contextmanager
 
 import pandas as pd
@@ -10,14 +11,20 @@ from lfx.schema.dataframe import DataFrame
 from lfx.template.field.base import Output
 
 
+# YouTube 搜索组件，根据关键词搜索 YouTube 视频并返回结果
 class YouTubeSearchComponent(Component):
     """A component that searches YouTube videos."""
 
+    # 组件显示名称
     display_name: str = "YouTube Search"
+    # 组件描述
     description: str = "Searches YouTube videos based on query."
+    # 组件图标
     icon: str = "YouTube"
 
+    # 组件输入参数定义
     inputs = [
+        # 搜索查询关键词
         MessageTextInput(
             name="query",
             display_name="Search Query",
@@ -25,18 +32,21 @@ class YouTubeSearchComponent(Component):
             tool_mode=True,
             required=True,
         ),
+        # YouTube Data API 密钥
         SecretStrInput(
             name="api_key",
             display_name="YouTube API Key",
             info="Your YouTube Data API key.",
             required=True,
         ),
+        # 最大返回结果数
         IntInput(
             name="max_results",
             display_name="Max Results",
             value=10,
             info="The maximum number of results to return.",
         ),
+        # 排序方式
         DropdownInput(
             name="order",
             display_name="Sort Order",
@@ -44,6 +54,7 @@ class YouTubeSearchComponent(Component):
             value="relevance",
             info="Sort order for the search results.",
         ),
+        # 是否包含视频元数据（描述、统计等）
         BoolInput(
             name="include_metadata",
             display_name="Include Metadata",
@@ -53,10 +64,12 @@ class YouTubeSearchComponent(Component):
         ),
     ]
 
+    # 组件输出定义
     outputs = [
         Output(name="results", display_name="Search Results", method="search_videos"),
     ]
 
+    # YouTube API 客户端上下文管理器
     @contextmanager
     def youtube_client(self):
         """Context manager for YouTube API client."""
@@ -66,6 +79,7 @@ class YouTubeSearchComponent(Component):
         finally:
             client.close()
 
+    # 搜索 YouTube 视频并返回 DataFrame
     def search_videos(self) -> DataFrame:
         """Searches YouTube videos and returns results as DataFrame."""
         try:
@@ -98,6 +112,7 @@ class YouTubeSearchComponent(Component):
 
                     if self.include_metadata:
                         # Get video details for additional metadata
+                        # 获取视频详情以补充元数据
                         video_response = youtube.videos().list(part="statistics,contentDetails", id=video_id).execute()
 
                         if video_response.get("items"):

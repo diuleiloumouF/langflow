@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .vectara import VectaraVectorStoreComponent
     from .vectara_rag import VectaraRagComponent
 
+# Vectara 向量存储组件的动态导入映射表
 _dynamic_imports = {
     "VectaraVectorStoreComponent": "vectara",
     "VectaraRagComponent": "vectara_rag",
@@ -21,6 +22,7 @@ __all__ = [
 
 def __getattr__(attr_name: str) -> Any:
     """Lazily import Vectara components on attribute access."""
+    # 在访问属性时延迟导入 Vectara 组件
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+# 类型检查相关的导入，仅在静态类型检查时使用
 from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID
 
 from fastapi import HTTPException
 from lfx.log.logger import logger
+
+# Pydantic v1 兼容层，用于创建动态模型
 from pydantic.v1 import BaseModel, Field, create_model
 from sqlalchemy.orm import aliased
 from sqlmodel import asc, desc, select
@@ -22,11 +25,14 @@ if TYPE_CHECKING:
 
 from langflow.schema.data import Data
 
+# 输入类型映射：将组件名称映射到对应的类型提示和默认值
 INPUT_TYPE_MAP = {
     "ChatInput": {"type_hint": "Optional[str]", "default": '""'},
     "TextInput": {"type_hint": "Optional[str]", "default": '""'},
     "JSONInput": {"type_hint": "Optional[dict]", "default": "{}"},
 }
+
+# 排序方向分发器：将字符串排序方向映射到 SQLModel 排序函数
 SORT_DISPATCHER = {
     "asc": asc,
     "desc": desc,
@@ -34,6 +40,7 @@ SORT_DISPATCHER = {
 
 
 async def list_flows(*, user_id: str | None = None) -> list[Data]:
+    """列出指定用户的所有流程（非组件类型）。"""
     if not user_id:
         msg = "Session is invalid"
         raise ValueError(msg)
@@ -55,6 +62,7 @@ async def list_flows_by_flow_folder(
     flow_id: str | None = None,
     order_params: dict | None = {"column": "updated_at", "direction": "desc"},  # noqa: B006
 ) -> list[Data]:
+    """根据指定流程所在的文件夹，列出该文件夹下的所有其他流程。"""
     if not user_id:
         msg = "Session is invalid"
         raise ValueError(msg)
@@ -67,6 +75,7 @@ async def list_flows_by_flow_folder(
             uuid_flow_id = UUID(flow_id) if isinstance(flow_id, str) else flow_id
             # get all flows belonging to the specified user
             # and inside the same folder as the specified flow
+            # Flow 表的别名，用于关联查询获取文件夹信息
             flow_ = aliased(Flow)  # flow table alias, used to retrieve the folder
             stmt = (
                 select(Flow.id, Flow.name, Flow.updated_at)
@@ -77,6 +86,7 @@ async def list_flows_by_flow_folder(
                 .where(Flow.id != uuid_flow_id)
             )
             # sort flows by the specified column and direction
+            # 按照指定的列和方向对流程进行排序
             if order_params is not None:
                 sort_col = getattr(Flow, order_params.get("column", "updated_at"), Flow.updated_at)
                 sort_dir = SORT_DISPATCHER.get(order_params.get("direction", "desc"), desc)
@@ -92,6 +102,7 @@ async def list_flows_by_flow_folder(
 async def list_flows_by_folder_id(
     *, user_id: str | None = None, folder_id: str | None = None, order_params: dict | None = None
 ) -> list[Data]:
+    """根据文件夹 ID 列出该文件夹下的所有流程。"""
     if not user_id:
         msg = "Session is invalid"
         raise ValueError(msg)
@@ -111,6 +122,7 @@ async def list_flows_by_folder_id(
                 .where(Flow.user_id == uuid_user_id)
                 .where(Flow.folder_id == uuid_folder_id)
             )
+            # 按照指定的列和方向对流程进行排序
             if order_params is not None:
                 sort_col = getattr(Flow, order_params.get("column", "updated_at"), Flow.updated_at)
                 sort_dir = SORT_DISPATCHER.get(order_params.get("direction", "desc"), desc)
@@ -129,6 +141,7 @@ async def get_flow_by_id_or_name(
     flow_id: str | None = None,
     flow_name: str | None = None,
 ) -> Data | None:
+    """根据流程 ID 或名称获取流程数据。如果同时提供两者，优先使用 flow_id。"""
     if not user_id:
         msg = "Session is invalid"
         raise ValueError(msg)
@@ -138,6 +151,7 @@ async def get_flow_by_id_or_name(
 
     # set user provided flow id or flow name.
     # if both are provided, flow_id is used.
+    # 设置用户提供的查询属性：如果同时提供 ID 和名称，优先使用 ID
     attr, val = None, None
     if flow_name:
         attr = "name"
@@ -166,6 +180,10 @@ async def get_flow_by_id_or_name(
 async def load_flow(
     user_id: str, flow_id: str | None = None, flow_name: str | None = None, tweaks: dict | None = None
 ) -> Graph:
+    """加载流程并返回可执行的 Graph 对象。
+
+    支持通过 flow_id 或 flow_name 定位流程，并可应用 tweaks 修改参数。
+    """
     from lfx.graph.graph.base import Graph
 
     from langflow.processing.process import process_tweaks
@@ -184,12 +202,14 @@ async def load_flow(
     if not graph_data:
         msg = f"Flow {flow_id} not found"
         raise ValueError(msg)
+    # 如果提供了 tweaks，应用参数修改到流程数据中
     if tweaks:
         graph_data = process_tweaks(graph_data=graph_data, tweaks=tweaks)
     return Graph.from_payload(graph_data, flow_id=flow_id, user_id=user_id)
 
 
 async def find_flow(flow_name: str, user_id: str) -> str | None:
+    """根据流程名称和用户 ID 查找流程，返回流程 ID。"""
     async with session_scope() as session:
         uuid_user_id = UUID(user_id) if isinstance(user_id, str) else user_id
         stmt = select(Flow).where(Flow.name == flow_name).where(Flow.user_id == uuid_user_id)
@@ -208,6 +228,11 @@ async def run_flow(
     session_id: str | None = None,
     graph: Graph | None = None,
 ) -> list[RunOutputs]:
+    """执行流程并返回运行结果。
+
+    支持通过 flow_id 或 flow_name 加载流程，可传入输入数据和参数调整。
+    如果已提供 graph 对象则直接使用，否则根据 ID/名称加载。
+    """
     if user_id is None:
         msg = "Session is invalid"
         raise ValueError(msg)
@@ -224,6 +249,8 @@ async def run_flow(
         inputs = []
     if isinstance(inputs, dict):
         inputs = [inputs]
+
+    # 将输入数据拆分为值列表、组件列表和类型列表
     inputs_list = []
     inputs_components = []
     types = []
@@ -232,6 +259,7 @@ async def run_flow(
         inputs_components.append(input_dict.get("components", []))
         types.append(input_dict.get("type", "chat"))
 
+    # 根据 output_type 筛选需要输出的顶点 ID
     outputs = [
         vertex.id
         for vertex in graph.vertices
@@ -274,6 +302,7 @@ def generate_function_for_flow(
         function = generate_function_for_flow(inputs, flow_id)
         result = function(input1, input2)
     """
+    # 根据输入顶点生成函数参数定义，包含类型提示和默认值
     # Prepare function arguments with type hints and default values
     args = [
         (
@@ -283,18 +312,22 @@ def generate_function_for_flow(
         for input_ in inputs
     ]
 
+    # 保留原始参数名，用于构建 tweaks 字典映射
     # Maintain original argument names for constructing the tweaks dictionary
     original_arg_names = [input_.display_name for input_ in inputs]
 
+    # 将参数列表拼接为合法的函数参数字符串
     # Prepare a Pythonic, valid function argument string
     func_args = ", ".join(args)
 
+    # 构建原始参数名到 Python 函数参数名的映射
     # Map original argument names to their corresponding Pythonic variable names in the function
     arg_mappings = ", ".join(
         f'"{original_name}": {name}'
         for original_name, name in zip(original_arg_names, [arg.split(":")[0] for arg in args], strict=True)
     )
 
+    # 动态生成流程执行函数的代码体
     func_body = f"""
 from typing import Optional
 async def flow_function({func_args}):
@@ -322,6 +355,7 @@ async def flow_function({func_args}):
         raise ToolException(f'Error running flow: ' + e)
 """
 
+    # 编译并执行动态生成的函数代码
     compiled_func = compile(func_body, "<string>", "exec")
     local_scope: dict = {}
     exec(compiled_func, globals(), local_scope)  # noqa: S102
@@ -372,6 +406,7 @@ def build_schema_from_inputs(name: str, inputs: list[Vertex]) -> type[BaseModel]
         BaseModel: The schema model.
 
     """
+    # 根据输入顶点动态构建 Pydantic 模型字段
     fields = {}
     for input_ in inputs:
         field_name = input_.display_name.lower().replace(" ", "_")
@@ -397,6 +432,11 @@ def get_arg_names(inputs: list[Vertex]) -> list[dict[str, str]]:
 
 
 async def get_flow_by_id_or_endpoint_name(flow_id_or_name: str, user_id: str | UUID | None = None) -> FlowRead:
+    """根据流程 ID 或端点名称获取流程。
+
+    支持通过 UUID 格式的 ID 或 endpoint_name 字符串查询。
+    包含安全检查：确保只能访问当前用户拥有的流程。
+    """
     async with session_scope() as session:
         # SECURITY (LE-639): previously the UUID branch below called
         # ``session.get(Flow, flow_id)`` with no ownership check, so any
@@ -408,12 +448,14 @@ async def get_flow_by_id_or_endpoint_name(flow_id_or_name: str, user_id: str | U
         # enforce it on both branches -- returning None on cross-user lookup
         # so the shared 404 below fires and we don't disclose existence of
         # another user's flow.
+        # 安全修复：统一处理 user_id，在两个分支上都强制执行所有权检查
         uuid_user_id: UUID | None = None
         if user_id is not None:
             # Malformed user_id -- e.g. ``?user_id=foo`` on a legacy Depends
             # route -- previously raised a raw ValueError (500 to the client).
             # Fail closed: convert to 404 so we never disclose a flow to a
             # caller whose identity we can't resolve.
+            # 格式错误的 user_id 会返回 404，避免泄露其他用户的流程信息
             try:
                 uuid_user_id = UUID(user_id) if isinstance(user_id, str) else user_id
             except (ValueError, AttributeError) as exc:
@@ -422,11 +464,14 @@ async def get_flow_by_id_or_endpoint_name(flow_id_or_name: str, user_id: str | U
                     detail=f"Flow identifier {flow_id_or_name} not found",
                 ) from exc
         try:
+            # 尝试将 flow_id_or_name 解析为 UUID 进行查询
             flow_id = UUID(flow_id_or_name)
             flow = await session.get(Flow, flow_id)
+            # 所有权检查：如果指定了 user_id，确保流程属于该用户
             if flow is not None and uuid_user_id is not None and flow.user_id != uuid_user_id:
                 flow = None
         except ValueError:
+            # 解析失败则作为 endpoint_name 字符串查询
             endpoint_name = flow_id_or_name
             stmt = select(Flow).where(Flow.endpoint_name == endpoint_name)
             if uuid_user_id is not None:
@@ -438,10 +483,12 @@ async def get_flow_by_id_or_endpoint_name(flow_id_or_name: str, user_id: str | U
 
 
 async def generate_unique_flow_name(flow_name, user_id, session):
+    """生成唯一的流程名称。如果名称已存在，自动追加数字后缀如 (1)、(2) 等。"""
     original_name = flow_name
     n = 1
     while True:
         # Check if a flow with the given name exists
+        # 检查是否已存在同名流程
         existing_flow = (
             await session.exec(
                 select(Flow).where(
@@ -452,10 +499,12 @@ async def generate_unique_flow_name(flow_name, user_id, session):
         ).first()
 
         # If no flow with the given name exists, return the name
+        # 如果不存在同名流程，直接返回当前名称
         if not existing_flow:
             return flow_name
 
         # If a flow with the name already exists, append (n) to the name and increment n
+        # 名称已存在，追加数字后缀并继续检查
         flow_name = f"{original_name} ({n})"
         n += 1
 
@@ -465,6 +514,7 @@ def json_schema_from_flow(flow: Flow) -> dict:
     from lfx.graph.graph.base import Graph
 
     # Get the flow's data which contains the nodes and their configurations
+    # 获取流程数据，包含节点及其配置信息
     flow_data = flow.data or {}
 
     graph = Graph.from_payload(flow_data)
@@ -484,6 +534,7 @@ def json_schema_from_flow(flow: Flow) -> dict:
                     "description": field_data.get("info", f"Input for {field_name}"),
                 }
                 # Update field_type in properties after determining the JSON Schema type
+                # 将内部类型映射为 JSON Schema 标准类型
                 if field_type == "str":
                     field_type = "string"
                 elif field_type == "int":

@@ -1,45 +1,56 @@
+# 聊天记忆组件基类、类型定义、输入组件
 from lfx.base.memory.model import LCChatMemoryComponent
 from lfx.field_typing.constants import Memory
 from lfx.inputs.inputs import DictInput, MessageTextInput, SecretStrInput
 
 
+# Cassandra 聊天记忆组件，用于从 Apache Cassandra 检索和存储聊天消息
 class CassandraChatMemory(LCChatMemoryComponent):
     display_name = "Cassandra Chat Memory"
+    # 组件描述：从 Apache Cassandra 检索和存储聊天消息
     description = "Retrieves and store chat messages from Apache Cassandra."
     name = "CassandraChatMemory"
     icon = "Cassandra"
 
+    # 输入参数定义
     inputs = [
+        # 数据库连接点或 Astra DB 数据库 ID
         MessageTextInput(
             name="database_ref",
             display_name="Contact Points / Astra Database ID",
             info="Contact points for the database (or Astra DB database ID)",
             required=True,
         ),
+        # 数据库用户名（Astra DB 可留空）
         MessageTextInput(
             name="username", display_name="Username", info="Username for the database (leave empty for Astra DB)."
         ),
+        # 数据库密码或 Astra DB Token
         SecretStrInput(
             name="token",
             display_name="Password / Astra DB Token",
             info="User password for the database (or Astra DB token).",
             required=True,
         ),
+        # 键空间（Astra DB 命名空间）
         MessageTextInput(
             name="keyspace",
             display_name="Keyspace",
             info="Table Keyspace (or Astra DB namespace).",
             required=True,
         ),
+        # 表名（Astra DB 集合名称）
         MessageTextInput(
             name="table_name",
             display_name="Table Name",
             info="The name of the table (or Astra DB collection) where vectors will be stored.",
             required=True,
         ),
+        # 会话 ID，用于区分不同的聊天会话
         MessageTextInput(
             name="session_id", display_name="Session ID", info="Session ID for the message.", advanced=True
         ),
+        # Cassandra 集群额外参数
         DictInput(
             name="cluster_kwargs",
             display_name="Cluster arguments",
@@ -49,6 +60,7 @@ class CassandraChatMemory(LCChatMemoryComponent):
         ),
     ]
 
+    # 构建聊天消息历史记录实例
     def build_message_history(self) -> Memory:
         from langchain_community.chat_message_histories import CassandraChatMessageHistory
 

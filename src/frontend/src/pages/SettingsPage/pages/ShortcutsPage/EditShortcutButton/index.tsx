@@ -14,6 +14,10 @@ import {
   normalizeRecordedCombination,
 } from "./helpers";
 
+/**
+ * 编辑快捷键按钮组件
+ * 提供快捷键录制和编辑功能，支持冲突检测和组合键规范化
+ */
 export default function EditShortcutButton({
   children,
   shortcut,

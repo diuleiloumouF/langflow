@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { SpanNode } from "./SpanNode";
 import type { Span } from "./types";
 
+/** Span 树组件的属性定义 */
 interface SpanTreeProps {
   spans: Span[];
   selectedSpanId: string | null;
@@ -9,6 +10,8 @@ interface SpanTreeProps {
 }
 
 /**
+ * Span 树组件
+ * 递归渲染层级化的 Span 树结构，管理每个节点的展开/折叠状态
  * Recursive tree component for rendering hierarchical spans
  * Manages expand/collapse state for each node
  */

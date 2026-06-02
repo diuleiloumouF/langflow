@@ -1,10 +1,17 @@
+# 类型注解支持
 from typing import Any
 
+# 组件基类
 from lfx.custom.custom_component.component import Component
+
+# 输入组件类型
 from lfx.inputs.inputs import DictInput, DropdownInput, MessageTextInput, SecretStrInput
+
+# 输出字段定义
 from lfx.template.field.base import Output
 
 
+# Astra Vectorize 组件，配置 Astra Vectorize 服务端嵌入选项
 class AstraVectorizeComponent(Component):
     display_name: str = "Astra Vectorize"
     description: str = "Configuration options for Astra Vectorize server-side embeddings. "
@@ -14,6 +21,7 @@ class AstraVectorizeComponent(Component):
     name = "AstraVectorize"
     replacement = ["datastax.AstraDB"]
 
+    # 嵌入提供者映射表：提供者名称 -> [内部名称, 模型列表]
     VECTORIZE_PROVIDERS_MAPPING = {
         "Azure OpenAI": ["azureOpenAI", ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"]],
         "Hugging Face - Dedicated": ["huggingfaceDedicated", ["endpoint-defined-model"]],

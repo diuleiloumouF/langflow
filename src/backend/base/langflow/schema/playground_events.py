@@ -1,3 +1,6 @@
+# Playground 事件模型模块
+# 定义了前端 Playground 中使用的各种事件类型，
+# 包括消息事件、错误事件、警告事件、信息事件和 token 流式事件
 import inspect
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -12,6 +15,7 @@ from lfx.utils.constants import MESSAGE_SENDER_USER
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
+# Playground 事件基础类：所有事件类型的基类
 class PlaygroundEvent(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     properties: Properties | None = Field(default=None)
@@ -38,6 +42,7 @@ class PlaygroundEvent(BaseModel):
         return v
 
 
+# 消息事件：用户或 AI 发送的聊天消息
 class MessageEvent(PlaygroundEvent):
     category: Literal["message", "error", "warning", "info"] = "message"
     format_type: Literal["default", "error", "warning", "info"] = Field(default="default")
@@ -56,6 +61,7 @@ class MessageEvent(PlaygroundEvent):
         return v
 
 
+# 错误事件：带有红色背景的错误消息
 class ErrorEvent(MessageEvent):
     background_color: str = Field(default="#FF0000")
     text_color: str = Field(default="#FFFFFF")
@@ -64,18 +70,21 @@ class ErrorEvent(MessageEvent):
     category: Literal["error"] = "error"
 
 
+# 警告事件：带有橙色背景的警告消息
 class WarningEvent(PlaygroundEvent):
     background_color: str = Field(default="#FFA500")
     text_color: str = Field(default="#000000")
     format_type: Literal["default", "error", "warning", "info"] = Field(default="warning")
 
 
+# 信息事件：带有蓝色背景的提示消息
 class InfoEvent(PlaygroundEvent):
     background_color: str = Field(default="#0000FF")
     text_color: str = Field(default="#FFFFFF")
     format_type: Literal["default", "error", "warning", "info"] = Field(default="info")
 
 
+# Token 事件：流式输出中的单个 token 数据
 class TokenEvent(BaseModel):
     chunk: str = Field(...)
     id: UUID | str | None = Field(alias="id")
@@ -84,7 +93,7 @@ class TokenEvent(BaseModel):
     )
 
 
-# Factory functions first
+# 事件工厂函数：用于创建各种类型的 Playground 事件
 def create_message(
     text: str,
     category: Literal["message", "error", "warning", "info"] = "message",
@@ -120,6 +129,7 @@ def create_message(
     )
 
 
+# 创建错误事件工厂函数
 def create_error(
     text: str,
     properties: dict | None = None,
@@ -145,14 +155,17 @@ def create_error(
     )
 
 
+# 创建警告事件工厂函数
 def create_warning(message: str) -> WarningEvent:
     return WarningEvent(text=message)
 
 
+# 创建信息事件工厂函数
 def create_info(message: str) -> InfoEvent:
     return InfoEvent(text=message)
 
 
+# 创建 token 事件工厂函数
 def create_token(chunk: str, id: str) -> TokenEvent:  # noqa: A002
     return TokenEvent(
         chunk=chunk,
@@ -160,6 +173,7 @@ def create_token(chunk: str, id: str) -> TokenEvent:  # noqa: A002
     )
 
 
+# 事件类型到创建函数的映射表，用于根据事件类型动态创建对应的事件对象
 _EVENT_CREATORS: dict[str, tuple[Callable, inspect.Signature]] = {
     "message": (create_message, inspect.signature(create_message)),
     "error": (create_error, inspect.signature(create_error)),
@@ -169,6 +183,7 @@ _EVENT_CREATORS: dict[str, tuple[Callable, inspect.Signature]] = {
 }
 
 
+# 根据事件类型创建对应的事件对象，自动过滤无效参数
 def create_event_by_type(event_type: str, **kwargs) -> PlaygroundEvent | dict:
     if event_type not in _EVENT_CREATORS:
         return kwargs

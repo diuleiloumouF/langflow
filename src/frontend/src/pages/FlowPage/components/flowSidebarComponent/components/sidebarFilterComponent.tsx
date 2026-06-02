@@ -3,6 +3,10 @@ import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import ShadTooltip from "@/components/common/shadTooltipComponent";
 import { Button } from "@/components/ui/button";
 
+/**
+ * 侧边栏筛选器组件
+ * 显示当前应用的筛选条件，并提供清除筛选的功能
+ */
 export function SidebarFilterComponent({
   name,
   description,

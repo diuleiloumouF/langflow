@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/utils/utils";
 import { BorderBeam } from "../../../components/ui/border-beams";
 
+/** 增强光束效果组件的属性定义 */
 interface EnhancedBeamEffectProps {
   children: ReactNode;
   className?: string;
@@ -10,6 +11,10 @@ interface EnhancedBeamEffectProps {
   size?: number;
 }
 
+/**
+ * 增强光束效果组件
+ * 为子元素添加动态光束边框效果，支持自定义颜色和大小
+ */
 export const EnhancedBeamEffect = ({
   children,
   className,

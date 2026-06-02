@@ -20,6 +20,12 @@ type IconComponentType = React.ComponentType<{
   isDark?: boolean;
 }>;
 
+/**
+ * 通用图标组件
+ * 支持动态加载图标，具有缓存机制和加载状态管理。
+ * 支持深色/浅色主题，提供骨架屏加载占位。
+ * 使用 memo 和 forwardRef 优化性能和 ref 转发。
+ */
 export const ForwardedIconComponent = memo(
   forwardRef(
     (
@@ -39,12 +45,13 @@ export const ForwardedIconComponent = memo(
       // This forces re-render when theme changes, bypassing memo
       const { dark: isDark } = useDarkStore();
 
-      const [showFallback, setShowFallback] = useState(false);
-      const [iconError, setIconError] = useState(false);
+      const [showFallback, setShowFallback] = useState(false); // 是否显示骨架屏占位
+      const [iconError, setIconError] = useState(false); // 图标加载是否出错
       const [TargetIcon, setTargetIcon] = useState<IconComponentType | null>(
         getCachedIcon(name) as IconComponentType | null,
       );
 
+      // 动态加载图标组件
       useEffect(() => {
         setIconError(false);
         setTargetIcon(null);
@@ -81,6 +88,7 @@ export const ForwardedIconComponent = memo(
         };
       }, [name]);
 
+      // 图标样式配置，包含描边宽度、颜色等
       const style = {
         strokeWidth: strokeWidth ?? 1.5,
         ...(stroke && { stroke: stroke }),
@@ -170,6 +178,10 @@ export const ForwardedIconComponent = memo(
 );
 
 // Simple error boundary component for catching lazy load errors
+/**
+ * 错误边界组件
+ * 用于捕获子组件（如懒加载图标）的渲染错误
+ */
 class ErrorBoundary extends React.Component<
   {
     children: React.ReactNode;

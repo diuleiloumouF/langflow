@@ -1,3 +1,4 @@
+// Discord 图标组件 - 用于 Discord 社交流媒体平台相关组件的标识
 import React, { forwardRef } from "react";
 import DiscordIconSVG from "./discord";
 

@@ -4,12 +4,19 @@ from lfx.io import DropdownInput, FloatInput, IntInput, MessageTextInput, Output
 from lfx.schema.message import Message
 
 
+# Vectara RAG 组件，提供 Vectara 的端到端检索增强生成功能
 class VectaraRagComponent(Component):
+    # 组件显示名称
     display_name = "Vectara RAG"
+    # 组件描述信息
     description = "Vectara's full end to end RAG"
+    # 组件文档链接
     documentation = "https://docs.vectara.com/docs"
+    # 组件图标
     icon = "Vectara"
+    # 组件内部名称
     name = "VectaraRAG"
+    # 可用的摘要提示词列表
     SUMMARIZER_PROMPTS = [
         "vectara-summary-ext-24-05-sml",
         "vectara-summary-ext-24-05-med-omni",
@@ -18,8 +25,10 @@ class VectaraRagComponent(Component):
         "vectara-summary-ext-v1.3.0",
     ]
 
+    # 可用的重排序器类型列表
     RERANKER_TYPES = ["mmr", "rerank_multilingual_v1", "none"]
 
+    # 支持的响应语言列表（ISO 639-3 代码）
     RESPONSE_LANGUAGES = [
         "auto",
         "eng",
@@ -52,8 +61,10 @@ class VectaraRagComponent(Component):
         "urd",
     ]
 
+    # 字段排序顺序
     field_order = ["vectara_customer_id", "vectara_corpus_id", "vectara_api_key", "search_query", "reranker"]
 
+    # 组件输入参数定义
     inputs = [
         StrInput(name="vectara_customer_id", display_name="Vectara Customer ID", required=True),
         StrInput(name="vectara_corpus_id", display_name="Vectara Corpus ID", required=True),
@@ -129,10 +140,12 @@ class VectaraRagComponent(Component):
         ),
     ]
 
+    # 组件输出参数定义
     outputs = [
         Output(name="answer", display_name="Answer", method="generate_response"),
     ]
 
+    # 生成 RAG 响应
     def generate_response(
         self,
     ) -> Message:

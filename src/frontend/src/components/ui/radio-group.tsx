@@ -3,6 +3,7 @@ import { CircleIcon } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/utils/utils";
 
+// 单选按钮组组件
 function RadioGroup({
   className,
   ...props
@@ -15,6 +16,7 @@ function RadioGroup({
     />
   );
 }
+// 单选按钮项组件
 function RadioGroupItem({
   className,
   ...props

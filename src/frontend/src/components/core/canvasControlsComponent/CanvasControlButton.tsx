@@ -3,6 +3,10 @@ import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import ShadTooltip from "@/components/common/shadTooltipComponent";
 import { cn } from "@/utils/utils";
 
+/**
+ * 画布控制按钮组件
+ * 封装了 React Flow 的 ControlButton，添加工具提示和自定义样式。
+ */
 type CanvasControlButtonProps = {
   iconName: string;
   tooltipText: string;

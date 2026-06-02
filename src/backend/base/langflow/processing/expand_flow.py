@@ -3,6 +3,8 @@
 This module provides functionality to expand a minimal/compact flow format
 (used by AI agents) into the full flow format expected by Langflow.
 """
+# 本模块提供将紧凑流程格式扩展为完整流程格式的功能。
+# 紧凑格式由 AI 代理使用，完整格式是 Langflow 所期望的。
 
 from __future__ import annotations
 
@@ -14,32 +16,40 @@ from pydantic import BaseModel, Field
 class CompactNode(BaseModel):
     """A compact node representation for AI-generated flows."""
 
-    id: str
-    type: str
-    values: dict[str, Any] = Field(default_factory=dict)
+    # 用于 AI 生成流程的紧凑节点表示
+
+    id: str  # 节点唯一标识符
+    type: str  # 组件类型名称
+    values: dict[str, Any] = Field(default_factory=dict)  # 节点字段值映射
     # If edited is True, the node field must contain the full node data
-    edited: bool = False
-    node: dict[str, Any] | None = None
+    # 如果 edited 为 True，则 node 字段必须包含完整的节点数据
+    edited: bool = False  # 标记节点是否被编辑过
+    node: dict[str, Any] | None = None  # 完整节点数据（仅在 edited=True 时使用）
 
 
 class CompactEdge(BaseModel):
     """A compact edge representation for AI-generated flows."""
 
-    source: str
-    source_output: str
-    target: str
-    target_input: str
+    # 用于 AI 生成流程的紧凑边（连接）表示
+
+    source: str  # 源节点 ID
+    source_output: str  # 源节点输出名称
+    target: str  # 目标节点 ID
+    target_input: str  # 目标节点输入名称
 
 
 class CompactFlowData(BaseModel):
     """The compact flow data structure."""
 
-    nodes: list[CompactNode]
-    edges: list[CompactEdge]
+    # 紧凑流程数据结构，包含节点和边的列表
+
+    nodes: list[CompactNode]  # 紧凑节点列表
+    edges: list[CompactEdge]  # 紧凑边列表
 
 
 def _get_flat_components(all_types_dict: dict[str, Any]) -> dict[str, Any]:
     """Flatten the component types dict for easy lookup by component name."""
+    # 将组件类型字典扁平化，以便通过组件名称快速查找
     return {
         comp_name: comp_data
         for components in all_types_dict.values()
@@ -64,7 +74,9 @@ def _expand_node(
     Raises:
         ValueError: If component type is not found and node is not edited
     """
+    # 将紧凑节点扩展为完整节点格式
     # If the node is edited, it should have full node data
+    # 如果节点被编辑过，应该包含完整的节点数据
     if compact_node.edited:
         if not compact_node.node:
             msg = f"Node {compact_node.id} is marked as edited but has no node data"
@@ -80,18 +92,23 @@ def _expand_node(
         }
 
     # Look up component template
+    # 查找组件模板
     if compact_node.type not in flat_components:
         msg = f"Component type '{compact_node.type}' not found in component index"
         raise ValueError(msg)
 
     # Fast deepcopy for known structure.
     # Instead of deepcopy, use shallow copy and per-field dict copy for template subdict.
+    # 对已知结构使用快速深拷贝。不使用 deepcopy，而是使用浅拷贝和逐字段字典拷贝。
     src_data = flat_components[compact_node.type]
     # Assume template is a dict (if present)
+    # 假设 template 是一个字典（如果存在）
     if "template" in src_data:
         # Shallow copy for outer structure
+        # 对外层结构进行浅拷贝
         template_data = src_data.copy()
         # Deep copy only 'template' portion (which is mutated and thus not shared)
+        # 仅对 'template' 部分进行深拷贝（因为会被修改，所以不能共享）
         template_data["template"] = template = src_data["template"].copy()
     else:
         template_data = src_data.copy()

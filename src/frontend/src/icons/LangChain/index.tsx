@@ -1,3 +1,4 @@
+// LangChain 图标组件 - 用于 LangChain 框架相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import SvgLangChainIcon from "./LangChainIcon";

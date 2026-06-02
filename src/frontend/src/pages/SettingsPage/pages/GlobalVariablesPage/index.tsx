@@ -23,6 +23,10 @@ import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import useAlertStore from "../../../../stores/alertStore";
 
+/**
+ * 全局变量管理页面
+ * 显示、创建、编辑和删除全局变量，支持按类型筛选
+ */
 export default function GlobalVariablesPage() {
   const { t } = useTranslation();
   const setErrorData = useAlertStore((state) => state.setErrorData);

@@ -1,6 +1,5 @@
 import Fuse from "fuse.js";
 import { cloneDeep, debounce } from "lodash";
-import { useTranslation } from "react-i18next";
 import {
   createContext,
   memo,
@@ -12,6 +11,7 @@ import {
   useState,
 } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import { Button } from "@/components/ui/button";
@@ -59,10 +59,12 @@ import { normalizeString } from "./helpers/normalize-string";
 import sensitiveSort from "./helpers/sensitive-sort";
 import { traditionalSearchMetadata } from "./helpers/traditional-search-metadata";
 
+/** 侧边栏分类列表 */
 const CATEGORIES = SIDEBAR_CATEGORIES;
 const BUNDLES = SIDEBAR_BUNDLES;
 const MCP_COMPONENT_CATEGORY = "models_and_agents";
 
+// 侧边栏搜索上下文类型定义
 // Search context for the sidebar
 export type SearchContextType = {
   focusSearch: () => void;
@@ -86,6 +88,7 @@ export function useSearchContext() {
   return context;
 }
 
+// 创建可在 FlowPage 级别使用的搜索上下文提供者
 // Create a provider that can be used at the FlowPage level
 export function FlowSearchProvider({
   children,
@@ -152,6 +155,11 @@ interface FlowSidebarComponentProps {
   setShowLegacy?: (value: boolean) => void;
 }
 
+/**
+ * 流程侧边栏组件
+ * 提供组件搜索、分类浏览、拖拽添加组件到画布等功能
+ * 支持新旧两种侧边栏模式，包含搜索、筛选、版本管理等完整的组件面板功能
+ */
 export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
   const { t } = useTranslation();
   const rawData = useTypesStore((state) => state.data);

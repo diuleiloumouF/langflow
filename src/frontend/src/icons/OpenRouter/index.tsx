@@ -1,3 +1,4 @@
+// OpenRouter 图标组件 - 用于 OpenRouter AI 模型路由服务相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import SvgOpenRouter from "./OpenRouterIcon";

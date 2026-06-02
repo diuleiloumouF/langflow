@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
-import { FaDiscord, FaGithub } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
+import { FaDiscord, FaGithub } from "react-icons/fa";
 import { useShallow } from "zustand/react/shallow";
 import logoDarkPng from "@/assets/logo_dark.png";
 import logoLightPng from "@/assets/logo_light.png";
@@ -16,9 +16,15 @@ import { useFolderStore } from "@/stores/foldersStore";
 import { formatNumber } from "@/utils/utils";
 import useFileDrop from "../hooks/use-on-file-drop";
 
+/** 外部链接图标的样式类名 */
 const EXTERNAL_LINK_ICON_CLASS =
   "absolute right-6 top-[35px] h-4 w-4 shrink-0 translate-x-0 opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100";
 
+/**
+ * 空页面社区组件
+ * 当用户没有流程时显示的欢迎页面，包含 Langflow Logo、
+ * GitHub 和 Discord 链接，以及创建第一个流程的按钮
+ */
 export const EmptyPageCommunity = ({
   setOpenModal,
 }: {

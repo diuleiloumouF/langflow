@@ -1,6 +1,10 @@
 import { useTranslation } from "react-i18next";
 import ForwardedIconComponent from "../../../../../../components/common/genericIconComponent";
 
+/**
+ * 通用设置页面头部组件
+ * 显示设置页面的标题和描述
+ */
 const GeneralPageHeaderComponent = () => {
   const { t } = useTranslation();
   return (

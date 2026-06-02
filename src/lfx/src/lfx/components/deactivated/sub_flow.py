@@ -1,5 +1,7 @@
+# 类型检查相关导入
 from typing import TYPE_CHECKING, Any
 
+# 流程处理工具、组件基类、图引擎
 from lfx.base.flow_processing.utils import build_data_from_result_data
 from lfx.custom.custom_component.custom_component import CustomComponent
 from lfx.graph.graph.base import Graph
@@ -10,12 +12,15 @@ from lfx.schema.data import Data
 from lfx.schema.dotdict import dotdict
 from lfx.template.field.base import Input
 
+# 仅在类型检查时导入，避免运行时循环依赖
 if TYPE_CHECKING:
     from lfx.graph.schema import RunOutputs
 
 
+# 子流程组件，从流程动态生成组件（已弃用）
 class SubFlowComponent(CustomComponent):
     display_name = "Sub Flow"
+    # 组件描述：从流程动态生成组件，输出包含 'result' 和 'message' 键的数据列表
     description = (
         "Dynamically Generates a Component from a Flow. The output is a list of data with keys 'result' and 'message'."
     )
@@ -23,10 +28,12 @@ class SubFlowComponent(CustomComponent):
     field_order = ["flow_name"]
     name = "SubFlow"
 
+    # 异步获取所有可用流程名称
     async def get_flow_names(self) -> list[str]:
         flow_datas = await self.alist_flows()
         return [flow_data.data["name"] for flow_data in flow_datas]
 
+    # 异步获取指定名称的流程数据
     async def get_flow(self, flow_name: str) -> Data | None:
         flow_datas = await self.alist_flows()
         for flow_data in flow_datas:
@@ -34,6 +41,7 @@ class SubFlowComponent(CustomComponent):
                 return flow_data
         return None
 
+    # 异步更新构建配置，当流程名称变更时刷新可用输入
     async def update_build_config(self, build_config: dotdict, field_value: Any, field_name: str | None = None):
         await logger.adebug(f"Updating build config with field value {field_value} and field name {field_name}")
         if field_name == "flow_name":
@@ -63,6 +71,7 @@ class SubFlowComponent(CustomComponent):
 
         return build_config
 
+    # 将流程输入添加到构建配置中
     def add_inputs_to_build_config(self, inputs: list[Vertex], build_config: dotdict):
         new_fields: list[Input] = []
         for vertex in inputs:
@@ -79,6 +88,7 @@ class SubFlowComponent(CustomComponent):
             build_config[field.name] = field.to_dict()
         return build_config
 
+    # 构建配置
     def build_config(self):
         return {
             "input_value": {
@@ -103,6 +113,7 @@ class SubFlowComponent(CustomComponent):
             },
         }
 
+    # 异步构建并执行子流程
     async def build(self, flow_name: str, **kwargs) -> list[Data]:
         tweaks = {key: {"input_value": value} for key, value in kwargs.items()}
         run_outputs: list[RunOutputs | None] = await self.run_flow(

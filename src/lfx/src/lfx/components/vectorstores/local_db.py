@@ -15,6 +15,7 @@ from lfx.schema.dataframe import DataFrame
 from lfx.template.field.base import Output
 from lfx.utils.validate_cloud import raise_error_if_astra_cloud_disable_component
 
+# 在 Astra Cloud 环境中禁用本地向量存储组件的提示信息
 disable_component_in_astra_cloud_msg = (
     "Local vector stores are not supported in S3/cloud mode. "
     "Local vector stores require local file system access for persistence. "
@@ -22,15 +23,22 @@ disable_component_in_astra_cloud_msg = (
 )
 
 
+# 本地数据库组件，基于 Chroma 的本地向量存储，提供搜索功能
 class LocalDBComponent(LCVectorStoreComponent):
     """Chroma Vector Store with search capabilities."""
 
+    # 组件显示名称
     display_name: str = "Local DB"
+    # 组件描述信息
     description: str = "Local Vector Store with search capabilities"
+    # 组件内部名称
     name = "LocalDB"
+    # 组件图标
     icon = "database"
+    # 标记为遗留组件
     legacy = True
 
+    # 组件输入参数定义
     inputs = [
         TabInput(
             name="mode",
@@ -60,7 +68,7 @@ class LocalDBComponent(LCVectorStoreComponent):
         DropdownInput(
             name="existing_collections",
             display_name="Existing Collections",
-            options=[],  # Will be populated dynamically
+            options=[],  # 选项将动态填充
             info="Select a previously created collection to search through its stored data.",
             show=False,
             combobox=True,
@@ -108,43 +116,48 @@ class LocalDBComponent(LCVectorStoreComponent):
             info="Limit the number of records to compare when Allow Duplicates is False.",
         ),
     ]
+    # 组件输出参数定义
     outputs = [
         Output(display_name="Table", name="dataframe", method="perform_search"),
     ]
 
+    # 获取集合的完整目录路径
     def get_vector_store_directory(self, base_dir: str | Path) -> Path:
         """Get the full directory path for a collection."""
-        # Ensure base_dir is a Path object
+        # 确保 base_dir 是 Path 对象
         base_dir = Path(base_dir)
-        # Create the full path: base_dir/vector_stores/collection_name
+        # 创建完整路径: base_dir/vector_stores/collection_name
         full_path = base_dir / "vector_stores" / self.collection_name
-        # Create the directory if it doesn't exist
+        # 如果目录不存在则创建
         full_path.mkdir(parents=True, exist_ok=True)
         return full_path
 
+    # 获取默认的持久化目录
     def get_default_persist_dir(self) -> str:
         """Get the default persist directory from cache."""
         from lfx.services.cache.utils import CACHE_DIR
 
         return str(self.get_vector_store_directory(CACHE_DIR))
 
+    # 列出现有的向量存储集合
     def list_existing_collections(self) -> list[str]:
         """List existing vector store collections from the persist directory."""
         from lfx.services.cache.utils import CACHE_DIR
 
-        # Get the base directory (either custom or cache)
+        # 获取基础目录（自定义目录或缓存目录）
         base_dir = Path(self.persist_directory) if self.persist_directory else Path(CACHE_DIR)
-        # Get the vector_stores subdirectory
+        # 获取 vector_stores 子目录
         vector_stores_dir = base_dir / "vector_stores"
         if not vector_stores_dir.exists():
             return []
 
         return [d.name for d in vector_stores_dir.iterdir() if d.is_dir()]
 
+    # 当模式变化时更新构建配置
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None) -> dict:
         """Update the build configuration when the mode changes."""
         if field_name == "mode":
-            # Hide all dynamic fields by default
+            # 默认隐藏所有动态字段
             dynamic_fields = [
                 "ingest_data",
                 "search_query",
@@ -160,7 +173,7 @@ class LocalDBComponent(LCVectorStoreComponent):
                 if field in build_config:
                     build_config[field]["show"] = False
 
-            # Show/hide fields based on selected mode
+            # 根据选择的模式显示/隐藏字段
             if field_value == "Ingest":
                 if "ingest_data" in build_config:
                     build_config["ingest_data"]["show"] = True
@@ -185,18 +198,19 @@ class LocalDBComponent(LCVectorStoreComponent):
                 build_config["number_of_results"]["show"] = True
                 build_config["embedding"]["show"] = True
                 build_config["collection_name"]["show"] = False
-                # Show existing collections dropdown and update its options
+                # 显示现有集合并下拉列表并更新其选项
                 if "existing_collections" in build_config:
                     build_config["existing_collections"]["show"] = True
                     build_config["existing_collections"]["options"] = self.list_existing_collections()
-                # Hide collection_name in Retrieve mode since we use existing_collections
+                # 在检索模式下隐藏 collection_name，因为我们使用 existing_collections
         elif field_name == "existing_collections":
-            # Update collection_name when an existing collection is selected
+            # 当选择现有集合时更新 collection_name
             if "collection_name" in build_config:
                 build_config["collection_name"]["value"] = field_value
 
         return build_config
 
+    # 构建 Chroma 向量存储实例
     @override
     @check_cached_vector_store
     def build_vector_store(self) -> Chroma:
@@ -208,12 +222,12 @@ class LocalDBComponent(LCVectorStoreComponent):
         except ImportError as e:
             msg = "Could not import Chroma integration package. Please install it with `pip install langchain-chroma`."
             raise ImportError(msg) from e
-        # Chroma settings
+        # Chroma 设置
         # chroma_settings = None
         if self.existing_collections:
             self.collection_name = self.existing_collections
 
-        # Use user-provided directory or default cache directory
+        # 使用用户提供的目录或默认缓存目录
         if self.persist_directory:
             base_dir = self.resolve_path(self.persist_directory)
             persist_directory = str(self.get_vector_store_directory(base_dir))
@@ -234,6 +248,7 @@ class LocalDBComponent(LCVectorStoreComponent):
         self.status = chroma_collection_to_data(chroma.get(limit=self.limit))
         return chroma
 
+    # 向向量存储添加文档
     def _add_documents_to_vector_store(self, vector_store: "Chroma") -> None:
         """Adds documents to the Vector Store."""
         ingest_data: list | Data | DataFrame = self.ingest_data
@@ -241,7 +256,7 @@ class LocalDBComponent(LCVectorStoreComponent):
             self.status = ""
             return
 
-        # Convert DataFrame to Data if needed using parent's method
+        # 使用父类方法将 DataFrame 转换为 Data（如果需要）
         ingest_data = self._prepare_ingest_data()
 
         stored_documents_without_id = []
@@ -268,5 +283,6 @@ class LocalDBComponent(LCVectorStoreComponent):
         else:
             self.log("No documents to add to the Vector Store.")
 
+    # 执行搜索并返回 DataFrame 结果
     def perform_search(self) -> DataFrame:
         return DataFrame(self.search_documents())

@@ -6,6 +6,8 @@ import { SpanTree } from "./SpanTree";
 import { Span, TraceDetailViewProps } from "./types";
 
 /**
+ * 追踪详情视图组件
+ * 在右侧面板中显示单个追踪的详情，包含标题栏、Span 树和 Span 详情
  * Single-trace detail view used in the right-side panel.
  * Matches the "Trace Detail" layout (header + span list + span details).
  */

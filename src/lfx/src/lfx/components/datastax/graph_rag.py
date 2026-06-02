@@ -1,15 +1,29 @@
+# 反射模块，用于动态获取类信息
 import inspect
+
+# 抽象基类，用于过滤抽象类
 from abc import ABC
 
+# 图检索策略模块
 import graph_retriever.strategies as strategies_module
+
+# 图检索器
 from langchain_graph_retriever import GraphRetriever
 
+# 向量存储组件基类
 from lfx.base.vectorstores.model import LCVectorStoreComponent
+
+# 文档转数据工具函数
 from lfx.helpers.data import docs_to_data
+
+# 输入组件类型
 from lfx.inputs.inputs import DropdownInput, HandleInput, MultilineInput, NestedDictInput, StrInput
+
+# 数据模型
 from lfx.schema.data import Data
 
 
+# 获取可用的图遍历策略列表
 def traversal_strategies() -> list[str]:
     """Retrieves a list of class names from the strategies_module.
 

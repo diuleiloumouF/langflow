@@ -8,6 +8,8 @@ from lfx.schema.data import Data
 from lfx.schema.message import Message
 
 
+# 自查询检索器组件，使用向量存储和 LLM 生成向量存储查询
+# Self query retriever component for using vector store and LLM to generate queries
 class SelfQueryRetrieverComponent(Component):
     display_name = "Self Query Retriever"
     description = "Retriever that uses a vector store and an LLM to generate the vector store queries."
@@ -56,6 +58,7 @@ class SelfQueryRetrieverComponent(Component):
         ),
     ]
 
+    # 检索文档
     def retrieve_documents(self) -> list[Data]:
         metadata_field_infos = [AttributeInfo(**value.data) for value in self.attribute_infos]
         self_query_retriever = SelfQueryRetriever.from_llm(

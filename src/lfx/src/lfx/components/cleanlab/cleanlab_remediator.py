@@ -1,9 +1,11 @@
+# 组件基类、输入/输出定义、消息模型
 from lfx.custom import Component
 from lfx.field_typing.range_spec import RangeSpec
 from lfx.io import BoolInput, FloatInput, HandleInput, MessageTextInput, Output, PromptInput
 from lfx.schema.message import Message
 
 
+# Cleanlab 修复器组件，基于可信度分数对不可信的 LLM 响应进行修复处理
 class CleanlabRemediator(Component):
     """Remediates potentially untrustworthy LLM responses based on trust scores computed by the Cleanlab Evaluator.
 
@@ -44,13 +46,16 @@ class CleanlabRemediator(Component):
     icon = "Cleanlab"
     name = "CleanlabRemediator"
 
+    # 输入参数定义
     inputs = [
+        # 待评估的 LLM 响应
         MessageTextInput(
             name="response",
             display_name="Response",
             info="The response to the user's query.",
             required=True,
         ),
+        # 从 Cleanlab 评估器传入的信任分数
         HandleInput(
             name="score",
             display_name="Trust Score",
@@ -58,12 +63,14 @@ class CleanlabRemediator(Component):
             input_types=["number"],
             required=True,
         ),
+        # 可选的评估解释说明
         MessageTextInput(
             name="explanation",
             display_name="Explanation",
             info="The explanation from the Cleanlab Evaluator.",
             required=False,
         ),
+        # 信任分数阈值（低于此值将触发修复）
         FloatInput(
             name="threshold",
             display_name="Threshold",
@@ -76,6 +83,7 @@ class CleanlabRemediator(Component):
             required=True,
             show=True,
         ),
+        # 是否显示不可信响应（带警告），否则返回兜底文本
         BoolInput(
             name="show_untrustworthy_response",
             display_name="Show Untrustworthy Response",
@@ -83,6 +91,7 @@ class CleanlabRemediator(Component):
             "added warning. If disabled, and the trust score is below the threshold, the fallback answer is returned.",
             value=True,
         ),
+        # 不可信响应的警告文本
         PromptInput(
             name="untrustworthy_warning_text",
             display_name="Warning for Untrustworthy Response",
@@ -90,6 +99,7 @@ class CleanlabRemediator(Component):
             "below the threshold.",
             value="⚠️ WARNING: The following response is potentially untrustworthy.",
         ),
+        # 兜底替换文本（当不显示不可信响应时返回）
         PromptInput(
             name="fallback_text",
             display_name="Fallback Answer",
@@ -99,6 +109,7 @@ class CleanlabRemediator(Component):
         ),
     ]
 
+    # 输出参数：修复后的消息
     outputs = [
         Output(
             display_name="Remediated Message",
@@ -108,6 +119,7 @@ class CleanlabRemediator(Component):
         ),
     ]
 
+    # 根据信任分数对响应进行修复处理
     def remediate_response(self) -> Message:
         if self.score >= self.threshold:
             self.status = f"Score {self.score:.2f} ≥ threshold {self.threshold:.2f} → accepted"

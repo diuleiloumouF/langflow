@@ -10,6 +10,10 @@ import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import type { APIClassType } from "@/types/api";
 import SidebarItemsList from "./sidebarItemsList";
 
+/**
+ * 分类折叠面板组件
+ * 显示单个分类的可折叠面板，展开后显示该分类下的所有组件项
+ */
 export const CategoryDisclosure = memo(function CategoryDisclosure({
   item,
   openCategories,

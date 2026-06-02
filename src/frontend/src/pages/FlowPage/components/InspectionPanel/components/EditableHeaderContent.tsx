@@ -7,12 +7,18 @@ import useFlowsManagerStore from "@/stores/flowsManagerStore";
 import type { NodeDataType } from "@/types/flow";
 import { cn } from "@/utils/utils";
 
+/** 可编辑头部内容的属性定义 */
 interface EditableHeaderContentProps {
   data: NodeDataType;
   editMode: boolean;
   setEditMode: (value: boolean) => void;
 }
 
+/**
+ * 可编辑头部内容组件
+ * 提供节点名称和描述的内联编辑功能，支持编辑模式切换、自动保存和取消操作
+ * 返回包含容器引用、保存方法、名称元素和描述元素的对象
+ */
 export default function EditableHeaderContent({
   data,
   editMode,
@@ -33,12 +39,14 @@ export default function EditableHeaderContent({
   const containerRef = useRef<HTMLDivElement>(null);
   const hasChangedRef = useRef(false);
 
+  // 当外部数据变化时更新本地状态
   // Update local state when data changes
   useEffect(() => {
     setLocalName(data.node?.display_name ?? data.type);
     setLocalDescription(data.node?.description ?? "");
   }, [data.node?.display_name, data.node?.description, data.type]);
 
+  // 保存编辑后的节点名称和描述到流程数据中
   const handleSave = useCallback(() => {
     if (!hasChangedRef.current) return;
 
@@ -68,6 +76,7 @@ export default function EditableHeaderContent({
     setNode,
   ]);
 
+  // 进入编辑模式时拍摄快照（用于撤销操作）
   // Take snapshot when entering edit mode
   useEffect(() => {
     if (editMode) {
@@ -86,6 +95,7 @@ export default function EditableHeaderContent({
     }
   }, [editMode, takeSnapshot]);
 
+  // 点击外部区域时保存并退出编辑模式
   // Handle click outside to save and exit edit mode
   useEffect(() => {
     if (!editMode) return;

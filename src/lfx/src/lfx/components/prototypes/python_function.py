@@ -9,13 +9,20 @@ from lfx.schema.dotdict import dotdict
 from lfx.schema.message import Message
 
 
+# Python 函数组件，允许用户定义和执行 Python 函数，返回 Data 对象或 Message
 class PythonFunctionComponent(Component):
+    # 组件显示名称
     display_name = "Python Function"
+    # 组件描述信息
     description = "Define and execute a Python function that returns a Data object or a Message."
+    # 组件图标
     icon = "Python"
+    # 组件内部名称
     name = "PythonFunction"
+    # 标记为遗留组件
     legacy = True
 
+    # 组件输入参数定义
     inputs = [
         CodeInput(
             name="function_code",
@@ -24,6 +31,7 @@ class PythonFunctionComponent(Component):
         ),
     ]
 
+    # 组件输出参数定义
     outputs = [
         Output(
             name="function_output",
@@ -42,11 +50,13 @@ class PythonFunctionComponent(Component):
         ),
     ]
 
+    # 获取函数的可调用对象
     def get_function_callable(self) -> Callable:
         function_code = self.function_code
         self.status = function_code
         return get_function(function_code)
 
+    # 执行函数并返回结果
     def execute_function(self) -> list[dotdict | str] | dotdict | str:
         function_code = self.function_code
 
@@ -60,11 +70,13 @@ class PythonFunctionComponent(Component):
             logger.debug("Error executing function", exc_info=True)
             return f"Error executing function: {e}"
 
+    # 执行函数并返回 Data 对象列表
     def execute_function_data(self) -> list[Data]:
         results = self.execute_function()
         results = results if isinstance(results, list) else [results]
         return [(Data(text=x) if isinstance(x, str) else Data(**x)) for x in results]
 
+    # 执行函数并返回 Message 对象
     def execute_function_message(self) -> Message:
         results = self.execute_function()
         results = results if isinstance(results, list) else [results]

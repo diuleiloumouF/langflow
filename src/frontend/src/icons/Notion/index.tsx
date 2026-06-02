@@ -1,3 +1,4 @@
+// Notion 图标组件 - 用于 Notion 协作办公平台相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import SvgNotionLogo from "./NotionLogo";

@@ -3,6 +3,11 @@ import type { crashComponentPropsType } from "../../../types/components";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../../ui/card";
 
+/**
+ * 崩溃错误组件
+ * 当应用发生未捕获的错误时显示的全屏错误页面。
+ * 提供错误信息展示、重启应用和报告问题到GitHub的功能。
+ */
 export default function CrashErrorComponent({
   error,
   resetErrorBoundary,

@@ -11,6 +11,8 @@ from lfx.inputs.inputs import SecretStrInput, StrInput
 from lfx.schema.data import Data
 
 
+# Home Assistant 设备控制组件，用于通过 API 控制 Home Assistant 智能家居设备
+# Home Assistant device control component for controlling smart home devices via API
 class HomeAssistantControl(LCToolComponent):
     """This tool is used to control Home Assistant devices.
 
@@ -27,6 +29,7 @@ class HomeAssistantControl(LCToolComponent):
     documentation: str = "https://developers.home-assistant.io/docs/api/rest/"
     icon: str = "HomeAssistant"
 
+    # --- LangFlow UI 输入字段（令牌、URL）---
     # --- Input fields for LangFlow UI (token, URL) ---
     inputs = [
         SecretStrInput(
@@ -55,9 +58,12 @@ class HomeAssistantControl(LCToolComponent):
         ),
     ]
 
+    # --- 暴露给 Agent 的参数（Pydantic schema）---
     # --- Parameters exposed to the agent (Pydantic schema) ---
     class ToolSchema(BaseModel):
         """Parameters to be passed by the agent: action, entity_id only."""
+
+        # 传递给 Agent 的参数：仅 action 和 entity_id
 
         action: str = Field(..., description="Home Assistant service name. (One of turn_on, turn_off, toggle)")
         entity_id: str = Field(
@@ -71,6 +77,8 @@ class HomeAssistantControl(LCToolComponent):
 
         - Uses default_action and default_entity_id entered in the UI.
         """
+        # 当在 LangFlow 中点击"运行"按钮时使用
+        # 使用 UI 中输入的 default_action 和 default_entity_id
         action = self.default_action or "turn_off"
         entity_id = self.default_entity_id or "switch.unknown_switch_3"
 
@@ -87,6 +95,8 @@ class HomeAssistantControl(LCToolComponent):
 
         - The agent can only pass action and entity_id as arguments.
         """
+        # 返回供 Agent（LLM）使用的工具
+        # Agent 只能传递 action 和 entity_id 作为参数
         return StructuredTool.from_function(
             name="home_assistant_control",
             description=(
@@ -103,6 +113,7 @@ class HomeAssistantControl(LCToolComponent):
 
         -> Internally calls _control_device.
         """
+        # Agent 调用的函数，内部调用 _control_device
         return self._control_device(
             ha_token=self.ha_token,
             base_url=self.base_url,
@@ -122,6 +133,8 @@ class HomeAssistantControl(LCToolComponent):
         The domain is extracted from the beginning of the entity_id.
         Example: entity_id="switch.unknown_switch_3" -> domain="switch".
         """
+        # 调用 Home Assistant 服务的实际逻辑
+        # 域名从 entity_id 的开头提取，例如: entity_id="switch.unknown_switch_3" -> domain="switch"
         try:
             domain = entity_id.split(".")[0]  # switch, light, cover, etc.
             url = f"{base_url}/api/services/{domain}/{action}"
@@ -143,6 +156,7 @@ class HomeAssistantControl(LCToolComponent):
 
     def _make_data_response(self, result: dict[str, Any] | str) -> Data:
         """Returns a response in the LangFlow Data format."""
+        # 以 LangFlow Data 格式返回响应
         if isinstance(result, str):
             # Handle error messages
             return Data(text=result)

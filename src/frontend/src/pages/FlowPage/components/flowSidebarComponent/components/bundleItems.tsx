@@ -9,6 +9,10 @@ import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import type { BundleItemProps } from "../types";
 import SidebarItemsList from "./sidebarItemsList";
 
+/**
+ * 组件包项组件
+ * 显示单个组件分类的可折叠列表，展开后显示该分类下的所有组件
+ */
 export const BundleItem = memo(
   ({
     item,

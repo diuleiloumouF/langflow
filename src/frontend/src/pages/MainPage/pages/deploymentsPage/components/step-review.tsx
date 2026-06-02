@@ -92,6 +92,11 @@ function EditableToolName({
   );
 }
 
+/**
+ * 审查步骤组件
+ * 部署向导的最后一步，显示部署配置的完整摘要
+ * 支持编辑工具名称和确认部署
+ */
 export default function StepReview() {
   const {
     isEditMode,

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Union
 from langflow.services.schema import ServiceType
 
 if TYPE_CHECKING:
+    # 仅在类型检查时导入，避免循环依赖
     from collections.abc import AsyncGenerator
 
     from sqlmodel.ext.asyncio.session import AsyncSession
@@ -20,9 +21,8 @@ if TYPE_CHECKING:
     from langflow.services.tracing.service import TracingService
     from langflow.services.variable.service import VariableService
 
-# These imports MUST be outside TYPE_CHECKING because FastAPI uses eval_str=True
-# to evaluate type annotations, and these types are used as return types for
-# dependency functions that FastAPI evaluates at module load time.
+# 这些导入必须在 TYPE_CHECKING 之外，因为 FastAPI 使用 eval_str=True 来评估类型注解，
+# 这些类型被用作 FastAPI 在模块加载时评估的依赖函数的返回类型。
 from lfx.services.auth.base import BaseAuthService  # noqa: TC002
 from lfx.services.settings.service import SettingsService  # noqa: TC002
 
@@ -32,7 +32,9 @@ from langflow.services.telemetry.service import TelemetryService  # noqa: TC001
 
 
 def get_service(service_type: ServiceType, default=None):
-    """Retrieves the service instance for the given service type.
+    """检索给定服务类型的服务实例。
+
+    Retrieves the service instance for the given service type.
 
     Args:
         service_type (ServiceType): The type of service to retrieve.
@@ -43,11 +45,13 @@ def get_service(service_type: ServiceType, default=None):
         Any: The service instance.
 
     """
+    # 获取全局服务管理器实例
     from lfx.services.manager import get_service_manager
 
     service_manager = get_service_manager()
 
     if not service_manager.are_factories_registered():
+        # 这是一个变通方法，确保服务管理器已初始化（非最优方案，但目前有效）
         # ! This is a workaround to ensure that the service manager is initialized
         # ! Not optimal, but it works for now
         from langflow.services.manager import ServiceManager
@@ -57,7 +61,9 @@ def get_service(service_type: ServiceType, default=None):
 
 
 def get_telemetry_service() -> TelemetryService:
-    """Retrieves the TelemetryService instance from the service manager.
+    """从服务管理器获取遥测服务实例。
+
+    Retrieves the TelemetryService instance from the service manager.
 
     Returns:
         TelemetryService: The TelemetryService instance.
@@ -68,7 +74,9 @@ def get_telemetry_service() -> TelemetryService:
 
 
 def get_tracing_service() -> TracingService:
-    """Retrieves the TracingService instance from the service manager.
+    """从服务管理器获取追踪服务实例。
+
+    Retrieves the TracingService instance from the service manager.
 
     Returns:
         TracingService: The TracingService instance.
@@ -79,7 +87,9 @@ def get_tracing_service() -> TracingService:
 
 
 def get_state_service() -> StateService:
-    """Retrieves the StateService instance from the service manager.
+    """从服务管理器获取状态服务实例。
+
+    Retrieves the StateService instance from the service manager.
 
     Returns:
         The StateService instance.
@@ -90,7 +100,9 @@ def get_state_service() -> StateService:
 
 
 def get_storage_service() -> StorageService:
-    """Retrieves the storage service instance.
+    """获取存储服务实例。
+
+    Retrieves the storage service instance.
 
     Returns:
         The storage service instance.

@@ -12,6 +12,8 @@ from lfx.services.deps import get_settings_service
 from lfx.utils.async_helpers import run_until_complete
 
 
+# JSON Agent 组件，用于从 JSON 文件构建可查询的 Agent
+# JSON Agent component for building a queryable agent from JSON files
 class JsonAgentComponent(LCAgentComponent):
     display_name = "JsonAgent"
     description = "Construct a json agent from an LLM and tools."
@@ -34,6 +36,7 @@ class JsonAgentComponent(LCAgentComponent):
         ),
     ]
 
+    # 获取本地文件路径，如果需要则从 S3 存储下载
     def _get_local_path(self) -> Path:
         """Get a local file path, downloading from S3 storage if necessary.
 
@@ -61,12 +64,14 @@ class JsonAgentComponent(LCAgentComponent):
         # Local storage - return as Path
         return Path(file_path)
 
+    # 清理临时文件（如果创建了）
     def _cleanup_temp_file(self) -> None:
         """Clean up temporary file if one was created."""
         if hasattr(self, "_temp_file_path"):
             with contextlib.suppress(Exception):
                 Path(self._temp_file_path).unlink()  # Ignore cleanup errors
 
+    # 构建 JSON Agent 执行器
     def build_agent(self) -> AgentExecutor:
         """Build the JSON agent executor."""
         try:

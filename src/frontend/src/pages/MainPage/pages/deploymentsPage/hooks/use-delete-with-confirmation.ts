@@ -9,6 +9,10 @@ interface DeleteWithConfirmation<T extends { id: string; name: string }> {
   setModalOpen: (open: boolean) => void;
 }
 
+/**
+ * 带确认的删除 Hook
+ * 封装删除操作的确认流程，包括目标选择、确认弹窗和错误处理
+ */
 export function useDeleteWithConfirmation<
   T extends { id: string; name: string },
   P,

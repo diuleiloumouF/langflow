@@ -1,11 +1,20 @@
+# 多查询检索器的 LangChain 集成
 from langchain_classic.retrievers import MultiQueryRetriever
+
+# 提示模板
 from langchain_core.prompts import PromptTemplate
 
+# 自定义组件基类
 from lfx.custom.custom_component.custom_component import CustomComponent
+
+# 类型定义
 from lfx.field_typing import BaseRetriever, LanguageModel, Text
+
+# 输入组件类型
 from lfx.inputs.inputs import HandleInput, StrInput
 
 
+# 多查询检索器组件，使用 LLM 生成多个查询以提高检索效果
 class MultiQueryRetrieverComponent(CustomComponent):
     display_name = "MultiQueryRetriever"
     description = "Initialize from llm using default template."
@@ -13,7 +22,9 @@ class MultiQueryRetrieverComponent(CustomComponent):
     name = "MultiQueryRetriever"
     legacy = True
 
+    # 输入参数定义
     inputs = [
+        # 语言模型
         HandleInput(
             name="llm",
             display_name="LLM",

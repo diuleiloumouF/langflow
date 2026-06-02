@@ -4,6 +4,10 @@ import { useCustomNavigate } from "@/customization/hooks/use-custom-navigate";
 import useFlowsManagerStore from "../../stores/flowsManagerStore";
 import Page from "../FlowPage/components/PageComponent";
 
+/**
+ * 流程只读视图页面
+ * 以只读模式显示指定 ID 的流程画布，不允许编辑操作
+ */
 export default function ViewPage() {
   const setCurrentFlow = useFlowsManagerStore((state) => state.setCurrentFlow);
 

@@ -1,3 +1,4 @@
+// Google BigQuery 图标组件 - 用于 Google BigQuery 数据仓库服务相关组件的标识
 import React, { forwardRef } from "react";
 import GooglebigqueryIconSVG from "./googlebigquery";
 

@@ -7,6 +7,8 @@ from lfx.inputs.inputs import BoolInput, DropdownInput, HandleInput, MultilineIn
 from lfx.schema import Message
 
 
+# 检索 QA 组件，从检索器中查询源文档进行问答
+# Retrieval QA component for question-answering by querying sources from a retriever
 class RetrievalQAComponent(LCChainComponent):
     display_name = "Retrieval QA"
     description = "Chain for question-answering querying sources from a retriever."
@@ -52,6 +54,7 @@ class RetrievalQAComponent(LCChainComponent):
         ),
     ]
 
+    # 调用检索 QA 链执行问答
     def invoke_chain(self) -> Message:
         chain_type = self.chain_type.lower().replace(" ", "_")
         if self.memory:

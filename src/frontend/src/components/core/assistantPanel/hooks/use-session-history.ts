@@ -1,12 +1,15 @@
 /**
- * Manages saved assistant sessions: persist, switch, and delete.
+ * 会话历史管理 Hook
+ * 管理已保存的助手会话：持久化、切换和删除。
+ * 使用 localStorage 存储会话历史记录。
  */
+// Manages saved assistant sessions: persist, switch, and delete.
 
 import { useCallback, useState } from "react";
 import {
   ASSISTANT_MAX_SESSIONS,
-  ASSISTANT_SESSIONS_STORAGE_KEY,
   ASSISTANT_SESSION_PREVIEW_LENGTH,
+  ASSISTANT_SESSIONS_STORAGE_KEY,
 } from "../assistant-panel.constants";
 import type {
   AssistantMessage,

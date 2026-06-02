@@ -3,10 +3,12 @@ import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import { Badge } from "@/components/ui/badge";
 import { Button, type ButtonProps } from "@/components/ui/button";
 
+/** 画布横幅操作按钮 */
 export function CanvasBannerButton(props: ButtonProps) {
   return <Button {...props} />;
 }
 
+/** 画布徽章的样式变体映射 */
 const canvasBadgeVariants = {
   readme:
     "pointer-events-auto absolute left-4 top-4 flex items-center gap-2 whitespace-nowrap rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground shadow-sm",
@@ -18,6 +20,10 @@ interface CanvasBadgeProps extends HTMLAttributes<HTMLDivElement> {
   variant?: CanvasBadgeVariant;
 }
 
+/**
+ * 画布徽章组件
+ * 在画布上显示状态标签，如版本预览标记
+ */
 export function CanvasBadge({
   variant = "readme",
   className,
@@ -34,6 +40,7 @@ export function CanvasBadge({
   );
 }
 
+/** 画布横幅的样式变体映射 */
 const canvasBannerVariants = {
   readme:
     "version-preview-banner flex items-center gap-4 overflow-hidden rounded-xl border border-border bg-background px-5 py-3",
@@ -49,6 +56,10 @@ interface CanvasBannerProps {
   variant?: CanvasBannerVariant;
 }
 
+/**
+ * 画布横幅组件
+ * 在画布底部居中显示通知横幅，包含图标、标题、描述和操作按钮
+ */
 export default function CanvasBanner({
   icon,
   title,

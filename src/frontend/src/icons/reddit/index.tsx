@@ -1,3 +1,4 @@
+// Reddit 图标组件 - 用于 Reddit 社交新闻平台相关组件的标识
 import React, { forwardRef } from "react";
 import RedditIconSVG from "./reddit";
 

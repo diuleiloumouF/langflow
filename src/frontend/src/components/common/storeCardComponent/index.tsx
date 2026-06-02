@@ -23,6 +23,11 @@ import useDataEffect from "./hooks/use-data-effect";
 import useInstallComponent from "./hooks/use-handle-install";
 import { convertTestName } from "./utils/convert-test-name";
 
+/**
+ * 商店卡片组件
+ * 展示商店中组件/流程的卡片，包含名称、描述、作者、版本等信息。
+ * 支持点赞和本地安装功能。
+ */
 export default function StoreCardComponent({
   data,
   authorized = true,
@@ -42,7 +47,7 @@ export default function StoreCardComponent({
     data?.downloads_count ?? 0,
   );
 
-  const name = data.is_component ? "Component" : "Flow";
+  const name = data.is_component ? "Component" : "Flow"; // 根据类型确定名称
 
   async function _getFlowData() {
     const res = await getComponent(data.id);

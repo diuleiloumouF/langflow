@@ -1,4 +1,5 @@
 """Helpers module - backwards compatibility for moved components."""
+# 辅助模块 - 为已移动的组件提供向后兼容性
 
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
     from lfx.components.helpers.output_parser import OutputParserComponent
     from lfx.components.helpers.store_message import MessageStoreComponent
 
+# 动态导入映射表，将组件类名映射到对应的模块名
 _dynamic_imports = {
     "CalculatorComponent": "calculator_core",
     "CreateListComponent": "create_list",
@@ -36,6 +38,8 @@ __all__ = [
     "OutputParserComponent",
 ]
 
+# 在 sys.modules 中注册重定向子模块，以支持直接的 importlib.import_module() 调用
+# 这允许如下导入方式: import lfx.components.helpers.current_date
 # Register redirected submodules in sys.modules for direct importlib.import_module() calls
 # This allows imports like: import lfx.components.helpers.current_date
 _redirected_submodules = {
@@ -47,6 +51,7 @@ _redirected_submodules = {
 
 for old_path, new_path in _redirected_submodules.items():
     if old_path not in sys.modules:
+        # 使用延迟加载器，在访问时才导入实际模块
         # Use a lazy loader that imports the actual module when accessed
         class _RedirectedModule:
             def __init__(self, target_path: str, original_path: str):
@@ -59,6 +64,7 @@ for old_path, new_path in _redirected_submodules.items():
                     from importlib import import_module
 
                     self._module = import_module(self._target_path)
+                    # 同时在原始路径下注册，以供后续导入使用
                     # Also register under the original path for future imports
                     sys.modules[self._original_path] = self._module
                 return getattr(self._module, name)
@@ -71,6 +77,7 @@ for old_path, new_path in _redirected_submodules.items():
 
 def __getattr__(attr_name: str) -> Any:
     """Lazily import helper components on attribute access."""
+    # 在属性访问时延迟导入辅助组件
     # Handle submodule access for backwards compatibility
     # e.g., lfx.components.helpers.id_generator -> lfx.components.utilities.id_generator
     if attr_name == "id_generator":
@@ -102,6 +109,8 @@ def __getattr__(attr_name: str) -> Any:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)
 
+    # CurrentDateComponent、CalculatorComponent 和 IDGeneratorComponent 已移动到 utilities 模块
+    # 为向后兼容，将请求转发到 utilities
     # CurrentDateComponent, CalculatorComponent, and IDGeneratorComponent were moved to utilities
     # Forward them to utilities for backwards compatibility
     if attr_name in ("CurrentDateComponent", "CalculatorComponent", "IDGeneratorComponent"):
@@ -111,6 +120,8 @@ def __getattr__(attr_name: str) -> Any:
         globals()[attr_name] = result
         return result
 
+    # MemoryComponent 已移动到 models_and_agents 模块
+    # 为向后兼容，将请求转发到 models_and_agents
     # MemoryComponent was moved to models_and_agents
     # Forward it to models_and_agents for backwards compatibility
     if attr_name == "MemoryComponent":
@@ -120,6 +131,8 @@ def __getattr__(attr_name: str) -> Any:
         globals()[attr_name] = result
         return result
 
+    # CreateListComponent、MessageStoreComponent 和 OutputParserComponent 已移动到 processing 模块
+    # 为向后兼容，将请求转发到 processing
     # CreateListComponent, MessageStoreComponent, and OutputParserComponent were moved to processing
     # Forward them to processing for backwards compatibility
     if attr_name == "CreateListComponent":

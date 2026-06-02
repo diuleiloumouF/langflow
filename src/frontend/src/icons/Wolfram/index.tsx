@@ -1,3 +1,4 @@
+// Wolfram 图标组件 - 用于 Wolfram 计算知识引擎相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import SvgWolfram from "./Wolfram";

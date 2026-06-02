@@ -1,3 +1,8 @@
+/**
+ * 敏感排序函数
+ * 支持对 "名称 (编号)" 格式的字符串进行自然排序
+ * 先按名称字母排序，名称相同时按编号数值排序
+ */
 export default function sensitiveSort(a: string, b: string): number {
   // Extract the name and number from each string using regular expressions
   const regex = /(.+) \((\w+)\)/;

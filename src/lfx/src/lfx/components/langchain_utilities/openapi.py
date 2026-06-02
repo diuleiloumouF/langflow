@@ -13,6 +13,8 @@ from lfx.base.models.watsonx_constants import IBM_WATSONX_URLS
 from lfx.inputs.inputs import BoolInput, DropdownInput, FileInput, ModelInput, SecretStrInput, StrInput
 
 
+# OpenAPI Agent 组件，用于与 OpenAPI API 交互
+# OpenAPI agent component for interacting with OpenAPI APIs
 class OpenAPIAgentComponent(LCAgentComponent):
     display_name = "OpenAPI Agent"
     description = "Agent to interact with OpenAPI API."
@@ -54,6 +56,7 @@ class OpenAPIAgentComponent(LCAgentComponent):
         BoolInput(name="allow_dangerous_requests", display_name="Allow Dangerous Requests", value=False, required=True),
     ]
 
+    # 从下拉选择或连接的组件解析语言模型
     def _get_llm(self):
         """Resolve the language model from dropdown selection or connected component."""
         return get_llm(
@@ -64,6 +67,7 @@ class OpenAPIAgentComponent(LCAgentComponent):
             watsonx_project_id=getattr(self, "project_id", None),
         )
 
+    # 动态更新构建配置，使用用户过滤的模型选项（支持工具调用的模型）
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None) -> dict:
         """Dynamically update build config with user-filtered model options (tool-calling capable models)."""
         return handle_model_input_update(
@@ -75,6 +79,7 @@ class OpenAPIAgentComponent(LCAgentComponent):
             get_options_func=lambda user_id=None: get_language_model_options(user_id=user_id, tool_calling=True),
         )
 
+    # 构建 OpenAPI Agent 执行器
     def build_agent(self) -> AgentExecutor:
         llm = self._get_llm()
         path = Path(self.path)

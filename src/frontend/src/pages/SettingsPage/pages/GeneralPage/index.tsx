@@ -1,7 +1,7 @@
 import { cloneDeep } from "lodash";
 import { useContext, useState } from "react";
-import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useParams } from "react-router-dom";
 import { usePostAddApiKey } from "@/controllers/API/queries/api-keys";
 import {
   useResetPassword,
@@ -24,6 +24,10 @@ import GeneralPageHeaderComponent from "./components/GeneralPageHeader";
 import PasswordFormComponent from "./components/PasswordForm";
 import ProfilePictureFormComponent from "./components/ProfilePictureForm";
 
+/**
+ * 通用设置页面
+ * 管理用户资料设置，包括头像、用户名、密码等
+ */
 export const GeneralPage = () => {
   const { scrollId } = useParams();
 

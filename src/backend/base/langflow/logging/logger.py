@@ -1,6 +1,7 @@
+# 从 lfx.log 导入日志配置和日志记录器
 from lfx.log.logger import configure, logger
 
-# Expose logger methods at module level for backwards compatibility
+# 在模块级别暴露日志方法，以保持向后兼容性
 info = logger.info
 debug = logger.debug
 warning = logger.warning
@@ -8,7 +9,7 @@ error = logger.error
 critical = logger.critical
 exception = logger.exception
 
-# Expose async logger methods at module level
+# 在模块级别暴露异步日志方法
 aerror = logger.aerror
 ainfo = logger.ainfo
 adebug = logger.adebug
@@ -16,6 +17,7 @@ awarning = logger.awarning
 acritical = logger.acritical
 aexception = logger.aexception
 
+# 模块公开的 API 列表
 __all__ = [
     "acritical",
     "adebug",

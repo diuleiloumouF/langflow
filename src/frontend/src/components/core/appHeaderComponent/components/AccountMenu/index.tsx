@@ -1,5 +1,5 @@
-import { FaDiscord, FaGithub } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
+import { FaDiscord, FaGithub } from "react-icons/fa";
 import { ForwardedIconComponent } from "@/components/common/genericIconComponent";
 import {
   DATASTAX_DOCS_URL,
@@ -24,6 +24,11 @@ import {
 } from "../HeaderMenu";
 import ThemeButtons from "../ThemeButtons";
 
+/**
+ * 账户菜单组件
+ * 显示用户头像下拉菜单，包含版本信息、设置、管理页面、
+ * 文档链接、社交媒体链接、主题切换和退出登录功能。
+ */
 export const AccountMenu = () => {
   const { t } = useTranslation();
   const version = useDarkStore((state) => state.version);

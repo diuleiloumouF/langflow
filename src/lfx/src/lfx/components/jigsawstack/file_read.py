@@ -5,6 +5,8 @@ from lfx.io import Output, SecretStrInput, StrInput
 from lfx.schema.data import Data
 
 
+# JigsawStack 文件读取组件，从 JigsawStack 文件存储中读取文件
+# JigsawStack file read component for reading files from JigsawStack File Storage
 class JigsawStackFileReadComponent(Component):
     display_name = "File Read"
     description = "Read any previously uploaded file seamlessly from \
@@ -33,6 +35,7 @@ class JigsawStackFileReadComponent(Component):
         Output(display_name="File Path", name="file_path", method="read_and_save_file"),
     ]
 
+    # 从 JigsawStack 读取文件并保存到临时文件，返回文件路径
     def read_and_save_file(self) -> Data:
         """Read file from JigsawStack and save to temp file, return file path."""
         try:
@@ -82,6 +85,7 @@ class JigsawStackFileReadComponent(Component):
             self.status = f"Error: {e!s}"
             return Data(data=error_data)
 
+    # 根据内容头检测文件扩展名
     def _detect_file_extension(self, content) -> str:
         """Detect file extension based on content headers."""
         if isinstance(content, bytes):

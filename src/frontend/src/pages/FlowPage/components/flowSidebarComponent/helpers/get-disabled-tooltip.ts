@@ -5,6 +5,10 @@ import {
   WEBHOOK_COMPONENT,
 } from "./constants";
 
+/**
+ * 获取禁用组件的提示消息
+ * 根据组件的禁用原因返回相应的提示文本
+ */
 export const getDisabledTooltip = (
   SBItemName: string,
   uniqueInputsComponents: UniqueInputsComponents,

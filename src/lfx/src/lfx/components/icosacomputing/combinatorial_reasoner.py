@@ -9,6 +9,8 @@ from lfx.schema.data import Data
 from lfx.schema.message import Message
 
 
+# 组合优化推理组件，使用组合优化构建带有嵌入推理的最优提示
+# Combinatorial reasoner component for constructing optimal prompts with embedded reasons
 class CombinatorialReasonerComponent(Component):
     display_name = "Combinatorial Reasoner"
     description = "Uses Combinatorial Optimization to construct an optimal prompt with embedded reasons. Sign up here:\nhttps://forms.gle/oWNv2NKjBNaqqvCx6"
@@ -57,6 +59,7 @@ class CombinatorialReasonerComponent(Component):
         Output(display_name="Selected Reasons", name="reasons", method="build_reasons"),
     ]
 
+    # 构建优化后的提示，调用 Icosa CR API
     def build_prompt(self) -> Message:
         params = {
             "prompt": self.prompt,
@@ -78,6 +81,7 @@ class CombinatorialReasonerComponent(Component):
         self.reasons = response.json()["finalReasons"]
         return prompt
 
+    # 构建选中的推理理由列表
     def build_reasons(self) -> Data:
         # list of selected reasons
         final_reasons = [reason[0] for reason in self.reasons]

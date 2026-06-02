@@ -4,7 +4,17 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import * as React from "react";
 import { cn } from "../../utils/utils";
 
+// 弹出框根组件
 const Popover = PopoverPrimitive.Root;
+
+// 弹出框触发器组件
+const PopoverTrigger = PopoverPrimitive.Trigger;
+
+// 弹出框锚点组件
+const PopoverAnchor = PopoverPrimitive.Anchor;
+
+// 弹出框内容组件（使用 Portal 渲染）
+const PopoverContent = React.forwardRef<
 
 const PopoverTrigger = PopoverPrimitive.Trigger;
 
@@ -29,6 +39,7 @@ const PopoverContent = React.forwardRef<
 ));
 PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 
+// 弹出框内容组件（不使用 Portal，直接在父元素中渲染）
 const PopoverContentWithoutPortal = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>

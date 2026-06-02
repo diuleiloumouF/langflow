@@ -21,6 +21,8 @@ from lfx.template.field.base import Output
 from lfx.utils.async_helpers import run_until_complete
 
 
+# CSV Agent 组件，用于从 CSV 文件构建可查询的 Agent
+# CSV Agent component for building a queryable agent from CSV files
 class CSVAgentComponent(LCAgentComponent):
     display_name = "CSV Agent"
     description = "Construct a CSV agent from a CSV and tools."
@@ -107,11 +109,13 @@ class CSVAgentComponent(LCAgentComponent):
         Output(display_name="Agent", name="agent", method="build_agent", hidden=True, tool_mode=False),
     ]
 
+    # 获取文件路径，支持从 Message 对象中提取
     def _path(self) -> str:
         if isinstance(self.path, Message) and isinstance(self.path.text, str):
             return self.path.text
         return self.path
 
+    # 从下拉选择或连接的组件解析语言模型
     def _get_llm(self):
         """Resolve the language model from dropdown selection or connected component."""
         return get_llm(
@@ -122,6 +126,7 @@ class CSVAgentComponent(LCAgentComponent):
             watsonx_project_id=getattr(self, "project_id", None),
         )
 
+    # 动态更新构建配置，使用用户过滤的模型选项（支持工具调用的模型）
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None) -> dict:
         """Dynamically update build config with user-filtered model options (tool-calling capable models)."""
         return handle_model_input_update(
@@ -133,6 +138,7 @@ class CSVAgentComponent(LCAgentComponent):
             get_options_func=lambda user_id=None: get_language_model_options(user_id=user_id, tool_calling=True),
         )
 
+    # 构建并执行 CSV Agent，返回响应
     def build_agent_response(self) -> Message:
         """Build and execute the CSV agent, returning the response."""
         try:
@@ -208,6 +214,7 @@ class CSVAgentComponent(LCAgentComponent):
         # when build_agent_response is called
         return agent_csv
 
+    # 获取本地文件路径，如果需要则从 S3 存储下载
     def _get_local_path(self) -> str:
         """Get a local file path, downloading from S3 storage if necessary.
 
@@ -235,6 +242,7 @@ class CSVAgentComponent(LCAgentComponent):
         # Local storage - return path as-is
         return file_path
 
+    # 清理临时文件（如果创建了）
     def _cleanup_temp_file(self) -> None:
         """Clean up temporary file if one was created."""
         if hasattr(self, "_temp_file_path"):

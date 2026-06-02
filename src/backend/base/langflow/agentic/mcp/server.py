@@ -3,12 +3,17 @@
 This module exposes template search and creation functions as MCP tools using FastMCP decorators.
 """
 
+# 用于类型注解的标准库导入
 from typing import Any
 from uuid import UUID
 
+# FastMCP 服务器核心组件，用于构建 MCP 工具服务
 from mcp.server.fastmcp import FastMCP
 
+# 辅助函数：将 None 和 "null" 值替换为空字符串
 from langflow.agentic.mcp.support import replace_none_and_null_with_empty_str
+
+# 组件搜索相关工具函数：获取组件类型、按名称/类型查询组件、统计数量、列出所有组件
 from langflow.agentic.utils.component_search import (
     get_all_component_types,
     get_component_by_name,
@@ -16,36 +21,49 @@ from langflow.agentic.utils.component_search import (
     get_components_count,
     list_all_components,
 )
+
+# 流中组件操作相关函数：获取组件详情、字段值、列出字段、更新字段值
 from langflow.agentic.utils.flow_component import (
     get_component_details,
     get_component_field_value,
     list_component_fields,
     update_component_field_value,
 )
+
+# 流图可视化相关函数：获取 ASCII 图、图的多种表示形式、图摘要、文本表示
 from langflow.agentic.utils.flow_graph import (
     get_flow_ascii_graph,
     get_flow_graph_representations,
     get_flow_graph_summary,
     get_flow_text_repr,
 )
+
+# 模板创建相关函数：从模板创建流并返回链接
 from langflow.agentic.utils.template_create import (
     create_flow_from_template_and_get_link,
 )
+
+# 模板搜索相关函数：获取标签列表、按 ID 查询模板、统计数量、列出模板
 from langflow.agentic.utils.template_search import (
     get_all_tags,
     get_template_by_id,
     get_templates_count,
     list_templates,
 )
+
+# Langflow 服务依赖注入：获取配置服务和数据库会话上下文
 from langflow.services.deps import get_settings_service, session_scope
 
-# Initialize FastMCP server
+# 初始化 FastMCP 服务器实例，命名为 "langflow-agentic"
 mcp = FastMCP("langflow-agentic")
 
+# 模板查询返回的默认字段列表
 DEFAULT_TEMPLATE_FIELDS = ["id", "name", "description", "tags", "endpoint_name", "icon"]
+# 组件查询返回的默认字段列表
 DEFAULT_COMPONENT_FIELDS = ["name", "type", "display_name", "description"]
 
 
+# 搜索模板工具：根据关键词或标签搜索模板列表
 @mcp.tool()
 def search_templates(query: str | None = None, fields: list[str] = DEFAULT_TEMPLATE_FIELDS) -> list[dict[str, Any]]:
     """Search and load template data with configurable field selection.
@@ -81,12 +99,13 @@ def search_templates(query: str | None = None, fields: list[str] = DEFAULT_TEMPL
         ...     fields=["name", "description"]
         ... )
     """
-    # Set default fields if not provided
+    # 如果未提供字段列表，则使用默认字段
     if fields is None:
         fields = DEFAULT_TEMPLATE_FIELDS
     return list_templates(query=query, fields=fields)
 
 
+# 获取单个模板工具：根据模板 ID 获取模板详细信息
 @mcp.tool()
 def get_template(
     template_id: str,
@@ -110,6 +129,7 @@ def get_template(
     return get_template_by_id(template_id=template_id, fields=fields)
 
 
+# 获取所有标签工具：列出所有模板中使用过的唯一标签
 @mcp.tool()
 def list_all_tags() -> list[str]:
     """Get a list of all unique tags used across all templates.
@@ -125,6 +145,7 @@ def list_all_tags() -> list[str]:
     return get_all_tags()
 
 
+# 统计模板数量工具：返回可用模板的总数
 @mcp.tool()
 def count_templates() -> int:
     """Get the total count of available templates.
@@ -139,7 +160,7 @@ def count_templates() -> int:
     return get_templates_count()
 
 
-# Flow creation from template
+# 从模板创建流工具：基于模板创建新流并返回流 ID 和 UI 链接
 @mcp.tool()
 async def create_flow_from_template(
     template_id: str,
@@ -156,6 +177,7 @@ async def create_flow_from_template(
     Returns:
         Dict with keys: {"id": str, "link": str}
     """
+    # 使用数据库会话上下文管理器执行操作
     async with session_scope() as session:
         return await create_flow_from_template_and_get_link(
             session=session,
@@ -165,7 +187,7 @@ async def create_flow_from_template(
         )
 
 
-# Component search and retrieval tools
+# 组件搜索工具：按关键词、类型或字段组合搜索组件
 @mcp.tool()
 async def search_components(
     query: str | None = None,
@@ -205,28 +227,35 @@ async def search_components(
         ...     fields=["name", "display_name"]
         ... )
     """
-    # Set default fields if not provided
+    # 如果未指定搜索文本标志，默认添加文本摘要
     if add_search_text is None:
         add_search_text = True
+    # 如果未指定字段列表，则使用默认字段
     if fields is None:
         fields = DEFAULT_COMPONENT_FIELDS
 
+    # 获取 Langflow 配置服务实例
     settings_service = get_settings_service()
+    # 异步调用组件列表接口获取匹配的组件数据
     result = await list_all_components(
         query=query,
         component_type=component_type,
         fields=fields,
         settings_service=settings_service,
     )
-    # For each component dict in result, add a 'text' key with all key-value pairs joined by newline.
+    # 为每个组件添加 'text' 字段，将所有键值对用换行符连接，便于文本搜索
 
+    # 如果需要添加文本摘要字段，则为每个组件生成 text 内容
     if add_search_text:
         for comp in result:
+            # 跳过已有的 text 字段，将其余字段格式化为 "key value" 形式
             text_lines = [f"{k} {v}" for k, v in comp.items() if k != "text"]
             comp["text"] = "\n".join(text_lines)
+    # 将组件结果中的 None 和 "null" 值替换为空字符串，确保返回数据格式统一
     return replace_none_and_null_with_empty_str(result, required_fields=fields)
 
 
+# 获取单个组件工具：根据组件名称获取组件详细信息
 @mcp.tool()
 async def get_component(
     component_name: str,
@@ -258,6 +287,7 @@ async def get_component(
     )
 
 
+# 列出所有组件类型工具：返回所有可用组件类型的排序列表
 @mcp.tool()
 async def list_component_types() -> list[str]:
     """Get a list of all available component types.
@@ -274,6 +304,7 @@ async def list_component_types() -> list[str]:
     return await get_all_component_types(settings_service=settings_service)
 
 
+# 统计组件数量工具：返回可用组件的总数，可按类型筛选
 @mcp.tool()
 async def count_components(component_type: str | None = None) -> int:
     """Get the total count of available components.
@@ -295,6 +326,7 @@ async def count_components(component_type: str | None = None) -> int:
     return await get_components_count(component_type=component_type, settings_service=settings_service)
 
 
+# 按类型获取组件工具：获取指定类型的所有组件
 @mcp.tool()
 async def get_components_by_type_tool(
     component_type: str,
@@ -315,7 +347,7 @@ async def get_components_by_type_tool(
         ...     fields=["name", "display_name", "description"]
         ... )
     """
-    # Set default fields if not provided
+    # 如果未指定字段列表，则使用默认字段
     if fields is None:
         fields = DEFAULT_COMPONENT_FIELDS
 
@@ -327,7 +359,7 @@ async def get_components_by_type_tool(
     )
 
 
-# Flow graph visualization tools
+# 流图可视化工具：获取流图的 ASCII 和文本表示形式
 @mcp.tool()
 async def visualize_flow_graph(
     flow_id_or_name: str,
@@ -362,6 +394,7 @@ async def visualize_flow_graph(
     return await get_flow_graph_representations(flow_id_or_name, user_id)
 
 
+# 获取流图 ASCII 图工具：返回流图的可视化 ASCII 字符画
 @mcp.tool()
 async def get_flow_ascii_diagram(
     flow_id_or_name: str,
@@ -386,6 +419,7 @@ async def get_flow_ascii_diagram(
     return await get_flow_ascii_graph(flow_id_or_name, user_id)
 
 
+# 获取流图文本表示工具：返回流图的结构化文本描述
 @mcp.tool()
 async def get_flow_text_representation(
     flow_id_or_name: str,
@@ -418,6 +452,7 @@ async def get_flow_text_representation(
     return await get_flow_text_repr(flow_id_or_name, user_id)
 
 
+# 获取流图结构摘要工具：返回流图的元数据摘要（顶点和边列表）
 @mcp.tool()
 async def get_flow_structure_summary(
     flow_id_or_name: str,
@@ -450,7 +485,7 @@ async def get_flow_structure_summary(
     return await get_flow_graph_summary(flow_id_or_name, user_id)
 
 
-# Flow component operations tools
+# 获取流中组件详情工具：返回指定组件的完整信息（类型、模板配置、输入输出等）
 @mcp.tool()
 async def get_flow_component_details(
     flow_id_or_name: str,
@@ -487,6 +522,7 @@ async def get_flow_component_details(
     return await get_component_details(flow_id_or_name, component_id, user_id)
 
 
+# 获取组件字段值工具：获取流中指定组件的某个字段的当前值
 @mcp.tool()
 async def get_flow_component_field_value(
     flow_id_or_name: str,
@@ -521,6 +557,7 @@ async def get_flow_component_field_value(
     return await get_component_field_value(flow_id_or_name, component_id, field_name, user_id)
 
 
+# 更新组件字段值工具：修改流中指定组件的字段值并持久化到数据库
 @mcp.tool()
 async def update_flow_component_field(
     flow_id_or_name: str,
@@ -565,6 +602,7 @@ async def update_flow_component_field(
     return await update_component_field_value(flow_id_or_name, component_id, field_name, new_value, user_id)
 
 
+# 列出组件所有字段工具：返回组件的所有字段及其当前值和元数据
 @mcp.tool()
 async def list_flow_component_fields(
     flow_id_or_name: str,
@@ -600,7 +638,7 @@ async def list_flow_component_fields(
     return await list_component_fields(flow_id_or_name, component_id, user_id)
 
 
-# Entry point for running the server
+# 脚本入口点：直接运行此文件时启动 FastMCP 服务器
 if __name__ == "__main__":
-    # Run the FastMCP server
+    # 启动 FastMCP 服务器
     mcp.run()

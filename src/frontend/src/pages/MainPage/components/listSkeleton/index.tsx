@@ -1,6 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
+/**
+ * 列表骨架屏组件
+ * 在数据加载时显示的占位动画，模拟列表项的布局结构
+ */
 const ListSkeleton = () => {
   return (
     <div className="flex flex-row justify-between rounded-lg bg-background px-4 py-3">

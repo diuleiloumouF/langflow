@@ -35,6 +35,10 @@ import useAlertStore from "../../stores/alertStore";
 import type { Users } from "../../types/api";
 import type { UserInputType } from "../../types/components";
 
+/**
+ * 管理员页面组件
+ * 提供用户管理功能，包括查看、搜索、添加、编辑、删除用户，以及管理用户的激活状态和超级管理员权限
+ */
 export default function AdminPage() {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
@@ -43,6 +47,7 @@ export default function AdminPage() {
   const [index, setPageIndex] = useState(PAGINATION_PAGE);
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
   const setErrorData = useAlertStore((state) => state.setErrorData);
+  // 当前登录的用户数据
   const { userData } = useContext(AuthContext);
   const navigate = useCustomNavigate();
   const [totalRowsCount, setTotalRowsCount] = useState(0);
@@ -55,6 +60,12 @@ export default function AdminPage() {
 
   const { mutate: mutateGetUsers, isPending, isIdle } = useGetUsers({});
 
+  /**
+   * 获取用户列表
+   * @param skip - 跳过的记录数（分页偏移量）
+   * @param limit - 每页返回的记录数
+   * @param search - 搜索关键词（可选）
+   */
   const fetchUsers = useCallback(
     (skip: number, limit: number, search?: string) => {
       mutateGetUsers(
@@ -77,12 +88,14 @@ export default function AdminPage() {
     }, 500);
   }, []);
 
+  // 处理分页切换
   function handleChangePagination(pageIndex: number, pageSize: number) {
     setPageSize(pageSize);
     setPageIndex(pageIndex);
     fetchUsers(pageSize * (pageIndex - 1), pageSize, inputValue);
   }
 
+  // 重置搜索过滤器和分页状态
   function resetFilter() {
     setInputValue("");
     setPageIndex(PAGINATION_PAGE);
@@ -90,6 +103,7 @@ export default function AdminPage() {
     fetchUsers(0, PAGINATION_SIZE);
   }
 
+  // 防抖搜索函数，延迟300ms执行以避免频繁请求
   const debouncedSearch = useCallback(
     debounce((search: string) => {
       setPageIndex(PAGINATION_PAGE);
@@ -104,11 +118,13 @@ export default function AdminPage() {
     };
   }, [debouncedSearch]);
 
+  // 处理用户搜索过滤输入
   function handleFilterUsers(input: string) {
     setInputValue(input);
     debouncedSearch(input);
   }
 
+  // 处理删除用户操作
   function handleDeleteUser(user) {
     mutateDeleteUser(
       { user_id: user.id },
@@ -129,6 +145,7 @@ export default function AdminPage() {
     );
   }
 
+  // 处理编辑用户信息操作
   function handleEditUser(userId, user) {
     mutateUpdateUser(
       { user_id: userId, user: user },
@@ -149,6 +166,7 @@ export default function AdminPage() {
     );
   }
 
+  // 处理启用/禁用用户操作
   function handleDisableUser(check, userId, user) {
     const userEdit = cloneDeep(user);
     userEdit.is_active = !check;
@@ -172,6 +190,7 @@ export default function AdminPage() {
     );
   }
 
+  // 处理设置/取消超级管理员权限操作
   function handleSuperUserEdit(check, userId, user) {
     const userEdit = cloneDeep(user);
     userEdit.is_superuser = !check;
@@ -195,6 +214,7 @@ export default function AdminPage() {
     );
   }
 
+  // 处理添加新用户操作，先创建用户再更新其角色权限
   function handleNewUser(user: UserInputType) {
     mutateAddUser(user, {
       onSuccess: (res) => {

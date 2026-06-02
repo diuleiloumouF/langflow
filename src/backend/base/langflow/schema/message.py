@@ -3,7 +3,7 @@
 This maintains backward compatibility while using the lfx implementation.
 """
 
-# Import and re-export to ensure class identity is preserved
+# 从 lfx 模块导入消息相关类型，保持类身份一致性
 from lfx.schema.message import (
     MAX_ATTACHMENT_SIZE_BYTES,
     ContentBlock,

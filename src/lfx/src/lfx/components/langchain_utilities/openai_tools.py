@@ -15,6 +15,8 @@ from lfx.inputs.inputs import (
 from lfx.schema.data import Data
 
 
+# OpenAI 工具 Agent 组件，使用 openai-tools 格式的工具调用
+# OpenAI tools agent component for tool calling using openai-tools format
 class OpenAIToolsAgentComponent(LCToolsAgentComponent):
     display_name: str = "OpenAI Tools Agent"
     description: str = "Agent that uses tools via openai-tools."
@@ -65,6 +67,7 @@ class OpenAIToolsAgentComponent(LCToolsAgentComponent):
         DataInput(name="chat_history", display_name="Chat History", is_list=True, advanced=True),
     ]
 
+    # 从下拉选择或连接的组件解析语言模型
     def _get_llm(self):
         """Resolve the language model from dropdown selection or connected component."""
         return get_llm(
@@ -75,6 +78,7 @@ class OpenAIToolsAgentComponent(LCToolsAgentComponent):
             watsonx_project_id=getattr(self, "project_id", None),
         )
 
+    # 动态更新构建配置，使用用户过滤的模型选项（支持工具调用的模型）
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None) -> dict:
         """Dynamically update build config with user-filtered model options (tool-calling capable models)."""
         return handle_model_input_update(
@@ -86,9 +90,11 @@ class OpenAIToolsAgentComponent(LCToolsAgentComponent):
             get_options_func=lambda user_id=None: get_language_model_options(user_id=user_id, tool_calling=True),
         )
 
+    # 获取聊天历史数据
     def get_chat_history_data(self) -> list[Data] | None:
         return self.chat_history
 
+    # 创建 Agent 可运行对象
     def create_agent_runnable(self):
         if "input" not in self.user_prompt:
             msg = "Prompt must contain 'input' key."

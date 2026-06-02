@@ -9,6 +9,10 @@ interface KnowledgeBaseDrawerProps {
   knowledgeBase: KnowledgeBaseInfo | null;
 }
 
+/**
+ * 知识库详情抽屉组件
+ * 从右侧滑入显示知识库的详细信息，包括名称、状态、分块统计等
+ */
 const KnowledgeBaseDrawer = ({
   isOpen,
   onClose,

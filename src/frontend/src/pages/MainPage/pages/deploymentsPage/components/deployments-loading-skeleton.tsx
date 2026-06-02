@@ -21,6 +21,10 @@ const COLUMN_HEADERS = [
   "",
 ];
 
+/**
+ * 部署加载骨架屏组件
+ * 在部署数据加载时显示的占位动画，模拟表格行的布局结构
+ */
 export default function DeploymentsLoadingSkeleton() {
   return (
     <Table>

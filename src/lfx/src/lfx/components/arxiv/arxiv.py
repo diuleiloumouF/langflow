@@ -1,26 +1,34 @@
+# 标准库：URL 处理与 XML 解析
 import urllib
 from xml.etree.ElementTree import Element
 
+# 安全的 XML 解析库，防止 XXE 攻击
 from defusedxml.ElementTree import fromstring
 
+# 组件基类、输入/输出定义、数据模型
 from lfx.custom.custom_component.component import Component
 from lfx.io import DropdownInput, IntInput, MessageTextInput, Output
 from lfx.schema.data import Data
 from lfx.schema.dataframe import DataFrame
 
 
+# arXiv 论文搜索组件，用于从 arXiv.org 搜索和检索学术论文
 class ArXivComponent(Component):
     display_name = "arXiv"
+    # 组件描述：搜索并检索 arXiv.org 上的论文
     description = "Search and retrieve papers from arXiv.org"
     icon = "arXiv"
 
+    # 输入参数定义
     inputs = [
+        # 搜索关键词输入框，支持工具模式
         MessageTextInput(
             name="search_query",
             display_name="Search Query",
             info="The search query for arXiv papers (e.g., 'quantum computing')",
             tool_mode=True,
         ),
+        # 搜索字段下拉选择框：全文、标题、摘要、作者、分类
         DropdownInput(
             name="search_type",
             display_name="Search Field",
@@ -28,6 +36,7 @@ class ArXivComponent(Component):
             options=["all", "title", "abstract", "author", "cat"],  # cat is for category
             value="all",
         ),
+        # 最大返回结果数量
         IntInput(
             name="max_results",
             display_name="Max Results",
@@ -36,10 +45,12 @@ class ArXivComponent(Component):
         ),
     ]
 
+    # 输出参数定义：以 DataFrame 表格形式返回搜索结果
     outputs = [
         Output(display_name="Table", name="dataframe", method="search_papers_dataframe"),
     ]
 
+    # 构建 arXiv API 查询 URL
     def build_query_url(self) -> str:
         """Build the arXiv API query URL."""
         base_url = "http://export.arxiv.org/api/query?"
@@ -64,6 +75,7 @@ class ArXivComponent(Component):
 
         return base_url + query_string
 
+    # 解析 arXiv 返回的 Atom XML 响应，提取论文信息
     def parse_atom_response(self, response_text: str) -> list[dict]:
         """Parse the Atom XML response from arXiv."""
         # Parse XML safely using defusedxml
@@ -93,11 +105,13 @@ class ArXivComponent(Component):
 
         return papers
 
+    # 安全地从 XML 元素中提取文本内容
     def _get_text(self, element: Element, path: str, ns: dict) -> str | None:
         """Safely extract text from an XML element."""
         el = element.find(path, ns)
         return el.text.strip() if el is not None and el.text else None
 
+    # 根据关系类型获取链接 URL
     def _get_link(self, element: Element, rel: str, ns: dict) -> str | None:
         """Get link URL based on relation type."""
         for link in element.findall("atom:link", ns):
@@ -105,14 +119,17 @@ class ArXivComponent(Component):
                 return link.get("href")
         return None
 
+    # 获取论文的主要分类
     def _get_category(self, element: Element, ns: dict) -> str | None:
         """Get primary category."""
         cat = element.find("arxiv:primary_category", ns)
         return cat.get("term") if cat is not None else None
 
+    # 运行模型，返回搜索结果的 DataFrame
     def run_model(self) -> DataFrame:
         return self.search_papers_dataframe()
 
+    # 搜索 arXiv 并返回结果列表
     def search_papers(self) -> list[Data]:
         """Search arXiv and return results."""
         try:
@@ -158,6 +175,7 @@ class ArXivComponent(Component):
         else:
             return results
 
+    # 将 arXiv 搜索结果转换为 DataFrame 表格格式
     def search_papers_dataframe(self) -> DataFrame:
         """Convert the Arxiv search results to a DataFrame.
 

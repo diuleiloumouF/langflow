@@ -1,3 +1,4 @@
+// Google Sheets 图标组件 - 用于 Google Sheets 在线电子表格服务相关组件的标识
 import React, { forwardRef } from "react";
 import GooglesheetsIconSVG from "./googlesheets";
 

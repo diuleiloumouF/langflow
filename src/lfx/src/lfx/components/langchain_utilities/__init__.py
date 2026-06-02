@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from .vector_store_router import VectorStoreRouterAgentComponent
     from .xml_agent import XMLAgentComponent
 
+# LangChain 工具组件的动态导入映射表
 _dynamic_imports = {
     "CharacterTextSplitterComponent": "character",
     "ConversationChainComponent": "conversation",
@@ -93,6 +94,7 @@ __all__ = [
 
 def __getattr__(attr_name: str) -> Any:
     """Lazily import langchain utility components on attribute access."""
+    # 在属性访问时延迟导入 LangChain 工具组件
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)

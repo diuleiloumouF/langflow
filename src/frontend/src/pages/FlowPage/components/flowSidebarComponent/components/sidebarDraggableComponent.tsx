@@ -25,6 +25,11 @@ import {
 } from "@/utils/reactflowUtils";
 import { cn, removeCountFromString } from "@/utils/utils";
 
+/**
+ * 侧边栏可拖拽组件项
+ * 显示单个组件的名称、图标、描述，支持拖拽到画布添加
+ * 包含官方标记、错误状态显示和上下文操作（如下载、删除）
+ */
 export const SidebarDraggableComponent = forwardRef(
   (
     {

@@ -13,6 +13,10 @@ const tabs: { value: DeploymentSubTab; label: string }[] = [
   { value: "providers", label: "Deployment Environments" },
 ];
 
+/**
+ * 子标签切换组件
+ * 提供部署和部署环境两个子标签页的切换功能
+ */
 export default function SubTabToggle({
   activeTab,
   onTabChange,

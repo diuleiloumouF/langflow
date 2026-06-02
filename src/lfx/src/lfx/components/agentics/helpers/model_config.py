@@ -1,3 +1,4 @@
+# Agentics 组件的模型配置和验证辅助工具
 """Model configuration and validation helpers for Agentics components."""
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from lfx.components.agentics.constants import (
 )
 
 
+# 从组件输入中验证并提取模型名称和提供商
 def validate_model_selection(model: Any) -> tuple[str, str]:
     """Validate and extract model name and provider from component input.
 
@@ -41,13 +43,14 @@ def validate_model_selection(model: Any) -> tuple[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# Deprecated - kept for backward compatibility only
-# These functions were superseded by handle_model_input_update() in
-# lfx.base.models.unified_models, which centralises provider-field show/hide
-# logic across all components.  They will be removed in a future release.
+# 已弃用 - 仅为了向后兼容而保留
+# 这些函数已被 lfx.base.models.unified_models 中的 handle_model_input_update() 取代，
+# 后者集中管理所有组件的提供商字段显示/隐藏逻辑。
+# 它们将在未来的版本中移除。
 # ---------------------------------------------------------------------------
 
 
+# 已弃用：根据所选模型更新提供商特定字段的可见性
 def update_provider_fields_visibility(
     build_config: dict,
     field_value: Any,
@@ -84,6 +87,7 @@ def update_provider_fields_visibility(
     return build_config
 
 
+# 已弃用的内部辅助函数 - 已被 handle_model_input_update() 吸收
 def _update_watsonx_fields(build_config: dict, provider: str) -> None:
     """Deprecated internal helper - absorbed into handle_model_input_update()."""
     is_watsonx = provider == PROVIDER_IBM_WATSONX
@@ -97,6 +101,7 @@ def _update_watsonx_fields(build_config: dict, provider: str) -> None:
         build_config["project_id"]["required"] = is_watsonx
 
 
+# 已弃用的内部辅助函数 - 已被 handle_model_input_update() 吸收
 def _update_ollama_fields(build_config: dict, provider: str) -> None:
     """Deprecated internal helper - absorbed into handle_model_input_update()."""
     is_ollama = provider == PROVIDER_OLLAMA

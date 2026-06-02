@@ -17,6 +17,10 @@ import useFlowStore from "@/stores/flowStore";
 import type { NodeInputFieldComponentType } from "@/types/components";
 import { cn } from "@/utils/utils";
 
+/**
+ * 检查面板字段组件的属性定义
+ * 继承自 NodeInputFieldComponentType，排除不需要的属性并添加 showAdvanced
+ */
 interface InspectionPanelFieldProps
   extends Omit<
     NodeInputFieldComponentType,
@@ -30,6 +34,11 @@ interface InspectionPanelFieldProps
   showAdvanced?: boolean;
 }
 
+/**
+ * 检查面板字段组件
+ * 在普通模式下渲染节点的高级设置字段，包含字段标签、信息提示和自定义参数编辑器
+ * 支持工具模式和代理字段显示
+ */
 export default function InspectionPanelField({
   id,
   data,

@@ -99,6 +99,11 @@ function EnvironmentList({
   );
 }
 
+/**
+ * 提供商选择步骤组件
+ * 部署向导的第一步，允许用户选择部署提供商和环境
+ * 支持从现有环境选择或添加新环境
+ */
 export default function StepProvider() {
   const {
     setSelectedProvider,

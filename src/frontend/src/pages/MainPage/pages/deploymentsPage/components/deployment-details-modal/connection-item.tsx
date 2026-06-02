@@ -4,6 +4,10 @@ interface ConnectionItemProps {
   name: string;
 }
 
+/**
+ * 连接项组件
+ * 显示单个连接的名称和图标
+ */
 export default function ConnectionItem({ name }: ConnectionItemProps) {
   return (
     <div className="flex items-center gap-2">

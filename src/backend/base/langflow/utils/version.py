@@ -1,9 +1,12 @@
+# 版本管理工具模块
+# 提供包版本查询、预发布版本检测、最新版本获取等功能
 from importlib import metadata
 
 import httpx
 from packaging import version as pkg_version
 
 
+# 从预发布版本号中提取正式版本号（去除 a/b/rc/dev/post 后缀）
 def _compute_non_prerelease_version(prerelease_version: str) -> str:
     prerelease_keywords = ["a", "b", "rc", "dev", "post"]
     for keyword in prerelease_keywords:
@@ -12,6 +15,7 @@ def _compute_non_prerelease_version(prerelease_version: str) -> str:
     return prerelease_version
 
 
+# 从可能的包名列表中获取版本信息（支持 nightly 构建）
 def _get_version_info():
     """Retrieves the version of the package from a possible list of package names.
 
@@ -50,9 +54,11 @@ def _get_version_info():
     return None
 
 
+# 模块加载时获取版本信息
 VERSION_INFO = _get_version_info()
 
 
+# 判断版本是否为预发布版本（包含 a/b/rc 标识）
 def is_pre_release(v: str) -> bool:
     """Whether the version is a pre-release version.
 
@@ -63,6 +69,7 @@ def is_pre_release(v: str) -> bool:
     return any(label in v for label in ["a", "b", "rc"])
 
 
+# 判断版本是否为 nightly（开发）版本
 def is_nightly(v: str) -> bool:
     """Whether the version is a dev (nightly) version.
 
@@ -73,6 +80,7 @@ def is_nightly(v: str) -> bool:
     return "dev" in v
 
 
+# 从 PyPI 获取包的最新版本号
 def fetch_latest_version(package_name: str, *, include_prerelease: bool) -> str | None:
     package_name = package_name.replace(" ", "-").lower()
     try:

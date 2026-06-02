@@ -3,6 +3,8 @@
 This module provides validation functions to ensure template integrity and prevent
 unexpected breakage in starter project templates.
 """
+# 模板验证工具模块
+# 提供对 Langflow 入门项目模板的结构验证、构建验证、代码验证和执行验证功能
 
 import asyncio
 import json
@@ -13,6 +15,7 @@ from lfx.custom.validate import validate_code
 from lfx.graph.graph.base import Graph
 
 
+# 验证模板的基本结构（nodes、edges 字段是否存在）
 def validate_template_structure(template_data: dict[str, Any], filename: str) -> list[str]:
     """Validate basic template structure.
 
@@ -49,6 +52,7 @@ def validate_template_structure(template_data: dict[str, Any], filename: str) ->
     return errors
 
 
+# 验证模板是否能成功构建为可运行的流程
 def validate_flow_can_build(template_data: dict[str, Any], filename: str) -> list[str]:
     """Validate that the template can be built into a working flow.
 
@@ -85,6 +89,7 @@ def validate_flow_can_build(template_data: dict[str, Any], filename: str) -> lis
     return errors
 
 
+# 验证流程模板中的代码字段（检查导入错误和函数错误）
 def validate_flow_code(template_data: dict[str, Any], filename: str) -> list[str]:
     """Validate flow code using direct function call.
 
@@ -137,6 +142,7 @@ def validate_flow_code(template_data: dict[str, Any], filename: str) -> list[str
     return errors
 
 
+# 通过 API 验证流程的完整执行（创建、构建、运行事件流）
 async def validate_flow_execution(
     client, template_data: dict[str, Any], filename: str, headers: dict[str, str]
 ) -> list[str]:
@@ -200,6 +206,7 @@ async def validate_flow_execution(
     return errors
 
 
+# 验证流程执行的事件流，检查关键事件是否正确返回
 async def _validate_event_stream(response, job_id: str, filename: str, errors: list[str]) -> None:
     """Validate the event stream from flow execution.
 

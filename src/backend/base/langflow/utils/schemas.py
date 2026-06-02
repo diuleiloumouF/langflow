@@ -1,3 +1,5 @@
+# API 响应 Schema 定义模块
+# 定义了聊天输出、数据输出等 API 响应的数据模型
 import enum
 from typing import Any
 from uuid import UUID
@@ -9,6 +11,7 @@ from pydantic import BaseModel, field_validator, model_validator
 from typing_extensions import TypedDict
 
 
+# 文件信息字典类型，包含路径、名称和类型
 class File(TypedDict):
     """File schema."""
 
@@ -17,6 +20,7 @@ class File(TypedDict):
     type: str
 
 
+# 聊天输出响应模型：定义聊天 API 返回的数据结构
 class ChatOutputResponse(BaseModel):
     """Chat output response schema."""
 
@@ -121,12 +125,14 @@ class ChatOutputResponse(BaseModel):
         raise ValueError(msg)
 
 
+# 数据输出响应模型：定义数据 API 返回的数据结构
 class DataOutputResponse(BaseModel):
     """Data output response schema."""
 
     data: list[dict | None]
 
 
+# 包含检查元类：为枚举类添加 in 运算符支持
 class ContainsEnumMeta(enum.EnumMeta):
     def __contains__(cls, item) -> bool:
         try:

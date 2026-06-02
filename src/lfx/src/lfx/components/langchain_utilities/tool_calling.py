@@ -5,6 +5,7 @@ from lfx.base.agents.agent import LCToolsAgentComponent
 from lfx.base.models.unified_models import get_language_model_options, get_llm, handle_model_input_update
 from lfx.base.models.watsonx_constants import IBM_WATSONX_URLS
 
+# IBM Granite 特定逻辑在单独的文件中
 # IBM Granite-specific logic is in a separate file
 from lfx.components.langchain_utilities.ibm_granite_handler import (
     create_granite_agent,
@@ -22,6 +23,8 @@ from lfx.inputs.inputs import (
 from lfx.schema.data import Data
 
 
+# 工具调用 Agent 组件，设计用于在工作流中无缝使用各种工具
+# Tool calling agent component designed to utilize various tools seamlessly within workflows
 class ToolCallingAgentComponent(LCToolsAgentComponent):
     display_name: str = "Tool Calling Agent"
     description: str = "An agent designed to utilize various tools seamlessly within workflows."
@@ -75,6 +78,7 @@ class ToolCallingAgentComponent(LCToolsAgentComponent):
         ),
     ]
 
+    # 从下拉选择或连接的组件解析语言模型
     def _get_llm(self):
         """Resolve the language model from dropdown selection or connected component."""
         return get_llm(
@@ -85,6 +89,7 @@ class ToolCallingAgentComponent(LCToolsAgentComponent):
             watsonx_project_id=getattr(self, "project_id", None),
         )
 
+    # 动态更新构建配置，使用用户过滤的模型选项（支持工具调用的模型）
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None) -> dict:
         """Dynamically update build config with user-filtered model options (tool-calling capable models)."""
         return handle_model_input_update(
@@ -96,17 +101,21 @@ class ToolCallingAgentComponent(LCToolsAgentComponent):
             get_options_func=lambda user_id=None: get_language_model_options(user_id=user_id, tool_calling=True),
         )
 
+    # 获取聊天历史数据
     def get_chat_history_data(self) -> list[Data] | None:
         return self.chat_history
 
+    # 创建 Agent 可运行对象
     def create_agent_runnable(self):
         messages = []
 
+        # 使用局部变量避免在重复调用时修改组件状态
         # Use local variable to avoid mutating component state on repeated calls
         effective_system_prompt = self.system_prompt or ""
 
         llm = self._get_llm()
 
+        # 为 IBM Granite 模型增强提示（它们需要明确的工具使用说明）
         # Enhance prompt for IBM Granite models (they need explicit tool usage instructions)
         if is_granite_model(llm) and self.tools:
             effective_system_prompt = get_enhanced_system_prompt(effective_system_prompt, self.tools)
@@ -129,6 +138,8 @@ class ToolCallingAgentComponent(LCToolsAgentComponent):
         self.validate_tool_names()
 
         try:
+            # 如果检测到 IBM Granite 模型，使用特定的 Agent
+            # 其他 WatsonX 模型（Llama、Mistral 等）使用默认行为
             # Use IBM Granite-specific agent if detected
             # Other WatsonX models (Llama, Mistral, etc.) use default behavior
             if is_granite_model(llm) and self.tools:

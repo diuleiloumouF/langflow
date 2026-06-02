@@ -1,3 +1,4 @@
+// Google Generative AI 图标组件 - 用于 Google Gemini 生成式 AI 服务相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import SvgGoogleGenerativeAI from "./GoogleGemini";

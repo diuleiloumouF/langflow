@@ -1,5 +1,10 @@
+# 向量存储组件基类和缓存检查装饰器
 from lfx.base.vectorstores.model import LCVectorStoreComponent, check_cached_vector_store
+
+# 文档转数据工具函数
 from lfx.helpers.data import docs_to_data
+
+# 输入组件类型
 from lfx.inputs.inputs import DictInput, FloatInput
 from lfx.io import (
     BoolInput,
@@ -10,9 +15,12 @@ from lfx.io import (
     SecretStrInput,
     StrInput,
 )
+
+# 数据模型
 from lfx.schema.data import Data
 
 
+# HCD（超融合数据库）向量存储组件，提供搜索功能
 class HCDVectorStoreComponent(LCVectorStoreComponent):
     display_name: str = "Hyper-Converged Database"
     description: str = "Implementation of Vector Store using Hyper-Converged Database (HCD) with search capabilities"

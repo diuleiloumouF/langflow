@@ -43,16 +43,19 @@ from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 _TEST_PASSWORD = "hashed"  # noqa: S105  # pragma: allowlist secret
+# 测试用的哈希密码
 _ENCRYPT_TARGET = "langflow.services.database.models.deployment_provider_account.crud.auth_utils"
+# 加密目标模块路径
 
 
 # ---------------------------------------------------------------------------
-# Fixtures
+# Fixtures（固定装置）
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture(name="db_engine")
 def db_engine_fixture():
+    """创建内存 SQLite 数据库引擎的固定装置。"""
     engine = create_async_engine(
         "sqlite+aiosqlite://",
         connect_args={"check_same_thread": False},
@@ -70,6 +73,7 @@ def db_engine_fixture():
 
 @pytest.fixture(name="db")
 async def db_fixture(db_engine):
+    """创建数据库会话的固定装置。"""
     async with db_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     async with AsyncSession(db_engine, expire_on_commit=False) as session:
@@ -81,6 +85,7 @@ async def db_fixture(db_engine):
 
 @pytest.fixture
 async def user(db: AsyncSession) -> User:
+    """创建测试用户的固定装置。"""
     u = User(username="testuser", password=_TEST_PASSWORD, is_active=True)
     db.add(u)
     await db.commit()
@@ -90,6 +95,7 @@ async def user(db: AsyncSession) -> User:
 
 @pytest.fixture
 async def folder(db: AsyncSession, user: User) -> Folder:
+    """创建测试文件夹（项目）的固定装置。"""
     f = Folder(name="test-project", user_id=user.id)
     db.add(f)
     await db.commit()
@@ -99,6 +105,7 @@ async def folder(db: AsyncSession, user: User) -> Folder:
 
 @pytest.fixture
 async def provider_account(db: AsyncSession, user: User) -> DeploymentProviderAccount:
+    """创建测试部署提供商账户的固定装置。"""
     acct = DeploymentProviderAccount(
         user_id=user.id,
         name="provider-account-1",
@@ -120,6 +127,7 @@ async def deployment(
     folder: Folder,
     provider_account: DeploymentProviderAccount,
 ) -> Deployment:
+    """创建测试部署的固定装置。"""
     d = Deployment(
         user_id=user.id,
         project_id=folder.id,
@@ -136,12 +144,16 @@ async def deployment(
 
 # ===========================================================================
 # DeploymentProviderAccount — model-level integration
+# DeploymentProviderAccount — 模型级别集成测试
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestProviderAccountModel:
+    """DeploymentProviderAccount 模型测试类。"""
+
     async def test_create_and_read(self, db: AsyncSession, provider_account: DeploymentProviderAccount):
+        """测试创建和读取提供商账户。"""
         stmt = select(DeploymentProviderAccount).where(DeploymentProviderAccount.id == provider_account.id)
         row = (await db.exec(stmt)).one()
         assert row.provider_key == DeploymentProviderKey.WATSONX_ORCHESTRATE
@@ -153,6 +165,7 @@ class TestProviderAccountModel:
     async def test_unique_constraint_user_url_tenant(
         self, db: AsyncSession, user: User, provider_account: DeploymentProviderAccount
     ):
+        """测试用户、URL、租户的唯一约束。"""
         dup = DeploymentProviderAccount(
             user_id=user.id,
             name="provider-account-duplicate",
@@ -167,6 +180,7 @@ class TestProviderAccountModel:
 
     async def test_null_tenant_allows_multiple_rows(self, db: AsyncSession, user: User):
         """SQL NULL != NULL in unique constraints, so two rows with tenant=NULL are allowed."""
+        # 测试空租户允许多行，因为在唯一约束中 SQL NULL != NULL
         for i in range(2):
             acct = DeploymentProviderAccount(
                 user_id=user.id,
@@ -189,6 +203,7 @@ class TestProviderAccountModel:
     async def test_cascade_delete_on_user(
         self, db: AsyncSession, user: User, provider_account: DeploymentProviderAccount
     ):
+        """测试级联删除用户时，会删除关联的提供商账户。"""
         acct_id = provider_account.id
         await db.delete(user)
         await db.commit()
@@ -197,6 +212,7 @@ class TestProviderAccountModel:
         assert (await db.exec(stmt)).first() is None
 
     async def test_user_relationship(self, db: AsyncSession, provider_account: DeploymentProviderAccount):
+        """测试用户关系加载。"""
         await db.refresh(provider_account, attribute_names=["user"])
         assert provider_account.user is not None
         assert provider_account.user.username == "testuser"
@@ -204,11 +220,14 @@ class TestProviderAccountModel:
 
 # ===========================================================================
 # Deployment — model-level integration
+# Deployment — 模型级别集成测试
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestDeploymentModel:
+    """Deployment 模型测试类。"""
+
     async def test_create_and_read(self, db: AsyncSession, deployment: Deployment):
         stmt = select(Deployment).where(Deployment.id == deployment.id)
         row = (await db.exec(stmt)).one()
@@ -328,11 +347,14 @@ class TestDeploymentModel:
 
 # ===========================================================================
 # DeploymentProviderAccount — CRUD integration
+# DeploymentProviderAccount — CRUD 集成测试
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestProviderAccountCRUD:
+    """DeploymentProviderAccount CRUD 测试类。"""
+
     async def test_create_and_get(self, db: AsyncSession, user: User):
         with patch(_ENCRYPT_TARGET) as mock_auth:
             mock_auth.encrypt_api_key.return_value = "enc-token"
@@ -448,11 +470,14 @@ class TestProviderAccountCRUD:
 
 # ===========================================================================
 # Deployment — CRUD integration
+# Deployment — CRUD 集成测试
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestDeploymentCRUD:
+    """Deployment CRUD 测试类。"""
+
     async def test_create_and_get(
         self,
         db: AsyncSession,

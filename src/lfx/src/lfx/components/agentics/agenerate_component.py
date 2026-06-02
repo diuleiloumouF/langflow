@@ -1,4 +1,5 @@
 """SyntheticDataGenerator component for creating synthetic data using LLM-based generation."""
+# 使用基于 LLM 的生成方式创建合成数据的组件
 
 from __future__ import annotations
 
@@ -27,17 +28,30 @@ class AgenerateComponent(BaseAgenticComponent):
 
     """
 
+    # 合成数据生成组件：通过示例数据或自定义 Schema 生成逼真的合成数据
+    # 支持两种模式：
+    #   1. 从输入的 DataFrame 中学习，生成类似的行数据
+    #   2. 根据用户定义的 Schema 从零创建数据
+
+    # 基类标识，用于代码生成时的继承关系
     code_class_base_inheritance: ClassVar[str] = "Component"
+    # 组件在画布上显示的名称
     display_name = "aGenerate"
+    # 组件的功能描述，显示在画布属性面板中
     description = (
         "Generate mock data for user defined schema. If a dataframe is provided, "
         "the component will generate similar rows."
     )
+    # 组件文档链接
     documentation: str = "https://docs.langflow.org/bundles-agentics"
+    # 组件图标标识
     icon = "Agentics"
 
+    # 组件输入端口定义
     inputs = [
+        # 模型提供者相关输入（LLM 配置：模型名称、API Key 等）
         *get_model_provider_inputs(),
+        # Schema 输入：定义要生成的数据结构（列名、描述、类型）
         get_generated_fields_input(
             name="schema",
             display_name="Schema",
@@ -47,6 +61,7 @@ class AgenerateComponent(BaseAgenticComponent):
             ),
             required=False,
         ),
+        # 示例 DataFrame 输入：提供参考数据，组件将学习其模式并生成类似数据
         DataFrameInput(
             name="source",
             display_name="Input Table",
@@ -58,6 +73,7 @@ class AgenerateComponent(BaseAgenticComponent):
             advanced=False,
             value=None,
         ),
+        # 自然语言指令输入：可选的额外生成指导说明
         MessageTextInput(
             name="instructions",
             display_name="Instructions",
@@ -66,6 +82,7 @@ class AgenerateComponent(BaseAgenticComponent):
             required=False,
             advanced=True,
         ),
+        # 生成行数：指定要生成的合成数据行数
         IntInput(
             name="batch_size",
             display_name="Number of Rows to Generate",
@@ -78,7 +95,9 @@ class AgenerateComponent(BaseAgenticComponent):
         ),
     ]
 
+    # 组件输出端口定义
     outputs = [
+        # 输出合成数据 DataFrame，包含 LLM 根据 Schema 或示例数据生成的行
         Output(
             name="states",
             display_name="Output Table",
@@ -94,34 +113,48 @@ class AgenerateComponent(BaseAgenticComponent):
         Returns:
             DataFrame containing the generated synthetic data.
         """
+        # 异步生成合成数据的核心方法
+        # 根据输入的示例 DataFrame 或自定义 Schema，调用 LLM 生成合成数据
+
         try:
+            # 延迟导入 agentics 库，仅在运行时需要时加载
             from agentics import AG
             from agentics.core.atype import create_pydantic_model
             from agentics.core.transducible_functions import generate_prototypical_instances
         except ImportError as e:
+            # agentics 库未安装时抛出明确的错误提示
             raise ImportError(ERROR_AGENTICS_NOT_INSTALLED) from e
 
+        # 从组件配置中准备 LLM 实例（包含模型名称、API 密钥等）
         llm = prepare_llm_from_component(self)
 
         if self.source:
+            # 模式一：从示例 DataFrame 学习并生成类似数据
             source = AG.from_dataframe(DataFrame(self.source))
             atype = source.atype
+            # 如果用户提供了自定义指令则使用，否则使用默认指令
             instructions = (
                 str(self.instructions) if self.instructions else "Generate similar data based on the examples provided."
             )
+            # 将示例数据附加到指令中（最多取前 50 行作为参考）
             instructions += "\nHere are examples to take inspiration from:\n" + str(source.states[:50])
         elif self.schema != []:
+            # 模式二：根据用户定义的 Schema 从零生成数据
+            # 将 Schema 字段定义转换为 Pydantic 模型
             schema_fields = build_schema_fields(self.schema)
             atype = create_pydantic_model(schema_fields, name="GeneratedData")
+            # 如果用户提供了自定义指令则使用，否则使用默认指令
             instructions = (
                 str(self.instructions)
                 if self.instructions
                 else "Generate realistic synthetic data following the provided schema."
             )
         else:
+            # 既没有提供示例数据也没有定义 Schema 时抛出错误
             msg = "Synthetic data generation requires either a sample DataFrame or schema definition (but not both)."
             raise ValueError(msg)
 
+        # 调用 agentics 库的异步生成函数，生成指定数量的合成数据实例
         output_states = await generate_prototypical_instances(
             atype,
             n_instances=self.batch_size,
@@ -129,12 +162,15 @@ class AgenerateComponent(BaseAgenticComponent):
             instructions=instructions,
         )
         # Ensure output_states is a list, not None
+        # 确保 output_states 是列表类型而非 None
         if output_states is None:
             output_states = []
 
         if self.source:
+            # 如果基于示例数据模式，将新生成的数据追加到原始数据后面
             output_states = source.states + output_states
 
+        # 将生成的状态列表封装为 AG 对象并转换为 DataFrame 格式返回
         output = AG(atype=atype, states=output_states)
 
         return DataFrame(output.to_dataframe().to_dict(orient="records"))

@@ -1,10 +1,9 @@
-"""Cross-module BaseModel for handling re-exported classes.
+"""跨模块 BaseModel，用于处理重新导出的类。
 
-This module provides a metaclass and base model that enable isinstance checks
-to work across module boundaries for Pydantic models. This is particularly useful
-when the same class is re-exported from different modules (e.g., lfx.Message vs
-langflow.schema.Message) but Python's isinstance() checks fail due to different
-module paths.
+该模块提供了一个元类和基础模型，使 isinstance 检查能够在 Pydantic 模型的
+模块边界之间正常工作。当同一个类从不同模块重新导出时（例如 lfx.Message 与
+langflow.schema.Message），由于 Python 的 isinstance() 检查因模块路径不同而
+失败，此模块非常有用。
 """
 
 from __future__ import annotations
@@ -14,67 +13,65 @@ from typing import Any
 from pydantic import BaseModel
 
 
+# 跨模块元类，继承自 Pydantic BaseModel 的元类
 class CrossModuleMeta(type(BaseModel)):  # type: ignore[misc]
-    """Metaclass that enables cross-module isinstance checks for Pydantic models.
+    """支持跨模块 isinstance 检查的 Pydantic 元类。
 
-    This metaclass overrides __instancecheck__ to perform structural type checking
-    based on the model's fields rather than strict class identity. This allows
-    instances of the same model from different module paths to be recognized as
-    compatible.
+    该元类重写 __instancecheck__，基于模型的字段进行结构化类型检查，
+    而非严格的类标识检查。这允许来自不同模块路径的同一模型实例被识别为兼容。
     """
 
     def __instancecheck__(cls, instance: Any) -> bool:
-        """Check if instance is compatible with this class across module boundaries.
+        """检查实例是否与该类跨模块兼容。
 
-        First performs a standard isinstance check. If that fails, falls back to
-        checking if the instance has all required Pydantic model attributes and
-        a compatible set of model fields.
+        首先执行标准 isinstance 检查。如果失败，则回退到检查实例是否具有
+        所有必需的 Pydantic 模型属性和兼容的模型字段集。
 
         Args:
-            instance: The object to check.
+            instance: 要检查的对象。
 
         Returns:
-            bool: True if instance is compatible with this class.
+            bool: 如果实例与该类兼容则返回 True。
         """
-        # First try standard isinstance check
+        # 首先尝试标准 isinstance 检查
         if type.__instancecheck__(cls, instance):
             return True
 
-        # If that fails, check for cross-module compatibility
-        # An object is cross-module compatible if it:
-        # 1. Has model_fields attribute (is a Pydantic model)
-        # 2. Has the same __class__.__name__
-        # 3. Has compatible model fields
+        # 如果失败，则检查跨模块兼容性
+        # 一个对象跨模块兼容的条件是：
+        # 1. 具有 model_fields 属性（是 Pydantic 模型）
+        # 2. 具有相同的 __class__.__name__
+        # 3. 具有兼容的模型字段
         if not hasattr(instance, "model_fields"):
             return False
 
-        # Check if class names match
+        # 检查类名是否匹配
         if instance.__class__.__name__ != cls.__name__:
             return False
 
-        # Check if the instance has all required fields from cls
+        # 检查实例是否具有 cls 的所有必需字段
         cls_fields = set(cls.model_fields.keys()) if hasattr(cls, "model_fields") else set()
         instance_fields = set(type(instance).model_fields.keys())
 
-        # The instance must have at least the same fields as the class
-        # (it can have more, but not fewer required fields)
+        # 实例必须至少具有与该类相同的字段
+        # （可以有更多字段，但不能缺少必需字段）
         return cls_fields.issubset(instance_fields)
 
 
+# 带有跨模块 isinstance 支持的 Pydantic 基础模型
 class CrossModuleModel(BaseModel, metaclass=CrossModuleMeta):
-    """Base Pydantic model with cross-module isinstance support.
+    """支持跨模块 isinstance 检查的 Pydantic 基础模型。
 
-    This class should be used as the base for models that may be re-exported
-    from different modules. It enables isinstance() checks to work across
-    module boundaries by using structural type checking.
+    该类应作为可能从不同模块重新导出的模型的基类。通过使用结构化类型检查，
+    它使 isinstance() 检查能够在模块边界之间正常工作。
 
     Example:
         >>> class Message(CrossModuleModel):
         ...     text: str
         ...
-        >>> # Even if Message is imported from different paths:
+        >>> # 即使 Message 从不同路径导入：
         >>> from lfx.schema.message import Message as LfxMessage
         >>> from langflow.schema import Message as LangflowMessage
         >>> msg = LfxMessage(text="hello")
-        >>> isinstance(msg, LangflowMessage)  # True (with cross-module support)
+        >>> isinstance(msg, LangflowMessage)  # True（通过跨模块支持）
     """

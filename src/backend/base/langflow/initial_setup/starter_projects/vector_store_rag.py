@@ -1,3 +1,6 @@
+# 向量存储 RAG 入门项目
+# 该模块构建一个完整的 RAG（检索增强生成）流程，包含数据摄入和查询两个子图
+
 from textwrap import dedent
 
 from lfx.components.data import FileComponent
@@ -12,6 +15,7 @@ from lfx.graph import Graph
 
 
 def ingestion_graph():
+    """构建数据摄入子图：文件加载 -> 文本分割 -> 嵌入 -> 向量存储。"""
     # Ingestion Graph
     file_component = FileComponent()
     text_splitter = SplitTextComponent()
@@ -27,6 +31,7 @@ def ingestion_graph():
 
 
 def rag_graph():
+    """构建 RAG 查询子图：用户输入 -> 向量搜索 -> 数据解析 -> 提示词模板 -> 语言模型 -> 输出。"""
     # RAG Graph
     openai_embeddings = OpenAIEmbeddingsComponent()
     chat_input = ChatInput()
@@ -59,4 +64,5 @@ def rag_graph():
 
 
 def vector_store_rag_graph():
+    """构建完整的向量存储 RAG 图，组合摄入和查询两个子图。"""
     return ingestion_graph() + rag_graph()

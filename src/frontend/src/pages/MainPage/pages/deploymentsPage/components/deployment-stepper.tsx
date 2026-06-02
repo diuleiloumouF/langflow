@@ -16,6 +16,10 @@ const EDIT_STEPS = [
 
 export const DEPLOYMENT_STEPS = CREATE_STEPS;
 
+/**
+ * 部署步骤指示器组件
+ * 显示部署向导的步骤进度条，支持创建和编辑两种步骤模式
+ */
 export default function DeploymentStepper() {
   const { currentStep, isEditMode } = useDeploymentStepper();
   const steps = isEditMode ? EDIT_STEPS : CREATE_STEPS;

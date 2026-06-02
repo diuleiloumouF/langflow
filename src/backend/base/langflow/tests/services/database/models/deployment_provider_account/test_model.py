@@ -1,3 +1,5 @@
+# 部署提供商账户模型验证测试模块
+# 测试 DeploymentProviderAccount 模型的字段验证器、URL 验证和租户一致性检查
 from unittest.mock import MagicMock
 
 import pytest

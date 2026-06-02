@@ -1,3 +1,7 @@
+/**
+ * 模态框组件集合
+ * 管理主页面中使用的模板模态框和删除确认模态框
+ */
 // Modals.tsx
 import TemplatesModal from "@/modals/templatesModal";
 import DeleteConfirmationModal from "../../../../modals/deleteConfirmationModal";

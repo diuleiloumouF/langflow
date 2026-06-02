@@ -1,5 +1,9 @@
 import type { LoadingComponentProps } from "../../../types/components";
 
+/**
+ * 加载组件
+ * 显示一个旋转的加载动画图标和 "Loading..." 文字提示。
+ */
 export default function LoadingComponent({
   remSize,
 }: LoadingComponentProps): JSX.Element {

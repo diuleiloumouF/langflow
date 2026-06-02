@@ -4,6 +4,9 @@ import { api } from "../../api";
 import { getURL } from "../../helpers/constants";
 import { UseRequestProcessor } from "../../services/request-processor";
 
+/**
+ * 会话响应接口定义
+ */
 export interface SessionResponse {
   authenticated: boolean;
   user?: {
@@ -16,6 +19,10 @@ export interface SessionResponse {
   store_api_key?: string;
 }
 
+/**
+ * 获取认证会话的自定义 Hook
+ * 用于验证用户当前的登录状态
+ */
 export const useGetAuthSession: useQueryFunctionType<
   undefined,
   SessionResponse

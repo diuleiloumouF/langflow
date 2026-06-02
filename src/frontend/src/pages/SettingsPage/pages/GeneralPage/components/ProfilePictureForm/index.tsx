@@ -17,6 +17,7 @@ import {
 import { gradients } from "../../../../../../utils/styleUtils";
 import ProfilePictureChooserComponent from "./components/profilePictureChooserComponent";
 
+/** 头像表单组件的属性定义 */
 type ProfilePictureFormComponentProps = {
   profilePicture: string;
   handleInput: (event: any) => void;

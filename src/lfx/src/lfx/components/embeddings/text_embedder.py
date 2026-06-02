@@ -1,8 +1,14 @@
+# 引入类型标注
 from typing import TYPE_CHECKING
 
+# 引入组件基类和输入输出组件
 from lfx.custom.custom_component.component import Component
 from lfx.io import HandleInput, MessageInput, Output
+
+# 引入日志记录器
 from lfx.log.logger import logger
+
+# 引入数据模型
 from lfx.schema.data import Data
 
 if TYPE_CHECKING:
@@ -11,11 +17,19 @@ if TYPE_CHECKING:
 
 
 class TextEmbedderComponent(Component):
+    """文本嵌入向量生成组件，使用指定的嵌入模型为给定消息生成嵌入向量。"""
+
+    # 组件在界面上的显示名称
     display_name: str = "Text Embedder"
+    # 组件的功能描述
     description: str = "Generate embeddings for a given message using the specified embedding model."
+    # 组件图标
     icon = "binary"
+    # 标记为旧版组件
     legacy: bool = True
+    # 推荐的替代组件
     replacement = ["models.EmbeddingModel"]
+    # 组件输入参数定义
     inputs = [
         HandleInput(
             name="embedding_model",
@@ -31,11 +45,13 @@ class TextEmbedderComponent(Component):
             required=True,
         ),
     ]
+    # 组件输出定义
     outputs = [
         Output(display_name="Embedding Data", name="embeddings", method="generate_embeddings"),
     ]
 
     def generate_embeddings(self) -> Data:
+        """生成文本的嵌入向量表示。"""
         try:
             embedding_model: Embeddings = self.embedding_model
             message: Message = self.message

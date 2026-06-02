@@ -18,6 +18,7 @@ import {
 } from "../utils/knowledgeBaseUtils";
 import { isBusyStatus, STATUS_CONFIG } from "./statusConfig";
 
+/** 知识库列表列操作回调接口 */
 export interface KnowledgeBaseColumnsCallbacks {
   onViewChunks?: (knowledgeBase: KnowledgeBaseInfo) => void;
   onDelete?: (knowledgeBase: KnowledgeBaseInfo) => void;
@@ -25,6 +26,10 @@ export interface KnowledgeBaseColumnsCallbacks {
   onStopIngestion?: (knowledgeBase: KnowledgeBaseInfo) => void;
 }
 
+/**
+ * 创建知识库列表列配置
+ * 生成 ag-grid 的列定义，包括名称、状态、分块数、大小等列
+ */
 export const createKnowledgeBaseColumns = (
   callbacks?: KnowledgeBaseColumnsCallbacks,
 ): ColDef[] => {

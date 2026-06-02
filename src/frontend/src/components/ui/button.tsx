@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn } from "../../utils/utils";
 import ForwardedIconComponent from "../common/genericIconComponent";
 
+// 按钮变体样式定义，支持多种样式和尺寸
 const buttonVariants = cva(
   "noflow nopan nodelete nodrag inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-70 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
@@ -50,16 +51,21 @@ const buttonVariants = cva(
   },
 );
 
+/**
+ * 按钮属性类型
+ * 扩展原生 HTML 按钮属性，添加自定义样式变体支持
+ */
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
-  loading?: boolean;
-  unstyled?: boolean;
-  ignoreTitleCase?: boolean;
-  shouldScale?: boolean;
+  asChild?: boolean; // 是否使用 Slot 模式渲染子元素
+  loading?: boolean; // 是否显示加载状态
+  unstyled?: boolean; // 是否禁用默认样式
+  ignoreTitleCase?: boolean; // 是否忽略标题大小写转换
+  shouldScale?: boolean; // 是否启用点击缩放效果
 }
 
+// 将文本转换为标题大小写格式
 function toTitleCase(text: string) {
   return text
     ?.split(" ")
@@ -69,6 +75,7 @@ function toTitleCase(text: string) {
     ?.join(" ");
 }
 
+// 按钮主组件，支持加载状态、标题大小写转换和缩放效果
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {

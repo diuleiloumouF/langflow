@@ -9,6 +9,10 @@ interface DeploymentExpandedRowProps {
   colSpan: number;
 }
 
+/**
+ * 部署展开行组件
+ * 显示部署表格中展开行的详细内容，包括附加的流程版本和连接信息
+ */
 export default function DeploymentExpandedRow({
   deploymentId,
   colSpan,

@@ -7,12 +7,17 @@ import { useSidebar } from "@/components/ui/sidebar";
 import useRestoreVersion from "@/hooks/flows/use-restore-version";
 import CanvasBanner, { CanvasBannerButton } from "./CanvasBanner";
 
+/** 恢复版本按钮的属性定义 */
 interface RestoreVersionButtonProps {
   flowId: string;
   versionId: string;
   versionTag: string;
 }
 
+/**
+ * 恢复版本按钮组件
+ * 显示版本恢复横幅和确认弹窗，支持在恢复前保存当前草稿
+ */
 export default function RestoreVersionButton({
   flowId,
   versionId,

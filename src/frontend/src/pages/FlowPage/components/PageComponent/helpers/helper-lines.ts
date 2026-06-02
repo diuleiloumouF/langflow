@@ -1,18 +1,25 @@
 import { Node, XYPosition } from "@xyflow/react";
 
+/** 辅助线数据结构 */
 export interface HelperLine {
   id: string;
   position: number;
   orientation: "horizontal" | "vertical";
 }
 
+/** 辅助线状态，包含水平和垂直辅助线 */
 export interface HelperLinesState {
   horizontal?: HelperLine;
   vertical?: HelperLine;
 }
 
+/** 吸附距离阈值（像素），节点在此距离内会自动对齐 */
 const SNAP_DISTANCE = 5;
 
+/**
+ * 计算辅助线位置
+ * 比较拖拽节点与其他节点的边界，返回需要显示的水平和垂直辅助线
+ */
 export function getHelperLines(
   draggingNode: Node,
   nodes: Node[],
@@ -116,6 +123,10 @@ export function getHelperLines(
   return helperLines;
 }
 
+/**
+ * 计算吸附后的位置
+ * 根据辅助线信息，将节点位置吸附到最近的对齐位置
+ */
 export function getSnapPosition(
   draggingNode: Node,
   nodes: Node[],

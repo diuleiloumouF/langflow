@@ -43,6 +43,10 @@ interface DeploymentStepperModalProps {
   editingDeployment?: Deployment | null;
 }
 
+/**
+ * 部署向导模态框
+ * 提供多步骤的部署创建/编辑流程，包括提供商选择、类型选择、流程附加和审查
+ */
 export default function DeploymentStepperModal({
   open,
   setOpen,

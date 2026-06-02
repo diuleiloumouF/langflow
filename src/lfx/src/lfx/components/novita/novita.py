@@ -18,12 +18,18 @@ from lfx.inputs.inputs import (
 )
 
 
+# Novita AI 模型组件，使用 Novita AI 的 LLM 生成文本（兼容 OpenAI 接口）
 class NovitaModelComponent(LCModelComponent):
+    # 组件显示名称
     display_name = "Novita AI"
+    # 组件描述信息
     description = "Generates text using Novita AI LLMs (OpenAI compatible)."
+    # 组件图标
     icon = "Novita"
+    # 组件内部名称
     name = "NovitaModel"
 
+    # 组件输入参数定义
     inputs = [
         *LCModelComponent.get_base_inputs(),
         IntInput(
@@ -78,6 +84,7 @@ class NovitaModelComponent(LCModelComponent):
         ),
     ]
 
+    # 从 Novita AI API 获取可用的模型列表
     def get_models(self) -> list[str]:
         base_url = "https://api.novita.ai/v3/openai"
         url = f"{base_url}/models"
@@ -93,6 +100,7 @@ class NovitaModelComponent(LCModelComponent):
             self.status = f"Error fetching models: {e}"
             return MODEL_NAMES
 
+    # 更新构建配置，当 API 密钥或模型名称改变时刷新模型列表
     @override
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None):
         if field_name in {"api_key", "model_name"}:
@@ -100,6 +108,7 @@ class NovitaModelComponent(LCModelComponent):
             build_config["model_name"]["options"] = models
         return build_config
 
+    # 构建 ChatOpenAI 模型实例，连接 Novita AI 服务
     def build_model(self) -> LanguageModel:  # type: ignore[type-var]
         api_key = self.api_key
         temperature = self.temperature

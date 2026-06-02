@@ -33,6 +33,10 @@ import {
 import Page from "./components/PageComponent";
 import { FlowInsightsContent } from "./components/TraceComponent/FlowInsightsContent";
 
+/**
+ * 流程页面主内容区域
+ * 根据当前侧边栏的活动区域，显示流程画布或追踪分析内容
+ */
 function FlowPageMainContent({
   flowId,
   setIsLoading,
@@ -61,6 +65,11 @@ function FlowPageMainContent({
   return <Page setIsLoading={setIsLoading} />;
 }
 
+/**
+ * 流程页面主组件
+ * 管理流程编辑器的完整生命周期，包括加载流程、保存、自动保存、离开确认等
+ * @param view - 是否为只读视图模式
+ */
 export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const types = useTypesStore((state) => state.types);
 
@@ -74,6 +83,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
   const [isLoading, setIsLoading] = useState(false);
 
+  // 判断流程是否有未保存的更改
   const changesNotSaved =
     customStringify(currentFlow) !== customStringify(currentSavedFlow) &&
     (currentFlow?.data?.nodes?.length ?? 0) > 0;
@@ -96,9 +106,11 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const { mutateAsync: getFlow } = useGetFlow();
   const applyFlowToCanvas = useApplyFlowToCanvas();
 
+  // 连接到 Webhook 事件的 SSE 实时反馈
   // Connect to webhook events SSE for real-time feedback
   useWebhookEvents();
 
+  // 处理保存流程操作
   const handleSave = () => {
     let saving = true;
     let proceed = false;
@@ -122,6 +134,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
     });
   };
 
+  // 处理离开流程页面的操作
   const handleExit = () => {
     if (isBuilding) {
       // Do nothing, let the blocker handle it
@@ -147,6 +160,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
     };
   }, [changesNotSaved, isBuilding]);
 
+  // 设置当前流程标签页，加载流程数据到画布
   // Set flow tab id
   useEffect(() => {
     const awaitgetTypes = async () => {
@@ -199,6 +213,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
     }
   }, [blocker.state, isBuilding]);
 
+  // 获取流程数据并应用到画布
   const getFlowToAddToCanvas = async (id: string) => {
     const flow = await getFlow({ id });
     applyFlowToCanvas(flow);
@@ -214,6 +229,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const inputs = useFlowStore((state) => state.inputs);
   const outputs = useFlowStore((state) => state.outputs);
 
+  // AI 助手状态管理
   // Assistant state
   const assistantOpen = useAssistantManagerStore(
     (state) => state.assistantSidebarOpen,
@@ -222,6 +238,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
     (state) => state.setAssistantSidebarOpen,
   );
 
+  // 使用可配置的快捷键切换 AI 助手（仅在未在输入框中输入时生效）
   // Toggle assistant with configurable shortcut (only when not typing in an input)
   const aiAssistantShortcut = useShortcutsStore((state) => state.aiAssistant);
   useHotkeys(
@@ -234,6 +251,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
     [assistantOpen, aiAssistantShortcut],
   );
 
+  // 按 Escape 键关闭 AI 助手
   // Close assistant with Escape
   useHotkeys(
     "escape",
@@ -246,6 +264,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
     [assistantOpen],
   );
 
+  // 当所有聊天组件被移除时，自动关闭 Playground
   // Auto-close playground when all chat components are removed
   useEffect(() => {
     const hasChatInput = inputs.some((input) => input.type === "ChatInput");

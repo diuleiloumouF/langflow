@@ -20,6 +20,7 @@ from lfx.io import (
 from lfx.schema.message import Message
 from lfx.schema.token_usage import accumulate_usage, extract_usage_from_message
 
+# NotDiamond 模型映射表，将通用模型名称映射到具体的提供商和模型标识
 ND_MODEL_MAPPING = {
     "gpt-4o": {"provider": "openai", "model": "gpt-4o"},
     "gpt-4o-mini": {"provider": "openai", "model": "gpt-4o-mini"},
@@ -43,17 +44,24 @@ ND_MODEL_MAPPING = {
 }
 
 
+# NotDiamond 路由器组件，用于智能选择最适合的 AI 模型
 class NotDiamondComponent(Component):
+    # 组件显示名称
     display_name = "Not Diamond Router"
+    # 组件描述信息
     description = "Call the right model at the right time with the world's most powerful AI model router."
+    # 组件文档链接
     documentation: str = "https://docs.notdiamond.ai/"
+    # 组件图标
     icon = "NotDiamond"
+    # 组件内部名称
     name = "NotDiamond"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._selected_model_name = None
 
+    # 组件输入参数定义
     inputs = [
         MessageInput(name="input_value", display_name="Input", required=True),
         MessageTextInput(
@@ -101,6 +109,7 @@ class NotDiamondComponent(Component):
         ),
     ]
 
+    # 组件输出参数定义
     outputs = [
         Output(display_name="Output", name="output", method="model_select"),
         Output(
@@ -111,9 +120,11 @@ class NotDiamondComponent(Component):
         ),
     ]
 
+    # 获取被选中的模型名称
     def get_selected_model(self) -> str:
         return self._selected_model_name
 
+    # 模型选择方法，调用 NotDiamond API 选择最佳模型并执行推理
     def model_select(self) -> Message:
         api_key = SecretStr(self.api_key).get_secret_value() if self.api_key else None
         input_value = self.input_value
@@ -178,6 +189,7 @@ class NotDiamondComponent(Component):
 
         return self._call_get_chat_result(chosen_model, input_value, system_message)
 
+    # 调用聊天结果获取函数，执行模型推理
     def _call_get_chat_result(self, chosen_model, input_value, system_message):
         return get_chat_result(
             runnable=chosen_model,
@@ -188,6 +200,7 @@ class NotDiamondComponent(Component):
             ),
         )
 
+    # 格式化输入消息，将各种消息类型转换为 OpenAI 格式
     def _format_input(
         self,
         input_value: str | Message,

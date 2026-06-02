@@ -8,6 +8,8 @@ from lfx.io import Output
 from lfx.schema.message import Message
 
 
+# LangChain Hub 提示组件，使用 LangChain Hub 中的提示模板
+# LangChain Hub prompt component for using prompts from LangChain Hub
 class LangChainHubPromptComponent(Component):
     display_name: str = "Prompt Hub"
     description: str = "Prompt Component that uses LangChain Hub prompts"
@@ -36,6 +38,7 @@ class LangChainHubPromptComponent(Component):
         Output(display_name="Build Prompt", name="prompt", method="build_prompt"),
     ]
 
+    # 根据字段更新动态更新构建配置
     def update_build_config(self, build_config: dict, field_value: str, field_name: str | None = None):
         # If the field is not langchain_hub_prompt or the value is empty, return the build config as is
         if field_name != "langchain_hub_prompt" or not field_value:
@@ -92,6 +95,7 @@ class LangChainHubPromptComponent(Component):
 
         return build_config
 
+    # 构建提示，从 LangChain Hub 获取模板并应用参数
     async def build_prompt(
         self,
     ) -> Message:
@@ -113,6 +117,7 @@ class LangChainHubPromptComponent(Component):
 
         return prompt
 
+    # 从 LangChain Hub 获取提示模板
     def _fetch_langchain_hub_template(self):
         import langchain.hub
 

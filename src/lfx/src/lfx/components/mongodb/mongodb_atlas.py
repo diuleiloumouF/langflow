@@ -12,14 +12,23 @@ from lfx.io import BoolInput, DropdownInput, HandleInput, IntInput, SecretStrInp
 from lfx.schema.data import Data
 
 
+# MongoDB Atlas 向量存储组件，提供向量搜索和存储功能
 class MongoVectorStoreComponent(LCVectorStoreComponent):
+    # 组件显示名称
     display_name = "MongoDB Atlas"
+    # 组件描述信息
     description = "MongoDB Atlas Vector Store with search capabilities"
+    # 组件内部名称
     name = "MongoDBAtlasVector"
+    # 组件图标
     icon = "MongoDB"
+    # 插入模式：追加或覆盖
     INSERT_MODES = ["append", "overwrite"]
+    # 相似度计算选项
     SIMILARITY_OPTIONS = ["cosine", "euclidean", "dotProduct"]
+    # 量化选项，用于减少内存消耗
     QUANTIZATION_OPTIONS = ["scalar", "binary"]
+    # 组件输入参数定义
     inputs = [
         SecretStrInput(name="mongodb_atlas_cluster_uri", display_name="MongoDB Atlas Cluster URI", required=True),
         BoolInput(name="enable_mtls", display_name="Enable mTLS", value=False, advanced=True, required=True),
@@ -93,6 +102,7 @@ class MongoVectorStoreComponent(LCVectorStoreComponent):
         ),
     ]
 
+    # 构建 MongoDB Atlas 向量存储实例，支持 mTLS 连接
     @check_cached_vector_store
     def build_vector_store(self) -> MongoDBAtlasVectorSearch:
         try:
@@ -156,6 +166,7 @@ class MongoVectorStoreComponent(LCVectorStoreComponent):
             )
         return MongoDBAtlasVectorSearch(embedding=self.embedding, collection=collection, index_name=self.index_name)
 
+    # 搜索文档，使用相似度搜索在向量存储中查找相关文档
     def search_documents(self) -> list[Data]:
         from bson.objectid import ObjectId
 
@@ -178,6 +189,7 @@ class MongoVectorStoreComponent(LCVectorStoreComponent):
             return data
         return []
 
+    # 处理插入模式，覆盖模式下先清空集合
     def __insert_mode(self, collection: Collection) -> None:
         if self.insert_mode == "overwrite":
             collection.delete_many({})  # Delete all documents while preserving collection structure
@@ -188,6 +200,7 @@ class MongoVectorStoreComponent(LCVectorStoreComponent):
         Args:
             collection (Collection): The collection to verify the search index on.
         """
+        # 验证搜索索引是否存在，不存在则创建
         indexes = collection.list_search_indexes()
 
         index_names_types = {idx["name"]: idx["type"] for idx in indexes}
@@ -198,6 +211,7 @@ class MongoVectorStoreComponent(LCVectorStoreComponent):
 
             time.sleep(20)  # Give some time for index to be ready
 
+    # 创建向量搜索索引定义
     def __create_index_definition(self) -> SearchIndexModel:
         fields = [
             {

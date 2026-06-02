@@ -7,12 +7,18 @@ from lfx.io import MultilineInput, Output, StrInput
 from lfx.schema.data import Data
 
 
+# Python 解释器组件，允许执行 Python 代码并支持可选的模块导入
 class PythonREPLComponent(Component):
+    # 组件显示名称
     display_name = "Python Interpreter"
+    # 组件描述信息
     description = "Run Python code with optional imports. Use print() to see the output."
+    # 组件文档链接
     documentation: str = "https://docs.langflow.org/python-interpreter"
+    # 组件图标
     icon = "square-terminal"
 
+    # 组件输入参数定义
     inputs = [
         StrInput(
             name="global_imports",
@@ -32,6 +38,7 @@ class PythonREPLComponent(Component):
         ),
     ]
 
+    # 组件输出参数定义
     outputs = [
         Output(
             display_name="Results",
@@ -41,6 +48,7 @@ class PythonREPLComponent(Component):
         ),
     ]
 
+    # 创建全局变量字典，只包含指定的允许导入的模块
     def get_globals(self, global_imports: str | list[str]) -> dict:
         """Create a globals dictionary with only the specified allowed imports."""
         global_dict = {}
@@ -69,6 +77,7 @@ class PythonREPLComponent(Component):
             self.log(f"Successfully imported modules: {list(global_dict.keys())}")
             return global_dict
 
+    # 运行 Python REPL 并返回结果
     def run_python_repl(self) -> Data:
         try:
             globals_ = self.get_globals(self.global_imports)
@@ -94,5 +103,6 @@ class PythonREPLComponent(Component):
             self.log(error_message)
             return Data(data={"error": error_message})
 
+    # 构建组件，返回主执行函数
     def build(self):
         return self.run_python_repl

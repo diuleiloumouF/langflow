@@ -13,6 +13,8 @@ import {
 import type { SpanDetailProps } from "./types";
 
 /**
+ * Span 详情面板组件
+ * 显示选中的 Span 的完整信息，包括输入、输出、模型信息、Token 用量和错误信息
  * Detail panel showing full information about a selected span
  * Includes inputs, outputs, model info, tokens, and errors
  */
@@ -172,6 +174,8 @@ export function SpanDetail({ span }: SpanDetailProps) {
 }
 
 /**
+ * 指标卡片组件
+ * 用于显示关键统计数据（如延迟、Token 用量等）
  * Metric card component for displaying key stats
  */
 function MetricCard({
@@ -195,6 +199,7 @@ function MetricCard({
 }
 
 /**
+ * 带图标的区块标题组件
  * Section header with icon
  */
 function SectionHeader({ icon, title }: { icon: string; title: string }) {

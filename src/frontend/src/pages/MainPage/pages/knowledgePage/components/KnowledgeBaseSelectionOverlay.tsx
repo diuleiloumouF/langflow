@@ -7,6 +7,7 @@ import DeleteConfirmationModal from "@/modals/deleteConfirmationModal";
 import useAlertStore from "@/stores/alertStore";
 import { cn } from "@/utils/utils";
 
+/** 知识库选择覆盖层的属性定义 */
 interface KnowledgeBaseSelectionOverlayProps {
   selectedFiles: KnowledgeBaseInfo[];
   quantitySelected: number;

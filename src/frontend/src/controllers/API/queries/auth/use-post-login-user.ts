@@ -4,6 +4,11 @@ import { api } from "../../api";
 import { getURL } from "../../helpers/constants";
 import { UseRequestProcessor } from "../../services/request-processor";
 
+/**
+ * 用户登录的自定义 Hook
+ * 处理用户名/密码认证，登录成功后清除缓存并刷新相关数据
+ * @returns 登录用户的 mutation 函数
+ */
 export const useLoginUser: useMutationFunctionType<undefined, LoginType> = (
   options?,
 ) => {

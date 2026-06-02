@@ -26,6 +26,7 @@ import { cn } from "@/utils/utils";
 import { sortByDate } from "../../../utils/sort-flows";
 import DragWrapComponent from "./dragWrapComponent";
 
+/** 文件标签页的属性定义 */
 interface FilesTabProps {
   quickFilterText: string;
   setQuickFilterText: (text: string) => void;

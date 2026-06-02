@@ -5,6 +5,11 @@ import { CanvasBadge } from "./CanvasBanner";
 import RestoreVersionButton from "./RestoreVersionButton";
 import SaveSnapshotButton from "./SaveSnapshotButton";
 
+/**
+ * 版本预览覆盖层组件
+ * 在画布上显示版本预览状态，包括只读标记、加载状态
+ * 根据预览的版本类型显示保存快照或恢复版本按钮
+ */
 export default function VersionPreviewOverlay() {
   const previewLabel = useVersionPreviewStore((s) => s.previewLabel);
   const previewId = useVersionPreviewStore((s) => s.previewId);

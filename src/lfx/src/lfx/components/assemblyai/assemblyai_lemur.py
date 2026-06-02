@@ -1,18 +1,24 @@
+# AssemblyAI SDK
 import assemblyai as aai
 
+# 组件基类、输入/输出定义、日志、数据模型
 from lfx.custom.custom_component.component import Component
 from lfx.io import DataInput, DropdownInput, FloatInput, IntInput, MultilineInput, Output, SecretStrInput
 from lfx.log.logger import logger
 from lfx.schema.data import Data
 
 
+# AssemblyAI LeMUR 组件，使用 AssemblyAI LeMUR 框架将大语言模型应用于语音数据
 class AssemblyAILeMUR(Component):
     display_name = "AssemblyAI LeMUR"
+    # 组件描述：使用 AssemblyAI LeMUR 框架将大语言模型应用于语音数据
     description = "Apply Large Language Models to spoken data using the AssemblyAI LeMUR framework"
     documentation = "https://www.assemblyai.com/docs/lemur"
     icon = "AssemblyAI"
 
+    # 输入参数定义
     inputs = [
+        # AssemblyAI API 密钥
         SecretStrInput(
             name="api_key",
             display_name="Assembly API Key",
@@ -20,13 +26,16 @@ class AssemblyAILeMUR(Component):
             advanced=False,
             required=True,
         ),
+        # 转录结果数据输入
         DataInput(
             name="transcription_result",
             display_name="Transcription Result",
             info="The transcription result from AssemblyAI",
             required=True,
         ),
+        # LLM 提示词输入（多行文本）
         MultilineInput(name="prompt", display_name="Input Prompt", info="The text to prompt the model", required=True),
+        # 最终使用的 LLM 模型（压缩后执行最终提示的模型）
         DropdownInput(
             name="final_model",
             display_name="Final Model",
@@ -35,6 +44,7 @@ class AssemblyAILeMUR(Component):
             info="The model that is used for the final prompt after compression is performed",
             advanced=True,
         ),
+        # 模型温度参数，控制输出随机性
         FloatInput(
             name="temperature",
             display_name="Temperature",
@@ -42,6 +52,7 @@ class AssemblyAILeMUR(Component):
             value=0.0,
             info="The temperature to use for the model",
         ),
+        # 最大输出 token 数量
         IntInput(
             name="max_output_size",
             display_name=" Max Output Size",
@@ -49,6 +60,7 @@ class AssemblyAILeMUR(Component):
             value=2000,
             info="Max output size in tokens, up to 4000",
         ),
+        # LeMUR 端点选择：任务、摘要、问答
         DropdownInput(
             name="endpoint",
             display_name="Endpoint",
@@ -60,12 +72,14 @@ class AssemblyAILeMUR(Component):
             ),
             advanced=True,
         ),
+        # 问答模式下的问题列表（逗号分隔）
         MultilineInput(
             name="questions",
             display_name="Questions",
             info="Comma-separated list of your questions. Only used if Endpoint is 'question-answer'",
             advanced=True,
         ),
+        # 转录 ID 列表（逗号分隔），可同时处理多个转录
         MultilineInput(
             name="transcript_ids",
             display_name="Transcript IDs",
@@ -77,10 +91,12 @@ class AssemblyAILeMUR(Component):
         ),
     ]
 
+    # 输出参数：LeMUR 处理结果
     outputs = [
         Output(display_name="LeMUR Response", name="lemur_response", method="run_lemur"),
     ]
 
+    # 运行 LeMUR 任务端点，输入 LLM 提示词
     def run_lemur(self) -> Data:
         """Use the LeMUR task endpoint to input the LLM prompt."""
         aai.settings.api_key = self.api_key
@@ -140,6 +156,7 @@ class AssemblyAILeMUR(Component):
         self.status = result
         return result
 
+    # 执行具体的 LeMUR 操作（任务/摘要/问答）
     def perform_lemur_action(self, transcript_group: aai.TranscriptGroup, endpoint: str) -> dict:
         logger.info("Endpoint:", endpoint, type(endpoint))
         if endpoint == "task":
@@ -170,6 +187,7 @@ class AssemblyAILeMUR(Component):
 
         return result.dict()
 
+    # 将模型名称字符串转换为 AssemblyAI LeMUR 模型枚举值
     def get_final_model(self, model_name: str) -> aai.LemurModel:
         if model_name == "claude3_5_sonnet":
             return aai.LemurModel.claude3_5_sonnet

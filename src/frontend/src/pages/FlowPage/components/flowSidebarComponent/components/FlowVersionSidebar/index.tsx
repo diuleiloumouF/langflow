@@ -11,6 +11,10 @@ import { CURRENT_DRAFT_ID } from "./constants";
 import type { FlowVersionSidebarContentProps } from "./types";
 import { useFlowVersionSidebar } from "./use-flow-version-sidebar";
 
+/**
+ * 流程版本侧边栏内容组件
+ * 显示流程的版本历史列表，支持版本选择、预览、删除等操作
+ */
 export default function FlowVersionSidebarContent({
   flowId,
 }: FlowVersionSidebarContentProps) {

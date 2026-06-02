@@ -3,6 +3,8 @@ from lfx.io import BoolInput, DropdownInput, MessageTextInput, Output, SecretStr
 from lfx.schema.data import Data
 
 
+# JigsawStack 对象检测组件，使用 AI 模型检测图像中的对象
+# JigsawStack object detection component for detecting objects in images using AI models
 class JigsawStackObjectDetectionComponent(Component):
     display_name = "Object Detection"
     description = "Perform object detection on images using JigsawStack's Object Detection Model, \
@@ -69,6 +71,7 @@ class JigsawStackObjectDetectionComponent(Component):
         Output(display_name="Object Detection results", name="object_detection_results", method="detect_objects"),
     ]
 
+    # 执行对象检测操作
     def detect_objects(self) -> Data:
         try:
             from jigsawstack import JigsawStack, JigsawStackError

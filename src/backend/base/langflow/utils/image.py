@@ -1,9 +1,12 @@
+# 图像处理工具模块
+# 提供图像转 Base64 编码、Data URL 生成和多模态内容字典构建等功能
 import base64
 import mimetypes
 from functools import lru_cache
 from pathlib import Path
 
 
+# 将图像文件转换为 Base64 编码字符串
 def convert_image_to_base64(image_path: str | Path) -> str:
     """Convert an image file to a base64 encoded string.
 
@@ -40,6 +43,7 @@ def convert_image_to_base64(image_path: str | Path) -> str:
         raise OSError(msg) from e
 
 
+# 从图像文件创建 Data URL（data:mime_type;base64,... 格式）
 def create_data_url(image_path: str | Path, mime_type: str | None = None) -> str:
     """Create a data URL from an image file.
 
@@ -70,6 +74,7 @@ def create_data_url(image_path: str | Path, mime_type: str | None = None) -> str
     return f"data:{mime_type};base64,{base64_data}"
 
 
+# 从图像文件创建多模态输入的内容字典（带缓存），用于 LLM 的视觉输入
 @lru_cache(maxsize=50)
 def create_image_content_dict(image_path: str | Path, mime_type: str | None = None) -> dict:
     """Create a content dictionary for multimodal inputs from an image file.

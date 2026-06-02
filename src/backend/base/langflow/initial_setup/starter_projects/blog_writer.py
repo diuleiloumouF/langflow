@@ -1,3 +1,6 @@
+# 博客写手入门项目
+# 该模块构建一个博客写作流程：URL 抓取 -> 数据解析 -> 提示词模板 -> OpenAI 模型 -> 输出
+
 from textwrap import dedent
 
 from lfx.components.data import URLComponent
@@ -9,6 +12,7 @@ from lfx.graph import Graph
 
 
 def blog_writer_graph(template: str | None = None):
+    """构建博客写手示例图。"""
     if template is None:
         template = dedent("""Reference 1:
 

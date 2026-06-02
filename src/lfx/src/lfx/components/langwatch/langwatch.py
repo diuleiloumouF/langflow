@@ -22,13 +22,20 @@ from lfx.schema.data import Data
 from lfx.schema.dotdict import dotdict
 
 
+# LangWatch 评估器组件，用于通过 LangWatch 的评估端点评估语言模型的各种方面
 class LangWatchComponent(Component):
+    # 组件显示名称
     display_name: str = "LangWatch Evaluator"
+    # 组件描述信息
     description: str = "Evaluates various aspects of language models using LangWatch's evaluation endpoints."
+    # 组件文档链接
     documentation: str = "https://docs.langwatch.ai/langevals/documentation/introduction"
+    # 组件图标
     icon: str = "Langwatch"
+    # 组件内部名称
     name: str = "LangWatchEvaluator"
 
+    # 组件输入参数定义
     inputs = [
         DropdownInput(
             name="evaluator_name",
@@ -78,10 +85,12 @@ class LangWatchComponent(Component):
         ),
     ]
 
+    # 组件输出参数定义
     outputs = [
         Output(name="evaluation_result", display_name="Evaluation Result", method="evaluate"),
     ]
 
+    # 设置评估器列表，从 LangWatch 端点获取可用的评估器
     def set_evaluators(self, endpoint: str):
         url = f"{endpoint}/api/evaluations/list"
         self.evaluators = get_cached_evaluators(url)
@@ -90,6 +99,7 @@ class LangWatchComponent(Component):
             msg = f"No evaluators found from {endpoint}"
             raise ValueError(msg)
 
+    # 更新构建配置，动态加载评估器选项和相关输入字段
     def update_build_config(self, build_config: dotdict, field_value: Any, field_name: str | None = None) -> dotdict:
         try:
             logger.info(f"Updating build config. Field name: {field_name}, Field value: {field_value}")
@@ -153,6 +163,7 @@ class LangWatchComponent(Component):
             self.status = f"Error updating component: {e!s}"
         return build_config
 
+    # 根据评估器配置动态生成输入字段
     def get_dynamic_inputs(self, evaluator: dict[str, Any]):
         try:
             dynamic_inputs = {}
@@ -211,6 +222,7 @@ class LangWatchComponent(Component):
             return {}
         return dynamic_inputs
 
+    # 异步执行评估，向 LangWatch API 发送评估请求并返回结果
     async def evaluate(self) -> Data:
         if not self.api_key:
             return Data(data={"error": "API key is required"})

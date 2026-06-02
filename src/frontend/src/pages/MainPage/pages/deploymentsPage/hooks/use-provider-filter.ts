@@ -8,6 +8,10 @@ interface ProviderFilter {
   providerMap: Record<string, string>;
 }
 
+/**
+ * 提供商筛选 Hook
+ * 管理提供商的选择和筛选状态，自动生成提供商 ID 到名称的映射
+ */
 export function useProviderFilter(
   providers: ProviderAccount[],
 ): ProviderFilter {

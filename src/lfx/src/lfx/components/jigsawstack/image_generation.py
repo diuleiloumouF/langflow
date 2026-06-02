@@ -3,6 +3,8 @@ from lfx.io import DropdownInput, IntInput, MessageTextInput, Output, SecretStrI
 from lfx.schema.data import Data
 
 
+# JigsawStack 图像生成组件，使用 AI 模型根据文本提示生成图像
+# JigsawStack image generation component for generating images from text prompts using AI models
 class JigsawStackImageGenerationComponent(Component):
     display_name = "Image Generation"
     description = "Generate an image based on the given text by employing AI models like Flux, \
@@ -108,6 +110,7 @@ class JigsawStackImageGenerationComponent(Component):
         Output(display_name="Image Generation Results", name="image_generation_results", method="generate_image"),
     ]
 
+    # 执行图像生成操作
     def generate_image(self) -> Data:
         try:
             from jigsawstack import JigsawStack, JigsawStackError

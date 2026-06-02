@@ -1,3 +1,4 @@
+// Calendly 图标组件 - 用于 Calendly 在线预约调度平台相关组件的标识
 import React, { forwardRef } from "react";
 import CalendlyIconSVG from "./calendly";
 

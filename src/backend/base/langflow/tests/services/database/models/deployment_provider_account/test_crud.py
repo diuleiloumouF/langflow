@@ -1,3 +1,5 @@
+# 部署提供商账户 CRUD 操作测试模块
+# 测试提供商账户的创建、读取、更新、删除操作及验证逻辑
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -24,22 +26,28 @@ from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 _ENCRYPT_TARGET = "langflow.services.database.models.deployment_provider_account.crud.auth_utils"
+# 加密目标模块路径
 _CRUD_LOGGER = "langflow.services.database.models.deployment_provider_account.crud.logger"
+# CRUD 日志记录器路径
 _TEST_PASSWORD = "hashed"  # noqa: S105  # pragma: allowlist secret
+# 测试用的哈希密码
 
 
 # ---------------------------------------------------------------------------
 # Helpers for pure-validation (mock-based) tests
+# 纯验证测试的辅助工具（基于模拟）
 # ---------------------------------------------------------------------------
 
 
 def _make_db() -> AsyncMock:
+    """创建模拟数据库对象。"""
     db = AsyncMock()
     db.add = MagicMock()
     return db
 
 
 def _make_provider_account(**overrides) -> SimpleNamespace:
+    """创建模拟的提供商账户对象。"""
     defaults = {
         "id": uuid4(),
         "user_id": uuid4(),
@@ -55,11 +63,13 @@ def _make_provider_account(**overrides) -> SimpleNamespace:
 
 # ---------------------------------------------------------------------------
 # Fixtures for real in-memory SQLite tests
+# 真实内存 SQLite 测试的固定装置
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture(name="db_engine")
 def db_engine_fixture():
+    """创建内存 SQLite 数据库引擎的固定装置。"""
     engine = create_async_engine(
         "sqlite+aiosqlite://",
         connect_args={"check_same_thread": False},
@@ -97,6 +107,7 @@ async def user(db: AsyncSession) -> User:
 
 # ---------------------------------------------------------------------------
 # Pure-validation tests (raise before touching DB)
+# 纯验证测试（在访问数据库之前抛出异常）
 # ---------------------------------------------------------------------------
 
 
@@ -234,6 +245,7 @@ async def test_update_provider_account_empty_api_key_raises():
 
 # ---------------------------------------------------------------------------
 # Mock-based tests (encryption errors / hard-to-trigger edge cases)
+# 基于模拟的测试（加密错误 / 难以触发的边缘情况）
 # ---------------------------------------------------------------------------
 
 
@@ -311,10 +323,12 @@ async def test_delete_provider_account_integrity_error_raises_value_error():
 
 # ---------------------------------------------------------------------------
 # Real in-memory SQLite tests
+# 真实内存 SQLite 测试
 # ---------------------------------------------------------------------------
 
 
 async def _create_account(db, user, **overrides):
+    """创建提供商账户的辅助函数。"""
     defaults = {
         "user_id": user.id,
         "name": "staging",

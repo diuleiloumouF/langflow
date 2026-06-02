@@ -8,6 +8,10 @@ import { useCustomNavigate } from "@/customization/hooks/use-custom-navigate";
 import AddMcpServerModal from "@/modals/addMcpServerModal";
 import { useUtilityStore } from "@/stores/utilityStore";
 
+/**
+ * 侧边栏底部菜单按钮组件
+ * 提供添加自定义组件和 MCP 服务器的快捷按钮
+ */
 const SidebarMenuButtons = ({
   customComponent,
   addComponent,

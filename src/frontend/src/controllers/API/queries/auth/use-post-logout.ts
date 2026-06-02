@@ -13,6 +13,11 @@ import { api } from "../../api";
 import { getURL } from "../../helpers/constants";
 import { UseRequestProcessor } from "../../services/request-processor";
 
+/**
+ * 用户登出的自定义 Hook
+ * 清除认证状态、流程数据和 React Query 缓存
+ * @returns 登出用户的 mutation 函数
+ */
 export const useLogout: useMutationFunctionType<undefined, void> = (
   options?,
 ) => {

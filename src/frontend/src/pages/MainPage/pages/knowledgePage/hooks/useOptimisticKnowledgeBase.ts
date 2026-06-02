@@ -4,6 +4,9 @@ import type { KnowledgeBaseInfo } from "@/controllers/API/queries/knowledge-base
 import type { KnowledgeBaseFormData } from "@/modals/knowledgeBaseUploadModal/KnowledgeBaseUploadModal";
 
 /**
+ * 乐观更新 Hook
+ * 管理知识库创建或更新时的乐观缓存更新
+ * 在模态框提交时捕获数据，关闭时应用乐观更新
  * Manages optimistic cache updates when a knowledge base is created or updated via the upload modal.
  * Call `captureSubmit` inside onSubmit, and `applyOptimisticUpdate` when the modal closes.
  */

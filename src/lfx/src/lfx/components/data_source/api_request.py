@@ -1,19 +1,46 @@
+# JSON 序列化与反序列化
 import json
+
+# 正则表达式匹配（用于从 Content-Disposition 中提取文件名）
 import re
+
+# 临时文件与临时目录管理
 import tempfile
+
+# 时间处理（用于生成唯一文件名的时间戳）
 from datetime import datetime, timezone
+
+# 文件路径操作
 from pathlib import Path
+
+# 类型注解
 from typing import Any
+
+# URL 解析与编码工具
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+# 异步文件操作库
 import aiofiles
+
+# 异步文件系统操作（创建目录等）
 import aiofiles.os as aiofiles_os
+
+# 异步 HTTP 客户端库
 import httpx
+
+# URL 格式校验库
 import validators
 
+# cURL 命令解析器，将 cURL 文本转换为结构化的请求参数
 from lfx.base.curl.parse import parse_context
+
+# Langflow 组件基类
 from lfx.custom.custom_component.component import Component
+
+# Tab 切换输入组件（用于 URL / cURL 模式切换）
 from lfx.inputs.inputs import TabInput
+
+# 各类输入/输出组件定义
 from lfx.io import (
     BoolInput,
     DataInput,
@@ -24,15 +51,23 @@ from lfx.io import (
     Output,
     TableInput,
 )
+
+# Langflow 数据模型，用于封装组件输出结果
 from lfx.schema.data import Data
+
+# 支持点号访问的字典（dotdict），用于动态访问构建配置
 from lfx.schema.dotdict import dotdict
+
+# 组件工具函数：设置字段可见性、高级属性、当前激活字段等
 from lfx.utils.component_utils import set_current_fields, set_field_advanced, set_field_display
 
-# SSRF Protection imports - for preventing Server-Side Request Forgery attacks
+# SSRF 防护导入 - 用于防止服务端请求伪造攻击
 from lfx.utils.ssrf_protection import SSRFProtectionError, validate_and_resolve_url
+
+# SSRF 防护的 HTTP 传输层，支持 DNS 固定（DNS pinning）
 from lfx.utils.ssrf_transport import create_ssrf_protected_client
 
-# Define fields for each mode
+# 每种模式下需要显示的字段列表
 MODE_FIELDS = {
     "URL": [
         "url_input",
@@ -41,18 +76,26 @@ MODE_FIELDS = {
     "cURL": ["curl_input"],
 }
 
-# Fields that should always be visible
+# 始终可见的字段（模式选择器始终显示）
 DEFAULT_FIELDS = ["mode"]
 
 
+# API 请求组件 - 通过 URL 或 cURL 命令发起 HTTP 请求
 class APIRequestComponent(Component):
+    # 组件显示名称
     display_name = "API Request"
+    # 组件描述信息
     description = "Make HTTP requests using URL or cURL commands."
+    # 组件文档链接
     documentation: str = "https://docs.langflow.org/api-request"
+    # 组件图标（使用 Globe 图标表示网络请求）
     icon = "Globe"
+    # 组件内部唯一标识名
     name = "APIRequest"
 
+    # 组件输入端口定义
     inputs = [
+        # URL 输入框 - 用户输入请求地址
         MessageTextInput(
             name="url_input",
             display_name="URL",
@@ -60,6 +103,7 @@ class APIRequestComponent(Component):
             advanced=False,
             tool_mode=True,
         ),
+        # cURL 输入框 - 粘贴 cURL 命令自动填充请求参数
         MultilineInput(
             name="curl_input",
             display_name="cURL",
@@ -72,6 +116,7 @@ class APIRequestComponent(Component):
             advanced=True,
             show=False,
         ),
+        # HTTP 方法下拉选择框（GET/POST/PATCH/PUT/DELETE）
         DropdownInput(
             name="method",
             display_name="Method",
@@ -80,6 +125,7 @@ class APIRequestComponent(Component):
             info="The HTTP method to use.",
             real_time_refresh=True,
         ),
+        # 模式切换标签页（URL 模式 / cURL 模式）
         TabInput(
             name="mode",
             display_name="Mode",
@@ -88,12 +134,14 @@ class APIRequestComponent(Component):
             info="Enable cURL mode to populate fields from a cURL command.",
             real_time_refresh=True,
         ),
+        # 查询参数输入 - 追加到 URL 的 ?key=value 部分
         DataInput(
             name="query_params",
             display_name="Query Parameters",
             info="The query parameters to append to the URL.",
             advanced=True,
         ),
+        # 请求体表格 - 以 key-value 键值对形式填写 POST/PATCH/PUT 请求体
         TableInput(
             name="body",
             display_name="Body",

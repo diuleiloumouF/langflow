@@ -17,6 +17,11 @@ import type {
   UserInputType,
 } from "../../types/components";
 
+/**
+ * 注册页面组件
+ * 提供新用户注册表单，包含用户名、密码和确认密码输入
+ * 支持表单验证和自动提交
+ */
 export default function SignUp(): JSX.Element {
   const [inputState, setInputState] =
     useState<signUpInputStateType>(CONTROL_INPUT_STATE);

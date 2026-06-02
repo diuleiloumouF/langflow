@@ -27,6 +27,10 @@ import type { KnowledgeBasesTabProps } from "../types";
 import KnowledgeBaseEmptyState from "./KnowledgeBaseEmptyState";
 import KnowledgeBaseSelectionOverlay from "./KnowledgeBaseSelectionOverlay";
 
+/**
+ * 知识库标签页组件
+ * 显示知识库列表表格，支持搜索、创建、删除和查看分块等操作
+ */
 const KnowledgeBasesTab = ({
   quickFilterText,
   setQuickFilterText,

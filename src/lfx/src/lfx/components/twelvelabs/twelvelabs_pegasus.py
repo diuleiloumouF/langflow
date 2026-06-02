@@ -1,3 +1,8 @@
+"""TwelveLabs Pegasus 视频聊天组件模块。
+
+提供通过 TwelveLabs Pegasus API 与视频进行对话的能力，包括视频索引、任务管理和问答等功能。
+"""
+
 import json
 import subprocess
 import time
@@ -15,54 +20,77 @@ from lfx.schema.message import Message
 
 
 class TaskError(Exception):
+    """任务执行失败时抛出的异常。"""
+
     """Error raised when a task fails."""
 
 
 class TaskTimeoutError(Exception):
+    """任务超时时抛出的异常。"""
+
     """Error raised when a task times out."""
 
 
 class IndexCreationError(Exception):
+    """索引创建或检索出现问题时抛出的异常。"""
+
     """Error raised when there's an issue with an index."""
 
 
 class ApiRequestError(Exception):
+    """API 请求失败时抛出的异常。"""
+
     """Error raised when an API request fails."""
 
 
 class VideoValidationError(Exception):
+    """视频验证失败时抛出的异常。"""
+
     """Error raised when video validation fails."""
 
 
 class TwelveLabsPegasus(Component):
+    """TwelveLabs Pegasus 视频对话组件。
+
+    通过 TwelveLabs Pegasus API 实现与视频的交互对话功能。
+    支持视频上传、索引创建、索引管理和基于视频内容的问答。
+    """
+
     display_name = "TwelveLabs Pegasus"
     description = "Chat with videos using TwelveLabs Pegasus API."
     icon = "TwelveLabs"
     name = "TwelveLabsPegasus"
     documentation = "https://github.com/twelvelabs-io/twelvelabs-developer-experience/blob/main/integrations/Langflow/TWELVE_LABS_COMPONENTS_README.md"
 
+    # 组件输入定义
     inputs = [
+        # 视频数据输入，支持列表形式
         DataInput(name="videodata", display_name="Video Data", info="Video Data", is_list=True),
+        # TwelveLabs API 密钥输入（必填）
         SecretStrInput(
             name="api_key", display_name="TwelveLabs API Key", info="Enter your TwelveLabs API Key.", required=True
         ),
+        # 已索引视频的 ID，用于直接对已有视频进行问答
         MessageInput(
             name="video_id",
             display_name="Pegasus Video ID",
             info="Enter a Video ID for a previously indexed video.",
         ),
+        # 索引名称，如果索引不存在则自动创建
         MessageInput(
             name="index_name",
             display_name="Index Name",
             info="Name of the index to use. If the index doesn't exist, it will be created.",
             required=False,
         ),
+        # 已有索引的 ID，提供后将忽略 index_name
         MessageInput(
             name="index_id",
             display_name="Index ID",
             info="ID of an existing index to use. If provided, index_name will be ignored.",
             required=False,
         ),
+        # Pegasus 模型选择下拉框，当前支持 pegasus1.2
         DropdownInput(
             name="model_name",
             display_name="Model",
@@ -71,12 +99,14 @@ class TwelveLabsPegasus(Component):
             value="pegasus1.2",
             advanced=False,
         ),
+        # 多行文本输入，用于向视频提问的提示词
         MultilineInput(
             name="message",
             display_name="Prompt",
             info="Message to chat with the video.",
             required=True,
         ),
+        # 温度参数滑块，控制回答的随机性（0=确定性高，1=创造性高）
         SliderInput(
             name="temperature",
             display_name="Temperature",
@@ -89,13 +119,16 @@ class TwelveLabsPegasus(Component):
         ),
     ]
 
+    # 组件输出定义
     outputs = [
+        # 主输出：视频处理后的对话响应消息
         Output(
             display_name="Message",
             name="response",
             method="process_video",
             type_=Message,
         ),
+        # 辅助输出：已处理视频的 ID，供后续组件使用
         Output(
             display_name="Video ID",
             name="processed_video_id",

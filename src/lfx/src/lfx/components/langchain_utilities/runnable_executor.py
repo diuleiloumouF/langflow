@@ -6,6 +6,8 @@ from lfx.schema.message import Message
 from lfx.template.field.base import Output
 
 
+# 可运行对象执行器组件，执行 LangChain 可运行对象并猜测输入输出键
+# Runnable executor component for executing LangChain runnables and guessing input/output keys
 class RunnableExecComponent(Component):
     description = "Execute a runnable. It will try to guess the input and output keys."
     display_name = "Runnable Executor"
@@ -48,6 +50,7 @@ class RunnableExecComponent(Component):
         ),
     ]
 
+    # 从结果字典中检索输出值
     def get_output(self, result, input_key, output_key):
         """Retrieves the output value from the given result dictionary based on the specified input and output keys.
 
@@ -91,6 +94,7 @@ class RunnableExecComponent(Component):
 
         return result_value, status
 
+    # 为给定的可运行对象返回输入字典
     def get_input_dict(self, runnable, input_key, input_value):
         """Returns a dictionary containing the input key-value pair for the given runnable.
 
@@ -114,6 +118,7 @@ class RunnableExecComponent(Component):
                 status = f"Warning: The input key is not '{input_key}'. The input key is '{runnable.input_keys}'."
         return input_dict, status
 
+    # 构建并执行可运行对象
     async def build_executor(self) -> Message:
         input_dict, status = self.get_input_dict(self.runnable, self.input_key, self.input_value)
         if not isinstance(self.runnable, AgentExecutor):
@@ -129,6 +134,7 @@ class RunnableExecComponent(Component):
         self.status = status
         return result_value
 
+    # 异步流式传输事件
     async def astream_events(self, runnable_input):
         async for event in self.runnable.astream_events(runnable_input, version="v1"):
             if event.get("event") != "on_chat_model_stream":

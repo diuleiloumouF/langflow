@@ -36,6 +36,11 @@ import type { storeComponent } from "../../types/store";
 import { cn } from "../../utils/utils";
 import InputSearchComponent from "../MainPage/components/inputSearchComponent";
 
+/**
+ * 组件商店页面
+ * 展示可用的组件商店内容，支持搜索、标签筛选、分页浏览
+ * 允许用户下载和导入社区组件
+ */
 export default function StorePage(): JSX.Element {
   const hasApiKey = useStoreStore((state) => state.hasApiKey);
   const validApiKey = useStoreStore((state) => state.validApiKey);

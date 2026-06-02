@@ -16,12 +16,18 @@ import { cn } from "@/utils/utils";
 import { ToolbarButton } from "../../nodeToolbarComponent/components/toolbar-button";
 import EditableHeaderContent from "./EditableHeaderContent";
 
+/** 检查面板头部的属性定义 */
 interface InspectionPanelHeaderProps {
   data: NodeDataType;
   isEditingFields: boolean;
   setIsEditingFields: (value: boolean) => void;
 }
 
+/**
+ * 检查面板头部组件
+ * 显示节点名称、ID、描述，以及操作按钮（文档链接、高级设置切换、代码编辑等）
+ * 支持内联编辑节点名称和描述
+ */
 export default function InspectionPanelHeader({
   data,
   isEditingFields,
@@ -45,6 +51,7 @@ export default function InspectionPanelHeader({
   const setNoticeData = useAlertStore((state) => state.setNoticeData);
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
 
+  // 复制节点 ID 到剪贴板
   const handleCopyId = useCallback(() => {
     navigator.clipboard.writeText(data.id);
     setSuccessData({ title: "Component ID copied to clipboard" });
@@ -65,6 +72,7 @@ export default function InspectionPanelHeader({
     });
   }, [data.id, data.node?.documentation, setNoticeData]);
 
+  // 包装 handleOnNewValue 以匹配 CodeAreaModal 的签名
   // Wrapper to match CodeAreaModal's expected signature
   const handleSetValue = useCallback(
     (value: string) => {

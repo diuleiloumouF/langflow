@@ -4,10 +4,17 @@ import { api } from "../../api";
 import { getURL } from "../../helpers/constants";
 import { UseRequestProcessor } from "../../services/request-processor";
 
+/**
+ * 删除用户参数接口
+ */
 interface DeleteUserParams {
   user_id: string;
 }
 
+/**
+ * 删除用户的自定义 Hook
+ * @returns 删除用户的 mutation 函数
+ */
 export const useDeleteUsers: useMutationFunctionType<
   undefined,
   DeleteUserParams

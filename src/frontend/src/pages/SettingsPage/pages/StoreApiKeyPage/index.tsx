@@ -11,6 +11,10 @@ import type { inputHandlerEventType } from "@/types/components";
 import useScrollToElement from "../hooks/use-scroll-to-element";
 import StoreApiKeyFormComponent from "./components/StoreApiKeyForm";
 
+/**
+ * 商店 API 密钥页面
+ * 管理 Langflow 商店的 API 密钥配置
+ */
 const StoreApiKeyPage = () => {
   const { t } = useTranslation();
   const { scrollId } = useParams();

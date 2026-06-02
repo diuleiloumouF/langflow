@@ -1,3 +1,4 @@
+# 点号字典类：允许使用点号语法访问字典元素（例如 dict.key 代替 dict['key']）
 class dotdict(dict):  # noqa: N801
     """dotdict allows accessing dictionary elements using dot notation (e.g., dict.key instead of dict['key']).
 

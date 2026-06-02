@@ -4,7 +4,17 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as React from "react";
 import { cn } from "../../utils/utils";
 
+// 工具提示提供者组件
 const TooltipProvider = TooltipPrimitive.Provider;
+
+// 工具提示根组件
+const Tooltip = TooltipPrimitive.Root;
+
+// 工具提示触发器组件
+const TooltipTrigger = TooltipPrimitive.Trigger;
+
+// 工具提示内容组件（使用 Portal 渲染）
+const TooltipContent = React.forwardRef<
 
 const Tooltip = TooltipPrimitive.Root;
 
@@ -28,6 +38,7 @@ const TooltipContent = React.forwardRef<
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
+// 工具提示内容组件（不使用 Portal，直接在父元素中渲染）
 const TooltipContentWithoutPortal = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>

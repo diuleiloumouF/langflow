@@ -11,6 +11,8 @@ import {
 import { SpanNodeProps } from "./types";
 
 /**
+ * Span 树节点组件
+ * 在追踪树中显示单个 Span 行，包含图标、名称、延迟、Token 数量和状态
  * Single span row in the trace tree
  * Shows icon, name, latency, token count, and status
  */

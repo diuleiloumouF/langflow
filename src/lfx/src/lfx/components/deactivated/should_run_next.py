@@ -1,15 +1,23 @@
+# LangChain 消息类型
 from langchain_core.messages import BaseMessage
+
+# 提示模板
 from langchain_core.prompts import PromptTemplate
 
+# 自定义组件基类
 from lfx.custom.custom_component.custom_component import CustomComponent
+
+# 类型定义
 from lfx.field_typing import LanguageModel, Text
 
 
+# 是否继续运行组件，判断顶点是否可执行
 class ShouldRunNextComponent(CustomComponent):
     display_name = "Should Run Next"
     description = "Determines if a vertex is runnable."
     name = "ShouldRunNext"
 
+    # 构建方法：使用 LLM 判断是否应该继续运行下一个顶点
     def build(self, llm: LanguageModel, question: str, context: str, retries: int = 3) -> Text:
         template = (
             "Given the following question and the context below, answer with a yes or no.\n\n"

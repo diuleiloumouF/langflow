@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from lfx.components.input_output.text_output import TextOutputComponent
     from lfx.components.input_output.webhook import WebhookComponent
 
+# 输入输出组件的动态导入映射表
 _dynamic_imports = {
     "ChatInput": "chat",
     "ChatOutput": "chat_output",
@@ -24,6 +25,7 @@ __all__ = ["ChatInput", "ChatOutput", "TextInputComponent", "TextOutputComponent
 
 def __getattr__(attr_name: str) -> Any:
     """Lazily import input/output components on attribute access."""
+    # 在属性访问时延迟导入输入输出组件
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)

@@ -9,14 +9,20 @@ from lfx.io import HandleInput, IntInput, SecretStrInput, StrInput
 from lfx.schema.data import Data
 
 
+# Redis 向量存储组件，使用 Redis 实现向量存储功能
 class RedisVectorStoreComponent(LCVectorStoreComponent):
     """A custom component for implementing a Vector Store using Redis."""
 
+    # 组件显示名称
     display_name: str = "Redis"
+    # 组件描述信息
     description: str = "Implementation of Vector Store using Redis"
+    # 组件内部名称
     name = "Redis"
+    # 组件图标
     icon = "Redis"
 
+    # 组件输入参数定义
     inputs = [
         SecretStrInput(name="redis_server_url", display_name="Redis Server Connection String", required=True),
         StrInput(
@@ -39,6 +45,7 @@ class RedisVectorStoreComponent(LCVectorStoreComponent):
         HandleInput(name="embedding", display_name="Embedding", input_types=["Embeddings"]),
     ]
 
+    # 构建 Redis 向量存储实例
     @check_cached_vector_store
     def build_vector_store(self) -> Redis:
         # Convert DataFrame to Data if needed using parent's method
@@ -74,6 +81,7 @@ class RedisVectorStoreComponent(LCVectorStoreComponent):
             )
         return redis_vs
 
+    # 搜索文档，使用相似度搜索在 Redis 向量存储中查找相关文档
     def search_documents(self) -> list[Data]:
         vector_store = self.build_vector_store()
 

@@ -1,3 +1,6 @@
+# 内容块（ContentBlock）模块
+# 定义了 Playground 中展示的多类型内容块结构，
+# 支持文本、错误、媒体、代码、JSON、工具调用等多种内容类型
 from typing import Annotated
 
 from pydantic import BaseModel, Discriminator, Field, Tag, field_serializer, field_validator
@@ -6,13 +9,14 @@ from typing_extensions import TypedDict
 from .content_types import CodeContent, ErrorContent, JSONContent, MediaContent, TextContent, ToolContent
 
 
+# 从字典或 BaseModel 中提取 type 字段，用于内容类型的判别器
 def _get_type(d: dict | BaseModel) -> str | None:
     if isinstance(d, dict):
         return d.get("type")
     return getattr(d, "type", None)
 
 
-# Create a union type of all content types
+# 创建所有内容类型的联合类型，使用 Pydantic 的 Tag 和 Discriminator 进行多态序列化
 ContentType = Annotated[
     Annotated[ToolContent, Tag("tool_use")]
     | Annotated[ErrorContent, Tag("error")]

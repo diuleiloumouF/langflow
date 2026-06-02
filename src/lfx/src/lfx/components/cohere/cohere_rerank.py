@@ -1,22 +1,34 @@
+# 压缩器组件基类
 from lfx.base.compressors.model import LCCompressorComponent
+
+# 文档压缩器类型
 from lfx.field_typing import BaseDocumentCompressor
+
+# 输入组件类型
 from lfx.inputs.inputs import SecretStrInput
 from lfx.io import DropdownInput
+
+# 输出字段定义
 from lfx.template.field.base import Output
 
 
+# Cohere 重排序组件，使用 Cohere API 对文档进行重新排序
 class CohereRerankComponent(LCCompressorComponent):
     display_name = "Cohere Rerank"
     description = "Rerank documents using the Cohere API."
     name = "CohereRerank"
     icon = "Cohere"
 
+    # 输入参数定义
     inputs = [
+        # 继承父类的输入参数
         *LCCompressorComponent.inputs,
+        # Cohere API 密钥
         SecretStrInput(
             name="api_key",
             display_name="Cohere API Key",
         ),
+        # 重排序模型选择
         DropdownInput(
             name="model",
             display_name="Model",
@@ -30,6 +42,7 @@ class CohereRerankComponent(LCCompressorComponent):
         ),
     ]
 
+    # 输出参数定义
     outputs = [
         Output(
             display_name="Reranked Documents",
@@ -38,6 +51,7 @@ class CohereRerankComponent(LCCompressorComponent):
         ),
     ]
 
+    # 构建 Cohere 重排序压缩器实例
     def build_compressor(self) -> BaseDocumentCompressor:  # type: ignore[type-var]
         try:
             from langchain_cohere import CohereRerank

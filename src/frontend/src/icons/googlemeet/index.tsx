@@ -1,3 +1,4 @@
+// Google Meet 图标组件 - 用于 Google Meet 视频会议服务相关组件的标识
 import React, { forwardRef } from "react";
 import GooglemeetIconSVG from "./googlemeet";
 

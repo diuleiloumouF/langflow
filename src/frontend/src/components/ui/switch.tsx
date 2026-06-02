@@ -4,11 +4,16 @@ import * as SwitchPrimitives from "@radix-ui/react-switch";
 import * as React from "react";
 import { cn } from "@/utils/utils";
 
+/**
+ * 开关组件属性类型
+ * 扩展 Radix UI Switch 属性，添加事件冒泡控制
+ */
 interface SwitchProps
   extends React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root> {
   stopPropagation?: boolean;
 }
 
+// 开关切换组件，支持阻止事件冒泡
 const Switch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitives.Root>,
   SwitchProps

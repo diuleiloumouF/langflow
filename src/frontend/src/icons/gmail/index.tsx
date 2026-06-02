@@ -1,3 +1,4 @@
+// Gmail 图标组件 - 用于 Gmail 邮件服务相关组件的标识
 import type React from "react";
 import { forwardRef } from "react";
 import GmailIconSVG from "./gmail";

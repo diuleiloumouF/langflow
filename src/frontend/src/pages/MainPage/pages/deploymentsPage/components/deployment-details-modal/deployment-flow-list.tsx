@@ -6,6 +6,10 @@ interface DeploymentFlowListProps {
   getConnectionNames: (fv: DeploymentFlowVersionItem) => string[];
 }
 
+/**
+ * 部署流程列表组件
+ * 显示部署中附加的流程版本列表
+ */
 export default function DeploymentFlowList({
   flowVersions,
   getConnectionNames,

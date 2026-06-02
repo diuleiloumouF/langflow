@@ -18,6 +18,11 @@ import { McpAutoInstallContent } from "./McpAutoInstallContent";
 import { McpFlowsSection } from "./McpFlowsSection";
 import { McpJsonContent } from "./McpJsonContent";
 
+/**
+ * MCP 服务器标签页组件
+ * 显示 MCP 服务器的配置和安装信息，支持多平台（Windows/Mac/Linux）
+ * 包括 JSON 配置、自动安装、认证设置和流程列表
+ */
 const McpServerTab = ({ folderName }: { folderName: string }) => {
   const isDarkMode = useTheme().dark;
   const { folderId } = useParams();

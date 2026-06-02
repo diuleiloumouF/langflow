@@ -12,6 +12,10 @@ import useAlertStore from "../../../../stores/alertStore";
 import ApiKeyHeaderComponent from "./components/ApiKeyHeader";
 import { getColumnDefs } from "./helpers/column-defs";
 
+/**
+ * API 密钥管理页面
+ * 显示、创建和删除 API 密钥，支持表格选择和批量删除
+ */
 export default function ApiKeysPage() {
   const { t } = useTranslation();
   const [selectedRows, setSelectedRows] = useState<string[]>([]);

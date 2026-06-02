@@ -22,6 +22,11 @@ import sortByName from "./utils/sort-by-name";
 
 //TODO IMPLEMENT FORM LOGIC
 
+/**
+ * 全局变量弹窗组件
+ * 用于创建和编辑全局变量，支持凭证和通用两种类型。
+ * 全局变量可在所有流程中使用，并可自动应用到指定字段。
+ */
 export default function GlobalVariableModal({
   children,
   asChild,
@@ -39,12 +44,12 @@ export default function GlobalVariableModal({
   setOpen?: (a: boolean | ((o?: boolean) => boolean)) => void;
   disabled?: boolean;
 }): JSX.Element {
-  const [key, setKey] = useState(initialData?.name ?? "");
-  const [value, setValue] = useState(initialData?.value ?? "");
+  const [key, setKey] = useState(initialData?.name ?? ""); // 变量名称
+  const [value, setValue] = useState(initialData?.value ?? ""); // 变量值
   const [type, setType] = useState<TAB_TYPES>(
     initialData?.type ?? "Credential",
   );
-  const [fields, setFields] = useState<string[]>(
+  const [fields, setFields] = useState<string[]>([]); // 应用变量的字段列表
     initialData?.default_fields ?? [],
   );
   const [open, setOpen] =
@@ -56,7 +61,7 @@ export default function GlobalVariableModal({
   const { mutate: mutateAddGlobalVariable } = usePostGlobalVariables();
   const { mutate: updateVariable } = usePatchGlobalVariables();
   const { data: globalVariables } = useGetGlobalVariables();
-  const [availableFields, setAvailableFields] = useState<string[]>([]);
+  const [availableFields, setAvailableFields] = useState<string[]>([]); // 可用字段列表
   useGetTypes({ checkCache: true, enabled: !!globalVariables });
 
   useEffect(() => {
@@ -87,10 +92,12 @@ export default function GlobalVariableModal({
 
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
 
+  // 根据值自动分配变量类型
   const handleOnValueCHange = (value: string) => {
     setType(assignTab(value));
   };
 
+  // 保存新变量
   function handleSaveVariable() {
     const data: {
       name: string;
@@ -134,6 +141,7 @@ export default function GlobalVariableModal({
     });
   }
 
+  // 提交表单，根据是否有初始数据决定创建或更新
   function submitForm() {
     if (!initialData || !initialData.id) {
       handleSaveVariable();

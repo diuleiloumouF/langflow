@@ -4,6 +4,10 @@ import { Input } from "@/components/ui/input";
 import { ENABLE_NEW_SIDEBAR } from "@/customization/feature-flags";
 import ShortcutDisplay from "../../nodeToolbarComponent/shortcutDisplay";
 
+/**
+ * 搜索输入框组件
+ * 提供组件搜索功能，支持快捷键提示和焦点管理
+ */
 export const SearchInput = memo(function SearchInput({
   searchInputRef,
   isInputFocused,

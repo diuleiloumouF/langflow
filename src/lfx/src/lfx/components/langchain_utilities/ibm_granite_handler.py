@@ -10,6 +10,9 @@ not just Granite models. This includes:
 - granite models
 - any other model running through WatsonX
 """
+# IBM WatsonX 特定的工具调用逻辑
+# 本模块包含所有针对 IBM WatsonX 模型的特殊处理
+# 工具调用问题影响 WatsonX 平台上的所有模型，不仅仅是 Granite 模型
 
 import re
 
@@ -20,6 +23,7 @@ from langchain_core.runnables import RunnableLambda
 
 from lfx.log.logger import logger
 
+# 检测工具参数中占位符使用模式的正则表达式
 # Pattern to detect placeholder usage in tool arguments
 PLACEHOLDER_PATTERN = re.compile(
     r"<[^>]*(?:result|value|output|response|data|from|extract|previous|current|date|input|query|search|tool)[^>]*>",
@@ -27,6 +31,7 @@ PLACEHOLDER_PATTERN = re.compile(
 )
 
 
+# 检查 LLM 是否为 IBM WatsonX 模型（任何模型，不仅仅是 Granite）
 def is_watsonx_model(llm) -> bool:
     """Check if the LLM is an IBM WatsonX model (any model, not just Granite).
 
@@ -43,6 +48,7 @@ def is_watsonx_model(llm) -> bool:
     return "watsonx" in module_name or "langchain_ibm" in module_name
 
 
+# 检查 LLM 是否为 IBM Granite 模型（已弃用，保留用于向后兼容）
 def is_granite_model(llm) -> bool:
     """Check if the LLM is an IBM Granite model.
 
@@ -53,6 +59,7 @@ def is_granite_model(llm) -> bool:
     return "granite" in str(model_id).lower()
 
 
+# 提取工具预期参数的简要描述
 def _get_tool_schema_description(tool) -> str:
     """Extract a brief description of the tool's expected parameters.
 
@@ -78,6 +85,7 @@ def _get_tool_schema_description(tool) -> str:
         return ""
 
 
+# 为 WatsonX 模型增强系统提示，添加工具使用说明
 def get_enhanced_system_prompt(base_prompt: str, tools: list) -> str:
     """Enhance system prompt for WatsonX models with tool usage instructions."""
     if not tools or len(tools) <= 1:
@@ -111,6 +119,7 @@ AVAILABLE TOOLS:
     return base_prompt + enhancement
 
 
+# 检测工具调用参数中是否包含占位符语法
 def detect_placeholder_in_args(tool_calls: list) -> tuple[bool, str | None]:
     """Detect if any tool call contains placeholder syntax in its arguments."""
     if not tool_calls:
@@ -130,6 +139,7 @@ def detect_placeholder_in_args(tool_calls: list) -> tuple[bool, str | None]:
     return False, None
 
 
+# 限制响应为单个工具调用（WatsonX 平台限制）
 def _limit_to_single_tool_call(llm_response):
     """Limit response to single tool call (WatsonX platform limitation)."""
     if not hasattr(llm_response, "tool_calls") or not llm_response.tool_calls:
@@ -142,6 +152,7 @@ def _limit_to_single_tool_call(llm_response):
     return llm_response
 
 
+# 如果检测到占位符语法，使用纠正消息重新调用
 def _handle_placeholder_in_response(llm_response, messages, llm_auto):
     """Re-invoke with corrective message if placeholder syntax detected."""
     if not hasattr(llm_response, "tool_calls") or not llm_response.tool_calls:
@@ -162,6 +173,7 @@ def _handle_placeholder_in_response(llm_response, messages, llm_auto):
     return llm_auto.invoke(messages_list)
 
 
+# 为 IBM WatsonX/Granite 模型创建工具调用 Agent
 def create_granite_agent(llm, tools: list, prompt: ChatPromptTemplate, forced_iterations: int = 2):
     """Create a tool calling agent for IBM WatsonX/Granite models.
 
@@ -207,5 +219,6 @@ def create_granite_agent(llm, tools: list, prompt: ChatPromptTemplate, forced_it
     return RunnableLambda(invoke) | ToolsAgentOutputParser()
 
 
+# 为向后兼容的别名
 # Alias for backwards compatibility
 create_watsonx_agent = create_granite_agent

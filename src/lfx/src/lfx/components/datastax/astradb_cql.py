@@ -1,13 +1,16 @@
+# 标准库：JSON 处理、URL 编码、时间处理、HTTP 状态码
 import json
 import urllib
 from datetime import datetime, timezone
 from http import HTTPStatus
 from typing import Any
 
+# HTTP 请求库、LangChain 工具、Pydantic 数据模型
 import requests
 from langchain_core.tools import StructuredTool, Tool
 from pydantic import BaseModel, Field, create_model
 
+# AstraDB 基础组件、工具组件基类
 from lfx.base.datastax.astradb_base import AstraDBBaseComponent
 from lfx.base.langchain_utilities.model import LCToolComponent
 from lfx.io import DictInput, IntInput, StrInput, TableInput
@@ -16,8 +19,10 @@ from lfx.schema.data import Data
 from lfx.schema.table import EditMode
 
 
+# Astra DB CQL 工具组件，用于从 DataStax Astra DB CQL 表获取事务数据
 class AstraDBCQLToolComponent(AstraDBBaseComponent, LCToolComponent):
     display_name: str = "Astra DB CQL"
+    # 组件描述：创建工具从 DataStax Astra DB CQL 表获取事务数据
     description: str = "Create a tool to get transactional data from DataStax Astra DB CQL Table"
     documentation: str = "https://docs.langflow.org/bundles-datastax"
     icon: str = "AstraDB"
@@ -135,6 +140,7 @@ class AstraDBCQLToolComponent(AstraDBBaseComponent, LCToolComponent):
         ),
     ]
 
+    # 解析时间戳字符串为 Astra DB REST API 格式
     def parse_timestamp(self, timestamp_str: str) -> str:
         """Parse a timestamp string into Astra DB REST API format.
 
@@ -176,6 +182,7 @@ class AstraDBCQLToolComponent(AstraDBBaseComponent, LCToolComponent):
         logger.error(msg)
         raise ValueError(msg)
 
+    # 通过 Astra DB REST API 执行查询
     def astra_rest(self, args):
         headers = {"Accept": "application/json", "X-Cassandra-Token": f"{self.token}"}
         astra_url = f"{self.get_api_endpoint()}/api/rest/v2/keyspaces/{self.get_keyspace()}/{self.collection_name}/"
@@ -230,6 +237,7 @@ class AstraDBCQLToolComponent(AstraDBBaseComponent, LCToolComponent):
         except ValueError:
             return res.status_code
 
+    # 创建工具输入参数的 Pydantic 模式
     def create_args_schema(self) -> dict[str, BaseModel]:
         args: dict[str, tuple[Any, Field]] = {}
 
@@ -244,6 +252,7 @@ class AstraDBCQLToolComponent(AstraDBBaseComponent, LCToolComponent):
         model = create_model("ToolInput", **args, __base__=BaseModel)
         return {"ToolInput": model}
 
+    # 构建 Astra DB CQL 表工具
     def build_tool(self) -> Tool:
         """Builds a Astra DB CQL Table tool.
 
@@ -262,6 +271,7 @@ class AstraDBCQLToolComponent(AstraDBBaseComponent, LCToolComponent):
             return_direct=False,
         )
 
+    # 解析投影字段参数
     def projection_args(self, input_str: str) -> dict:
         elements = input_str.split(",")
         result = {}
@@ -274,6 +284,7 @@ class AstraDBCQLToolComponent(AstraDBBaseComponent, LCToolComponent):
 
         return result
 
+    # 运行模型，执行查询并返回结果
     def run_model(self, **args) -> Data | list[Data]:
         results = self.astra_rest(args)
         data: list[Data] = []

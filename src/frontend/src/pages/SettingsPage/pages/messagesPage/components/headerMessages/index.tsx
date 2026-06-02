@@ -1,5 +1,9 @@
 import ForwardedIconComponent from "../../../../../../components/common/genericIconComponent";
 
+/**
+ * 消息页面头部组件
+ * 显示消息页面的标题和描述
+ */
 const HeaderMessagesComponent = () => {
   return (
     <>

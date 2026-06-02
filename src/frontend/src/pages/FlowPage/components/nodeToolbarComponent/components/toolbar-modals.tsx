@@ -6,6 +6,8 @@ import ShareModal from "@/modals/shareModal";
 import type { APIClassType } from "@/types/api";
 import type { FlowType } from "@/types/flow";
 
+/** 工具栏弹窗的属性定义 */
+/** 工具栏弹窗组件 */
 interface ToolbarModalsProps {
   // Modal visibility states
   showModalAdvanced: boolean;

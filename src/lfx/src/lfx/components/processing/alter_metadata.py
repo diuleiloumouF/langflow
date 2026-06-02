@@ -5,6 +5,7 @@ from lfx.schema.data import Data
 from lfx.schema.dataframe import DataFrame
 
 
+# AlterMetadata 组件 - 用于修改数据对象的元数据字典（已标记为 legacy，推荐使用 DataOperations 替代）
 class AlterMetadataComponent(Component):
     display_name = "Alter Metadata"
     description = "Adds/Removes Metadata Dictionary on inputs"
@@ -13,6 +14,7 @@ class AlterMetadataComponent(Component):
     legacy = True
     replacement = ["processing.DataOperations"]
 
+    # 输入参数定义：接收要添加元数据的对象、用户文本、元数据字典以及要移除的字段
     inputs = [
         HandleInput(
             name="input_value",
@@ -44,6 +46,7 @@ class AlterMetadataComponent(Component):
         ),
     ]
 
+    # 输出参数定义：JSON 格式的数据列表和 DataFrame 格式的表格
     outputs = [
         Output(
             name="data",
@@ -59,6 +62,7 @@ class AlterMetadataComponent(Component):
         ),
     ]
 
+    # 将 Data 对象或标准字典转换为标准字典，并过滤掉空键
     def _as_clean_dict(self, obj):
         """Convert a Data object or a standard dictionary to a standard dictionary."""
         if isinstance(obj, dict):
@@ -71,6 +75,7 @@ class AlterMetadataComponent(Component):
 
         return {k: v for k, v in (as_dict or {}).items() if k and k.strip()}
 
+    # 处理输出：将元数据添加到所有输入对象上，并可选地移除指定字段
     def process_output(self) -> list[Data]:
         # Ensure metadata is a dictionary, filtering out any empty keys
         metadata = self._as_clean_dict(self.metadata)

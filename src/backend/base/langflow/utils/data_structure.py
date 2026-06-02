@@ -1,3 +1,6 @@
+# 数据结构分析工具模块
+# 提供对数据对象的类型推断、结构分析和采样功能，
+# 用于在组件中展示数据的结构化描述信息
 import json
 from collections import Counter
 from typing import Any
@@ -5,6 +8,7 @@ from typing import Any
 from langflow.schema.data import Data
 
 
+# 通过采样推断列表的类型信息，支持混合类型
 def infer_list_type(items: list, max_samples: int = 5) -> str:
     """Infer the type of a list by sampling its items.
 
@@ -28,6 +32,7 @@ def infer_list_type(items: list, max_samples: int = 5) -> str:
     return f"list({type_str})"
 
 
+# 获取值的详细类型字符串表示，支持特殊类型识别（日期、JSON 等）
 def get_type_str(value: Any) -> str:
     """Get a detailed string representation of the type of a value.
 
@@ -61,6 +66,7 @@ def get_type_str(value: Any) -> str:
     return type(value).__name__
 
 
+# 分析值的结构并返回带元数据的类型描述
 def analyze_value(
     value: Any,
     max_depth: int = 10,
@@ -135,6 +141,7 @@ def analyze_value(
         return f"error({e!s})"
 
 
+# 将 Data 对象或字典转换为详细的结构化 schema 表示
 def get_data_structure(
     data_obj: Data | dict,
     max_depth: int = 10,
@@ -203,6 +210,7 @@ def get_data_structure(
     return result
 
 
+# 从数据结构中获取采样值，支持嵌套结构
 def get_sample_values(data: Any, max_items: int = 3) -> Any:
     """Get sample values from a data structure, handling nested structures."""
     if isinstance(data, list | tuple | set):

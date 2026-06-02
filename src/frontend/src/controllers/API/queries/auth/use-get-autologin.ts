@@ -12,6 +12,9 @@ import { api } from "../../api";
 import { getURL } from "../../helpers/constants";
 import { UseRequestProcessor } from "../../services/request-processor";
 
+/**
+ * 自动登录响应接口
+ */
 export interface AutoLoginResponse {
   frontend_timeout: number;
   auto_saving: boolean;
@@ -19,10 +22,18 @@ export interface AutoLoginResponse {
   health_check_max_retries: number;
 }
 
+/**
+ * 自动登录错误响应接口
+ */
 export interface AutoLoginErrorResponse {
   auto_login?: boolean;
 }
 
+/**
+ * 自动登录的自定义 Hook
+ * 支持指数退避重试机制，用于自动登录场景
+ * @returns 自动登录的查询结果
+ */
 export const useGetAutoLogin: useQueryFunctionType<undefined, undefined> = (
   options,
 ) => {

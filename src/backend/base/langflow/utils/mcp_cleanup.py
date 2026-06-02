@@ -5,6 +5,9 @@ spawned by stdio_client during Langflow shutdown.
 
 Works on macOS and Linux only.
 """
+# MCP 子进程清理工具模块
+# 在 Langflow 关闭时，正确终止由 stdio_client 启动的 MCP 服务器子进程
+# 仅支持 macOS 和 Linux 系统
 
 from __future__ import annotations
 
@@ -18,6 +21,7 @@ if TYPE_CHECKING:
     import psutil as psutil_type
 
 
+# 清理所有 MCP 会话，确保子进程被正确终止
 async def cleanup_mcp_sessions() -> None:
     """Cleanup all MCP sessions to ensure subprocesses are properly terminated.
 
@@ -41,6 +45,7 @@ async def cleanup_mcp_sessions() -> None:
         await _kill_mcp_processes()
 
 
+# 终止当前 Langflow 进程启动的 MCP 服务器子进程（仅 Unix 系统）
 async def _kill_mcp_processes() -> None:
     """Kill MCP server subprocesses spawned by this Langflow process.
 
@@ -65,6 +70,7 @@ async def _kill_mcp_processes() -> None:
             await logger.ainfo(f"Killed {killed_count} MCP processes")
 
 
+# 终止当前进程的子 MCP 进程
 async def _terminate_child_mcp_processes(psutil: psutil_type) -> int:
     """Terminate MCP processes that are children of this process."""
     killed_count = 0
@@ -82,6 +88,7 @@ async def _terminate_child_mcp_processes(psutil: psutil_type) -> int:
     return killed_count
 
 
+# 终止孤儿 MCP 进程（父进程 PID=1 的进程，在 Unix 系统上）
 async def _terminate_orphaned_mcp_processes(psutil: psutil_type) -> int:
     """Terminate orphaned MCP processes (ppid=1) on Unix systems."""
     killed_count = 0
@@ -101,6 +108,7 @@ async def _terminate_orphaned_mcp_processes(psutil: psutil_type) -> int:
     return killed_count
 
 
+# 尝试终止一个 MCP 服务器进程（如果命令行中包含 mcp-server 或 mcp-proxy）
 async def _try_terminate_mcp_process(proc: psutil_type.Process, psutil: psutil_type) -> bool:
     """Try to terminate a process if it's an MCP server process.
 

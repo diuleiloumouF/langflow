@@ -5,6 +5,8 @@ from lfx.base.agents.agent import LCAgentComponent
 from lfx.inputs.inputs import HandleInput
 
 
+# 向量存储路由器 Agent 组件，从向量存储路由器构建 Agent
+# Vector store router agent component for building an agent from a vector store router
 class VectorStoreRouterAgentComponent(LCAgentComponent):
     display_name = "VectorStoreRouterAgent"
     description = "Construct an agent from a Vector Store Router."
@@ -28,6 +30,7 @@ class VectorStoreRouterAgentComponent(LCAgentComponent):
         ),
     ]
 
+    # 构建向量存储路由器 Agent 执行器
     def build_agent(self) -> AgentExecutor:
         toolkit = VectorStoreRouterToolkit(vectorstores=self.vectorstores, llm=self.llm)
         return create_vectorstore_router_agent(llm=self.llm, toolkit=toolkit, **self.get_agent_kwargs())

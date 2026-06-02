@@ -1,7 +1,13 @@
+# Astrapy 客户端库
 from astrapy import DataAPIClient
+
+# LangChain 文档类型
 from langchain_core.documents import Document
 
+# AstraDB 基础组件
 from lfx.base.datastax.astradb_base import AstraDBBaseComponent
+
+# 统一模型工具函数
 from lfx.base.models.unified_models import (
     apply_provider_variable_config_to_build_config,
     get_embedding_model_options,

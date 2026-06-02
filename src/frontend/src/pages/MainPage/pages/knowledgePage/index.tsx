@@ -6,6 +6,11 @@ import { useCustomNavigate } from "@/customization/hooks/use-custom-navigate";
 import KnowledgeBaseDrawer from "./components/KnowledgeBaseDrawer";
 import KnowledgeBasesTab from "./components/KnowledgeBasesTab";
 
+/**
+ * 知识库页面组件
+ * 管理知识库的列表显示、搜索、多选、详情抽屉等功能
+ * 支持 Shift 多选和批量操作
+ */
 export const KnowledgePage = () => {
   const [selectedKnowledgeBases, setSelectedKnowledgeBases] = useState<
     KnowledgeBaseInfo[]

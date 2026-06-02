@@ -17,6 +17,10 @@ import { useCustomNavigate } from "@/customization/hooks/use-custom-navigate";
 import ChunkCard from "./components/ChunkCard";
 import { CHUNKS_PER_PAGE, PAGE_SIZE_OPTIONS } from "./constants";
 
+/**
+ * 源分块页面组件
+ * 显示知识库中源文件的分块列表，支持搜索、分页和复制内容
+ */
 export const SourceChunksPage = () => {
   const { sourceId } = useParams<{ sourceId: string }>();
   const navigate = useCustomNavigate();

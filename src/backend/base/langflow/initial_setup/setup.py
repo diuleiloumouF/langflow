@@ -56,11 +56,11 @@ from langflow.services.deps import (
     session_scope,
 )
 
-# In the folder ./starter_projects we have a few JSON files that represent
-# starter projects. We want to load these into the database so that users
-# can use them as a starting point for their own projects.
+# 在 ./starter_projects 文件夹中有几个 JSON 文件，代表入门项目。
+# 我们希望将它们加载到数据库中，以便用户可以将其作为自己项目的起点。
 
 
+# 使用最新组件版本更新项目中的组件配置
 def update_projects_components_with_latest_component_versions(project_data, all_types_dict):
     all_types_dict_flat = flatten_components_with_aliases(all_types_dict)
 
@@ -209,6 +209,7 @@ def update_projects_components_with_latest_component_versions(project_data, all_
     return project_data_copy
 
 
+# 解析可能包含特殊编码字符的 JSON 字符串
 def scape_json_parse(json_string: str) -> dict:
     if json_string is None:
         return {}
@@ -218,6 +219,7 @@ def scape_json_parse(json_string: str) -> dict:
     return json.loads(parsed_string)
 
 
+# 更新数据中的输出句柄格式，使其兼容新版组件输出类型
 def update_new_output(data):
     nodes = copy.deepcopy(data["nodes"])
     edges = copy.deepcopy(data["edges"])
@@ -302,6 +304,7 @@ def update_new_output(data):
     return data_copy
 
 
+# 使用最新组件版本更新项目中的边（连接线）配置
 def update_edges_with_latest_component_versions(project_data):
     """Update edges in a project with the latest component versions.
 
@@ -544,6 +547,7 @@ def update_edges_with_latest_component_versions(project_data):
     return project_data_copy
 
 
+# 记录节点变更日志，用于调试
 def log_node_changes(node_changes_log) -> None:
     # The idea here is to log the changes that were made to the nodes in debug
     # Something like:
@@ -560,6 +564,7 @@ def log_node_changes(node_changes_log) -> None:
         logger.debug("\n".join(formatted_messages))
 
 
+# 从 starter_projects 目录加载入门项目 JSON 文件
 async def load_starter_projects(retries=3, delay=1) -> list[tuple[anyio.Path, dict]]:
     starter_projects = []
     folder = anyio.Path(__file__).parent / "starter_projects"
@@ -582,6 +587,7 @@ async def load_starter_projects(retries=3, delay=1) -> list[tuple[anyio.Path, di
     return starter_projects
 
 
+# 异步复制头像图片到配置目录
 async def copy_profile_pictures() -> None:
     """Asynchronously copies profile pictures from the source directory to the target configuration directory.
 
@@ -646,6 +652,7 @@ async def copy_profile_pictures() -> None:
         raise RuntimeError(msg) from exc
 
 
+# 从项目字典中提取所有项目数据字段
 def get_project_data(project):
     project_name = project.get("name")
     project_description = project.get("description")
@@ -674,6 +681,7 @@ def get_project_data(project):
     )
 
 
+# 异步更新入门项目 JSON 文件中的数据
 async def update_project_file(project_path: anyio.Path, project: dict, updated_project_data) -> None:
     """Update starter project JSON file with new data.
 
@@ -701,6 +709,7 @@ async def update_project_file(project_path: anyio.Path, project: dict, updated_p
         )
 
 
+# 更新已存在的入门项目信息
 def update_existing_project(
     existing_project,
     project_name,
@@ -721,6 +730,7 @@ def update_existing_project(
     existing_project.icon_bg_color = project_icon_bg_color
 
 
+# 创建新的入门项目并添加到数据库
 def create_new_project(
     session,
     project_name,
@@ -750,23 +760,27 @@ def create_new_project(
     session.add(db_flow)
 
 
+# 获取指定文件夹下的所有流程
 async def get_all_flows_similar_to_project(session: AsyncSession, folder_id: UUID) -> list[Flow]:
     stmt = select(Folder).options(selectinload(Folder.flows)).where(Folder.id == folder_id)
     return list((await session.exec(stmt)).first().flows)
 
 
+# 删除指定文件夹中的所有入门项目
 async def delete_starter_projects(session, folder_id) -> None:
     flows = await get_all_flows_similar_to_project(session, folder_id)
     for flow in flows:
         await session.delete(flow)
 
 
+# 检查指定名称的文件夹是否已存在
 async def folder_exists(session, folder_name):
     stmt = select(Folder).where(Folder.name == folder_name)
     folder = (await session.exec(stmt)).first()
     return folder is not None
 
 
+# 获取或创建入门项目文件夹
 async def get_or_create_starter_folder(session):
     if not await folder_exists(session, STARTER_FOLDER_NAME):
         new_folder = FolderCreate(name=STARTER_FOLDER_NAME, description=STARTER_FOLDER_DESCRIPTION)
@@ -779,6 +793,7 @@ async def get_or_create_starter_folder(session):
     return (await session.exec(stmt)).first()
 
 
+# 获取或创建 Langflow 助手文件夹
 async def get_or_create_assistant_folder(session, user_id: UUID):
     """Create or get the Langflow Assistant folder for a specific user.
 
@@ -806,6 +821,7 @@ async def get_or_create_assistant_folder(session, user_id: UUID):
     return folder
 
 
+# 从 agentic/flows 目录加载智能体流程
 async def load_agentic_flows() -> list[tuple[anyio.Path, dict]]:
     """Load agentic flows from the agentic/flows directory.
 
@@ -835,6 +851,7 @@ async def load_agentic_flows() -> list[tuple[anyio.Path, dict]]:
     return agentic_flows
 
 
+# 为用户创建或更新 Langflow 助手文件夹中的智能体流程
 async def create_or_update_agentic_flows(session: AsyncSession, user_id: UUID) -> None:
     """Create or update agentic flows in the Langflow Assistant folder for a user.
 
@@ -945,6 +962,7 @@ async def create_or_update_agentic_flows(session: AsyncSession, user_id: UUID) -
         await logger.aexception("Error in create_or_update_agentic_flows")
 
 
+# 验证字符串是否为有效的 UUID 格式
 def _is_valid_uuid(val):
     try:
         uuid_obj = UUID(val)
@@ -953,6 +971,7 @@ def _is_valid_uuid(val):
     return str(uuid_obj) == val
 
 
+# 从配置目录加载所有流程文件到数据库
 async def load_flows_from_directory() -> None:
     """On langflow startup, this loads all flows from the directory specified in the settings.
 
@@ -986,6 +1005,7 @@ async def load_flows_from_directory() -> None:
             await upsert_flow_from_file(content, file_path.stem, session, user.id)
 
 
+# 检测 GitHub URL 并转换为可下载的 zip 文件链接
 async def detect_github_url(url: str) -> str:
     if matched := re.match(r"https?://(?:www\.)?github\.com/([\w.-]+)/([\w.-]+)?/?$", url):
         owner, repo = matched.groups()
@@ -1017,6 +1037,7 @@ async def detect_github_url(url: str) -> str:
     return url
 
 
+# 从配置的 URL 列表加载流程和组件包
 async def load_bundles_from_urls() -> tuple[list[TemporaryDirectory], list[str]]:
     component_paths: set[str] = set()
     temp_dirs = []
@@ -1063,6 +1084,7 @@ async def load_bundles_from_urls() -> tuple[list[TemporaryDirectory], list[str]]
     return temp_dirs, list(component_paths)
 
 
+# 从文件内容中更新或插入流程到数据库
 async def upsert_flow_from_file(file_content: AnyStr, filename: str, session: AsyncSession, user_id: UUID) -> None:
     flow = orjson.loads(file_content)
     flow_endpoint_name = flow.get("endpoint_name")
@@ -1114,6 +1136,7 @@ async def upsert_flow_from_file(file_content: AnyStr, filename: str, session: As
         session.add(flow)
 
 
+# 根据流程 ID 或端点名称查找已存在的流程
 async def find_existing_flow(session, flow_id, flow_endpoint_name):
     if flow_endpoint_name:
         await logger.adebug(f"flow_endpoint_name: {flow_endpoint_name}")
@@ -1129,6 +1152,7 @@ async def find_existing_flow(session, flow_id, flow_endpoint_name):
     return None
 
 
+# 创建或更新入门项目
 async def create_or_update_starter_projects(all_types_dict: dict) -> None:
     """Create or update starter projects.
 
@@ -1233,6 +1257,7 @@ async def create_or_update_starter_projects(all_types_dict: dict) -> None:
                 await logger.adebug(f"Successfully created {successfully_created_projects} starter projects")
 
 
+# 初始化自动登录模式下的默认超级用户
 async def initialize_auto_login_default_superuser() -> None:
     settings_service = get_settings_service()
     if not settings_service.auth_settings.AUTO_LOGIN:
@@ -1259,6 +1284,7 @@ async def initialize_auto_login_default_superuser() -> None:
     await logger.adebug("Super user initialized")
 
 
+# 确保用户拥有默认文件夹，不存在则创建
 async def get_or_create_default_folder(session: AsyncSession, user_id: UUID) -> FolderRead:
     """Ensure the default folder exists for the given user_id. If it doesn't exist, create it.
 
@@ -1328,6 +1354,7 @@ async def get_or_create_default_folder(session: AsyncSession, user_id: UUID) -> 
     return FolderRead.model_validate(folder_obj, from_attributes=True)
 
 
+# 从文件系统同步流程变更到数据库
 async def sync_flows_from_fs():
     flow_mtimes = {}
     fs_flows_polling_interval = get_settings_service().settings.fs_flows_polling_interval / 1000

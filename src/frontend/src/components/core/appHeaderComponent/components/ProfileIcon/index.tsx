@@ -6,6 +6,11 @@ interface ProfileIconProps {
   className?: string;
 }
 
+/**
+ * 用户头像图标组件
+ * 从认证上下文获取用户数据，显示用户的个人头像图片。
+ * 如果用户未设置头像，使用默认的火箭图标。
+ */
 export function ProfileIcon({ className }: ProfileIconProps = {}) {
   const { userData } = useContext(AuthContext);
 

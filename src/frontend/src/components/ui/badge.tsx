@@ -2,6 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 import { cn } from "../../utils/utils";
 
+// 徽章变体样式定义，支持多种颜色和尺寸
 const badgeVariants = cva(
   "inline-flex items-center border rounded-full px-2.5 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
   {

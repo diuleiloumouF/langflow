@@ -19,6 +19,8 @@ from lfx.utils.constants import (
 )
 
 
+# 聊天输出组件，用于在 Playground 中显示聊天消息
+# Chat output component for displaying chat messages in the Playground
 class ChatOutput(ChatComponent):
     display_name = "Chat Output"
     description = "Display a chat message in the Playground."
@@ -93,6 +95,7 @@ class ChatOutput(ChatComponent):
         ),
     ]
 
+    # 构建消息来源属性
     def _build_source(self, id_: str | None, display_name: str | None, source: str | None) -> Source:
         source_dict = {}
         if id_:
@@ -109,7 +112,9 @@ class ChatOutput(ChatComponent):
                 source_dict["source"] = str(source)
         return Source(**source_dict)
 
+    # 处理聊天消息响应，创建消息对象并存储到历史记录
     async def message_response(self) -> Message:
+        # 首先将输入转换为字符串（如果需要）
         # First convert the input to string if needed
         text = self.convert_to_string()
 
@@ -158,8 +163,10 @@ class ChatOutput(ChatComponent):
         self.status = message
         return message
 
+    # 将 Data 对象序列化为 JSON 字符串
     def _serialize_data(self, data: Data) -> str:
         """Serialize Data object to JSON string."""
+        # 将 data.data 转换为 JSON 可序列化格式
         # Convert data.data to JSON-serializable format
         serializable_data = jsonable_encoder(data.data)
         # Serialize with orjson, enabling pretty printing with indentation
@@ -167,6 +174,7 @@ class ChatOutput(ChatComponent):
         # Convert bytes to string and wrap in Markdown code blocks
         return "```json\n" + json_bytes.decode("utf-8") + "\n```"
 
+    # 验证输入数据，如果无效则引发 ValueError
     def _validate_input(self) -> None:
         """Validate the input data and raise ValueError if invalid."""
         if self.input_value is None:
@@ -190,6 +198,7 @@ class ChatOutput(ChatComponent):
             msg = f"Expected Data or DataFrame or Message or str, Generator or None, got {type_name}"
             raise TypeError(msg)
 
+    # 将输入数据转换为字符串，包含适当的错误处理
     def convert_to_string(self) -> str | Generator[Any, None, None]:
         """Convert input data to string with proper error handling."""
         self._validate_input()

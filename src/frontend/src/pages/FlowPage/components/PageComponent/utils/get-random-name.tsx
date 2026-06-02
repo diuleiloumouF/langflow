@@ -2,6 +2,14 @@ import { ADJECTIVES, NOUNS } from "../../../../../flow_constants";
 import { getRandomElement } from "../../../../../utils/reactflowUtils";
 import { toTitleCase } from "../../../../../utils/utils";
 
+/**
+ * 生成随机名称
+ * 从预定义的形容词和名词列表中随机组合生成名称
+ * @param retry - 当前重试次数，用于避免生成不合适的名称
+ * @param noSpace - 是否不使用空格分隔（使用下划线代替）
+ * @param maxRetries - 最大重试次数
+ * @returns 标题格式的随机名称
+ */
 export default function getRandomName(
   retry: number = 0,
   noSpace: boolean = false,

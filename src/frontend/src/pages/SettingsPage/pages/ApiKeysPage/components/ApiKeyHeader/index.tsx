@@ -9,6 +9,10 @@ type ApiKeyHeaderComponentProps = {
   fetchApiKeys: () => void;
   userId: string;
 };
+/**
+ * API 密钥头部组件
+ * 显示 API 密钥页面的标题和操作按钮（创建密钥、删除选中）
+ */
 const ApiKeyHeaderComponent = ({
   selectedRows,
   fetchApiKeys,

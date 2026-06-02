@@ -5,20 +5,28 @@ from lfx.inputs.inputs import DropdownInput, MessageTextInput, NestedDictInput, 
 from lfx.schema.data import Data
 
 
+# Unstructured API 组件，使用 Unstructured.io API 从原始源文档中提取干净的文本
 class UnstructuredComponent(BaseFileComponent):
+    # 组件显示名称
     display_name = "Unstructured API"
+    # 组件描述信息
     description = (
         "Uses Unstructured.io API to extract clean text from raw source documents. Supports a wide range of file types."
     )
+    # 组件文档链接
     documentation = (
         "https://python.langchain.com/api_reference/unstructured/document_loaders/"
         "langchain_unstructured.document_loaders.UnstructuredLoader.html"
     )
+    # 跟踪类型
     trace_type = "tool"
+    # 组件图标
     icon = "Unstructured"
+    # 组件内部名称
     name = "Unstructured"
 
     # https://docs.unstructured.io/api-reference/api-services/overview#supported-file-types
+    # 支持的文件扩展名列表
     VALID_EXTENSIONS = [
         "bmp",
         "csv",
@@ -49,6 +57,7 @@ class UnstructuredComponent(BaseFileComponent):
         "xml",
     ]
 
+    # 组件输入参数定义
     inputs = [
         *BaseFileComponent.get_base_inputs(),
         SecretStrInput(
@@ -82,10 +91,12 @@ class UnstructuredComponent(BaseFileComponent):
         ),
     ]
 
+    # 组件输出参数定义
     outputs = [
         *BaseFileComponent.get_base_outputs(),
     ]
 
+    # 处理文件列表，使用 Unstructured API 提取文档内容
     def process_files(self, file_list: list[BaseFileComponent.BaseFile]) -> list[BaseFileComponent.BaseFile]:
         file_paths = [str(file.path) for file in file_list if file.path]
 

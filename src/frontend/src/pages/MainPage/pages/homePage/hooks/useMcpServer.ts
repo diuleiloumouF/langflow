@@ -25,6 +25,7 @@ import {
   type ToolFlow,
 } from "../utils/mcpServerUtils";
 
+/** 已安装的 MCP 项目类型 */
 type InstalledMCPItem = { name?: string; available?: boolean };
 
 type State = {

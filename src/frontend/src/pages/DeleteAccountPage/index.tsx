@@ -4,9 +4,15 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import BaseModal from "../../modals/baseModal";
 
+/**
+ * 账号删除页面组件
+ * 提供用户账号删除功能，包含密码确认输入和二次确认弹窗
+ * 注意：当前删除逻辑为占位实现，需后续完善
+ */
 export default function DeleteAccountPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
+  // 处理账号删除操作（当前为占位实现）
   const handleDeleteAccount = () => {
     // Implement your account deletion logic here
     // For example, make an API call to delete the account

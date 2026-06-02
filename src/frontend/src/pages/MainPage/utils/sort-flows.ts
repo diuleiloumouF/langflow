@@ -1,3 +1,7 @@
+/**
+ * 排序流程列表
+ * 根据类型筛选流程，并按更新时间降序排序
+ */
 export const sortFlows = (flows, type) => {
   const isComponent = type === "component";
 
@@ -16,6 +20,10 @@ export const sortFlows = (flows, type) => {
   return filteredFlows?.sort(sortByDateFn) ?? [];
 };
 
+/**
+ * 按日期排序
+ * 降序排列，较新的日期排在前面
+ */
 export const sortByDate = (dateA: string, dateB: string) => {
   if (dateA && dateB) {
     return new Date(dateB).getTime() - new Date(dateA).getTime();
@@ -28,6 +36,10 @@ export const sortByDate = (dateA: string, dateB: string) => {
   }
 };
 
+/**
+ * 按布尔值排序
+ * true 排在 false 前面
+ */
 export const sortByBoolean = (a: boolean, b: boolean) => {
   if (a && b) {
     return 0;

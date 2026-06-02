@@ -1,6 +1,6 @@
 import { useUpdateNodeInternals } from "@xyflow/react";
-import { cloneDeep } from "lodash";
 import { AnimatePresence, motion } from "framer-motion";
+import { cloneDeep } from "lodash";
 import { useMemo, useRef, useState } from "react";
 import { processNodeAdvancedFields } from "@/CustomNodes/helpers/process-node-advanced-fields";
 import useUpdateAllNodes, {
@@ -11,8 +11,8 @@ import { usePostValidateComponentCode } from "@/controllers/API/queries/nodes/us
 import UpdateComponentModal from "@/modals/updateComponentModal";
 import useAlertStore from "@/stores/alertStore";
 import useFlowStore, {
-  registerNodeUpdate,
   completeNodeUpdate,
+  registerNodeUpdate,
 } from "@/stores/flowStore";
 import useFlowsManagerStore from "@/stores/flowsManagerStore";
 import { useTypesStore } from "@/stores/typesStore";
@@ -20,6 +20,7 @@ import { useUtilityStore } from "@/stores/utilityStore";
 import type { NodeDataType } from "@/types/flow";
 import { cn } from "@/utils/utils";
 
+/** 更新组件时的错误提示消息 */
 const ERROR_MESSAGE_UPDATING_COMPONENTS = "Error updating components";
 const ERROR_MESSAGE_UPDATING_COMPONENTS_LIST = [
   "There was an error updating the components.",
@@ -28,12 +29,18 @@ const ERROR_MESSAGE_UPDATING_COMPONENTS_LIST = [
 const ERROR_MESSAGE_EDGES_LOST =
   "Some edges were lost after updating the components. Please review the flow and reconnect them.";
 
+/** 容器动画变体 */
 const CONTAINER_VARIANTS = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: 20 },
 };
 
+/**
+ * 更新所有组件组件
+ * 检测画布上需要更新的组件，在画布底部显示更新通知横幅
+ * 支持批量更新、单个更新、忽略更新，以及破坏性变更的确认
+ */
 export default function UpdateAllComponents() {
   const { componentsToUpdate, nodes, edges, setNodes } = useFlowStore();
   const templates = useTypesStore((state) => state.templates);

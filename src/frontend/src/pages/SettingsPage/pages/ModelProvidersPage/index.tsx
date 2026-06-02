@@ -2,6 +2,10 @@ import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import ModelProvidersContent from "@/modals/modelProviderModal/components/ModelProvidersContent";
 import CustomOpenAIModelsCard from "./components/CustomOpenAIModelsCard";
 
+/**
+ * 模型提供商设置页面
+ * 配置 AI 模型提供商和管理 API 密钥
+ */
 export default function ModelProvidersPage() {
   return (
     <div className="flex w-full flex-col gap-6">

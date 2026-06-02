@@ -1,12 +1,25 @@
 # mypy: ignore-errors
+# 自定义组件工具模块，提供组件模板构建、字段管理、代码哈希生成等工具函数
 from __future__ import annotations
 
 import ast
+
+# 异步编程支持
 import asyncio
+
+# 上下文管理器工具
 import contextlib
+
+# 哈希计算（用于代码指纹）
 import hashlib
+
+# 反射与代码检查
 import inspect
+
+# 正则表达式
 import re
+
+# 异常回溯格式化
 import traceback
 from pathlib import Path
 from typing import TYPE_CHECKING, Any

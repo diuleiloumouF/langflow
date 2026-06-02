@@ -11,6 +11,8 @@ from lfx.schema import Data
 from lfx.template import Output
 from lfx.utils.validate_cloud import raise_error_if_astra_cloud_disable_component
 
+# Astra 云环境下禁用此组件的提示信息
+# Astra 云环境不支持视频处理，视频组件需要本地文件系统访问权限
 disable_component_in_astra_cloud_msg = (
     "Video processing is not supported in Astra cloud environment. "
     "Video components require local file system access for processing. "
@@ -18,6 +20,7 @@ disable_component_in_astra_cloud_msg = (
 )
 
 
+# 使用 FFmpeg 将视频按指定时长分割为多个片段的组件
 class SplitVideoComponent(Component):
     """A component that splits a video into multiple clips of specified duration using FFmpeg."""
 
@@ -73,9 +76,11 @@ class SplitVideoComponent(Component):
         ),
     ]
 
+    # 使用 FFmpeg 获取视频时长
     def get_video_duration(self, video_path: str) -> float:
         """Get video duration using FFmpeg."""
         try:
+            # 验证视频路径，防止 shell 注入攻击
             # Validate video path to prevent shell injection
             if not isinstance(video_path, str) or any(c in video_path for c in ";&|`$(){}[]<>*?!#~"):
                 error_msg = "Invalid video path"
@@ -98,6 +103,7 @@ class SplitVideoComponent(Component):
                 check=False,
                 shell=False,  # Explicitly set shell=False for security
             )
+            # 检查 FFprobe 命令执行是否成功
             if result.returncode != 0:
                 error_msg = f"FFprobe error: {result.stderr}"
                 raise RuntimeError(error_msg)
@@ -106,57 +112,64 @@ class SplitVideoComponent(Component):
             self.log(f"Error getting video duration: {e!s}", "ERROR")
             raise
 
+    # 根据视频名称和时间戳为片段创建唯一的输出目录
     def get_output_dir(self, video_path: str) -> str:
         """Create a unique output directory for clips based on video name and timestamp."""
+        # 获取视频文件名（不含扩展名）
         # Get the video filename without extension
         path_obj = Path(video_path)
         base_name = path_obj.stem
 
+        # 创建时间戳
         # Create a timestamp
         timestamp = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
 
+        # 从视频路径创建唯一的哈希值
         # Create a unique hash from the video path
         path_hash = hashlib.sha256(video_path.encode()).hexdigest()[:8]
 
+        # 创建输出目录路径
         # Create the output directory path
         output_dir = Path(path_obj.parent) / f"clips_{base_name}_{timestamp}_{path_hash}"
 
+        # 如果目录不存在则创建
         # Create the directory if it doesn't exist
         output_dir.mkdir(parents=True, exist_ok=True)
 
         return str(output_dir)
 
+    # 处理视频并使用 FFmpeg 将其分割为多个片段
     def process_video(self, video_path: str, clip_duration: int, *, include_original: bool) -> list[Data]:
         """Process video and split it into clips using FFmpeg."""
         try:
-            # Get video duration
+            # 获取视频时长
             total_duration = self.get_video_duration(video_path)
 
-            # Calculate number of clips (ceiling to include partial clip)
+            # 计算片段数量（向上取整以包含部分片段）
             num_clips = math.ceil(total_duration / clip_duration)
             self.log(
                 f"Total duration: {total_duration}s, Clip duration: {clip_duration}s, Number of clips: {num_clips}"
             )
 
-            # Create output directory for clips
+            # 创建片段输出目录
             output_dir = self.get_output_dir(video_path)
 
-            # Get original video info
+            # 获取原始视频信息
             path_obj = Path(video_path)
             original_filename = path_obj.name
             original_name = path_obj.stem
 
-            # List to store all video paths (including original if requested)
+            # 存储所有视频路径的列表（包括原始视频，如果需要的话）
             video_paths: list[Data] = []
 
-            # Add original video if requested
+            # 如果需要，添加原始视频
             if include_original:
                 original_data: dict[str, Any] = {
                     "text": video_path,
                     "metadata": {
                         "source": video_path,
                         "type": "video",
-                        "clip_index": -1,  # -1 indicates original video
+                        "clip_index": -1,  # -1 表示原始视频
                         "duration": int(total_duration),  # Convert to int
                         "original_video": {
                             "name": original_name,
@@ -170,13 +183,13 @@ class SplitVideoComponent(Component):
                 }
                 video_paths.append(Data(data=original_data))
 
-            # Split video into clips
+            # 将视频分割为片段
             for i in range(int(num_clips)):  # Convert num_clips to int for range
                 start_time = float(i * clip_duration)  # Convert to float for time calculations
                 end_time = min(float((i + 1) * clip_duration), total_duration)
                 duration = end_time - start_time
 
-                # Handle last clip if it's shorter
+                # 处理最后一个片段（如果它比指定时长短）
                 if i == int(num_clips) - 1 and duration < clip_duration:  # Convert num_clips to int for comparison
                     if self.last_clip_handling == "Truncate":
                         # Skip if the last clip would be too short

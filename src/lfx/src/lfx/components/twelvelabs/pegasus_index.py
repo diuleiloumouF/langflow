@@ -12,32 +12,44 @@ from lfx.io import Output
 from lfx.schema import Data
 
 
+# TwelveLabs 错误基类，所有自定义异常继承自此类
 class TwelveLabsError(Exception):
     """Base exception for TwelveLabs errors."""
 
 
+# 索引创建相关错误
 class IndexCreationError(TwelveLabsError):
     """Error raised when there's an issue with an index."""
 
 
+# 任务执行失败错误
 class TaskError(TwelveLabsError):
     """Error raised when a task fails."""
 
 
+# 任务超时错误
 class TaskTimeoutError(TwelveLabsError):
     """Error raised when a task times out."""
 
 
+# 使用 TwelveLabs Pegasus API 对视频进行索引，并将视频 ID 添加到元数据中的组件
 class PegasusIndexVideo(Component):
     """Indexes videos using TwelveLabs Pegasus API and adds the video ID to metadata."""
 
+    # 组件显示名称
     display_name = "TwelveLabs Pegasus Index Video"
+    # 组件描述
     description = "Index videos using TwelveLabs and add the video_id to metadata."
+    # 组件图标
     icon = "TwelveLabs"
+    # 组件内部名称
     name = "TwelveLabsPegasusIndexVideo"
+    # 组件文档链接
     documentation = "https://github.com/twelvelabs-io/twelvelabs-developer-experience/blob/main/integrations/Langflow/TWELVE_LABS_COMPONENTS_README.md"
 
+    # 组件输入定义
     inputs = [
+        # 视频数据输入，接收来自 VideoFile 或 SplitVideo 的数据对象列表
         DataInput(
             name="videodata",
             display_name="Video Data",
@@ -45,9 +57,11 @@ class PegasusIndexVideo(Component):
             is_list=True,
             required=True,
         ),
+        # TwelveLabs API 密钥
         SecretStrInput(
             name="api_key", display_name="TwelveLabs API Key", info="Enter your TwelveLabs API Key.", required=True
         ),
+        # 用于索引的 Pegasus 模型选择
         DropdownInput(
             name="model_name",
             display_name="Model",
@@ -56,12 +70,14 @@ class PegasusIndexVideo(Component):
             value="pegasus1.2",
             advanced=False,
         ),
+        # 索引名称，如果索引不存在则自动创建
         StrInput(
             name="index_name",
             display_name="Index Name",
             info="Name of the index to use. If the index doesn't exist, it will be created.",
             required=False,
         ),
+        # 已有索引的 ID，如果提供则忽略 index_name
         StrInput(
             name="index_id",
             display_name="Index ID",
@@ -70,7 +86,9 @@ class PegasusIndexVideo(Component):
         ),
     ]
 
+    # 组件输出定义
     outputs = [
+        # 输出索引后的数据（JSON 格式，列表）
         Output(
             display_name="Indexed Data", name="indexed_data", method="index_videos", output_types=["JSON"], is_list=True
         ),
@@ -81,27 +99,30 @@ class PegasusIndexVideo(Component):
 
         Returns (index_id, index_name).
         """
-        # First check if index_id is provided and valid
+        # 首先检查是否提供了有效的 index_id
         if hasattr(self, "index_id") and self.index_id:
             try:
+                # 尝试通过 ID 检索已有索引
                 index = client.index.retrieve(id=self.index_id)
             except (ValueError, KeyError) as e:
+                # 如果 index_id 无效且没有提供 index_name 作为回退，则报错
                 if not hasattr(self, "index_name") or not self.index_name:
                     error_msg = "Invalid index ID provided and no index name specified for fallback"
                     raise IndexCreationError(error_msg) from e
             else:
+                # 成功获取到索引，返回 ID 和名称
                 return self.index_id, index.name
 
-        # If index_name is provided, try to find it
+        # 如果提供了 index_name，尝试按名称查找
         if hasattr(self, "index_name") and self.index_name:
             try:
-                # List all indexes and find by name
+                # 列出所有索引并按名称匹配
                 indexes = client.index.list()
                 for idx in indexes:
                     if idx.name == self.index_name:
                         return idx.id, idx.name
 
-                # If we get here, index wasn't found - create it
+                # 未找到同名索引，则创建新索引，配置视觉和音频分析选项
                 index = client.index.create(
                     name=self.index_name,
                     models=[
@@ -117,7 +138,7 @@ class PegasusIndexVideo(Component):
             else:
                 return index.id, index.name
 
-        # If we get here, neither index_id nor index_name was provided
+        # 如果既没有提供 index_id 也没有提供 index_name，则抛出错误
         error_msg = "Either index_name or index_id must be provided"
         raise IndexCreationError(error_msg)
 
@@ -126,10 +147,12 @@ class PegasusIndexVideo(Component):
 
         Updates the component status with the current task status.
         """
+        # 获取视频文件名并更新组件状态信息
         video_name = Path(video_path).name
         status_msg = f"Indexing {video_name}... Status: {task.status}"
         self.status = status_msg
 
+    # 使用指数退避重试策略，最多重试 5 次，等待时间在 5-60 秒之间
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=5, max=60), reraise=True)
     def _check_task_status(
         self,
@@ -141,7 +164,9 @@ class PegasusIndexVideo(Component):
 
         Makes a single API call to check the status of a task.
         """
+        # 调用 API 检索任务状态
         task = client.task.retrieve(id=task_id)
+        # 触发状态更新回调
         self.on_task_update(task, video_path)
         return task
 
@@ -153,27 +178,34 @@ class PegasusIndexVideo(Component):
         Polls the task status until completion or timeout.
         """
         retries = 0
+        # 连续错误计数器，用于检测持续性故障
         consecutive_errors = 0
+        # 允许的最大连续错误次数，超过后终止
         max_consecutive_errors = 5
         video_name = Path(video_path).name
 
+        # 循环轮询任务状态直到完成或超时
         while retries < max_retries:
             try:
                 self.status = f"Checking task status for {video_name} (attempt {retries + 1})"
                 task = self._check_task_status(client, task_id, video_path)
 
                 if task.status == "ready":
+                    # 任务完成
                     self.status = f"Indexing for {video_name} completed successfully!"
                     return task
                 if task.status == "failed":
+                    # 任务失败
                     error_msg = f"Task failed for {video_name}: {getattr(task, 'error', 'Unknown error')}"
                     self.status = error_msg
                     raise TaskError(error_msg)
                 if task.status == "error":
+                    # 任务出错
                     error_msg = f"Task encountered an error for {video_name}: {getattr(task, 'error', 'Unknown error')}"
                     self.status = error_msg
                     raise TaskError(error_msg)
 
+                # 任务仍在处理中，等待后重试
                 time.sleep(sleep_time)
                 retries += 1
                 elapsed_time = retries * sleep_time
@@ -184,13 +216,16 @@ class PegasusIndexVideo(Component):
                 error_msg = f"Error checking task status for {video_name}: {e!s}"
                 self.status = error_msg
 
+                # 连续错误次数过多则终止
                 if consecutive_errors >= max_consecutive_errors:
                     too_many_errors = f"Too many consecutive errors checking task status for {video_name}"
                     raise TaskError(too_many_errors) from e
 
+                # 指数退避等待后继续重试
                 time.sleep(sleep_time * (2**consecutive_errors))
                 continue
 
+        # 超过最大重试次数，抛出超时错误
         timeout_msg = f"Timeout waiting for indexing of {video_name} after {max_retries * sleep_time} seconds"
         self.status = timeout_msg
         raise TaskTimeoutError(timeout_msg)
@@ -201,8 +236,10 @@ class PegasusIndexVideo(Component):
         Uploads a video file to the specified index and returns the task ID.
         """
         video_name = Path(video_path).name
+        # 以二进制模式打开视频文件并上传
         with Path(video_path).open("rb") as video_file:
             self.status = f"Uploading {video_name} to index {index_id}..."
+            # 创建上传任务
             task = client.task.create(index_id=index_id, file=video_file)
             task_id = task.id
             self.status = f"Upload complete for {video_name}. Task ID: {task_id}"
@@ -210,22 +247,26 @@ class PegasusIndexVideo(Component):
 
     def index_videos(self) -> list[Data]:
         """Indexes each video and adds the video_id to its metadata."""
+        # 检查是否提供了视频数据
         if not self.videodata:
             self.status = "No video data provided."
             return []
 
+        # 检查 API 密钥
         if not self.api_key:
             error_msg = "TwelveLabs API Key is required"
             raise IndexCreationError(error_msg)
 
+        # 检查是否提供了索引名称或索引 ID
         if not (hasattr(self, "index_name") and self.index_name) and not (hasattr(self, "index_id") and self.index_id):
             error_msg = "Either index_name or index_id must be provided"
             raise IndexCreationError(error_msg)
 
+        # 创建 TwelveLabs 客户端实例
         client = TwelveLabs(api_key=self.api_key)
         indexed_data_list: list[Data] = []
 
-        # Get or create the index
+        # 获取或创建索引
         try:
             index_id, index_name = self._get_or_create_index(client)
             self.status = f"Using index: {index_name} (ID: {index_id})"
@@ -233,34 +274,39 @@ class PegasusIndexVideo(Component):
             self.status = f"Failed to get/create TwelveLabs index: {e!s}"
             raise
 
-        # First, validate all videos and create a list of valid ones
+        # 首先验证所有视频，筛选出有效的视频列表
         valid_videos: list[tuple[Data, str]] = []
         for video_data_item in self.videodata:
+            # 跳过非 Data 类型的无效数据项
             if not isinstance(video_data_item, Data):
                 self.status = f"Skipping invalid data item: {video_data_item}"
                 continue
 
             video_info = video_data_item.data
+            # 跳过数据结构不为字典的项
             if not isinstance(video_info, dict):
                 self.status = f"Skipping item with invalid data structure: {video_info}"
                 continue
 
+            # 获取视频文件路径
             video_path = video_info.get("text")
             if not video_path or not isinstance(video_path, str):
                 self.status = f"Skipping item with missing or invalid video path: {video_info}"
                 continue
 
+            # 检查视频文件是否存在
             if not Path(video_path).exists():
                 self.status = f"Video file not found, skipping: {video_path}"
                 continue
 
             valid_videos.append((video_data_item, video_path))
 
+        # 没有有效视频则直接返回
         if not valid_videos:
             self.status = "No valid videos to process."
             return []
 
-        # Upload all videos first and collect their task IDs
+        # 上传所有视频并收集任务 ID
         upload_tasks: list[tuple[Data, str, str]] = []  # (data_item, video_path, task_id)
         for data_item, video_path in valid_videos:
             try:
@@ -270,14 +316,14 @@ class PegasusIndexVideo(Component):
                 self.status = f"Failed to upload {video_path}: {e!s}"
                 continue
 
-        # Now check all tasks in parallel using a thread pool
+        # 使用线程池并行检查所有任务状态，最多 10 个并发线程
         with ThreadPoolExecutor(max_workers=min(10, len(upload_tasks))) as executor:
             futures = []
             for data_item, video_path, task_id in upload_tasks:
                 future = executor.submit(self._wait_for_task_completion, client, task_id, video_path)
                 futures.append((data_item, video_path, future))
 
-            # Process results as they complete
+            # 处理已完成的任务结果
             for data_item, video_path, future in futures:
                 try:
                     completed_task = future.result()
@@ -286,7 +332,7 @@ class PegasusIndexVideo(Component):
                         video_name = Path(video_path).name
                         self.status = f"Video {video_name} indexed successfully. Video ID: {video_id}"
 
-                        # Add video_id to the metadata
+                        # 将视频 ID、索引 ID 和索引名称添加到元数据中
                         video_info = data_item.data
                         if "metadata" not in video_info:
                             video_info["metadata"] = {}
@@ -298,11 +344,13 @@ class PegasusIndexVideo(Component):
                             {"video_id": video_id, "index_id": index_id, "index_name": index_name}
                         )
 
+                        # 创建包含更新后元数据的新 Data 对象
                         updated_data_item = Data(data=video_info)
                         indexed_data_list.append(updated_data_item)
                 except (TaskError, TaskTimeoutError) as e:
                     self.status = f"Failed to process {video_path}: {e!s}"
 
+        # 更新最终处理状态
         if not indexed_data_list:
             self.status = "No videos were successfully indexed."
         else:

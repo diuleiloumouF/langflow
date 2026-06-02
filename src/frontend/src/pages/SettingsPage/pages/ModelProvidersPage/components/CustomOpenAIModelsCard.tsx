@@ -11,8 +11,10 @@ import {
 } from "@/controllers/API/queries/models";
 import useAlertStore from "@/stores/alertStore";
 
+/** 模型类型枚举 */
 type ModelType = "llm" | "embeddings";
 
+/** 自定义 OpenAI 模型表单状态 */
 interface FormState {
   id?: string;
   display_name: string;

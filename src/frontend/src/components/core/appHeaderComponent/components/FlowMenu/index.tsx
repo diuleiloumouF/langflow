@@ -1,5 +1,6 @@
 import { memo, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import IconComponent from "@/components/common/genericIconComponent";
 import ShadTooltip from "@/components/common/shadTooltipComponent";
@@ -11,7 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useTranslation } from "react-i18next";
 import { useGetRefreshFlowsQuery } from "@/controllers/API/queries/flows/use-get-refresh-flows-query";
 import { useGetFoldersQuery } from "@/controllers/API/queries/folders/use-get-folders";
 import { useCustomNavigate } from "@/customization/hooks/use-custom-navigate";
@@ -24,6 +24,11 @@ import { useShortcutsStore } from "@/stores/shortcuts";
 import { swatchColors } from "@/utils/styleUtils";
 import { cn, getNumberFromString } from "@/utils/utils";
 
+/**
+ * 流程菜单栏组件
+ * 在流程编辑页面显示流程名称、文件夹路径和保存按钮。
+ * 支持点击流程名称打开设置弹窗，支持快捷键保存。
+ */
 export const MenuBar = memo((): JSX.Element => {
   const { t } = useTranslation();
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
@@ -72,6 +77,7 @@ export const MenuBar = memo((): JSX.Element => {
     [folders, currentFlowFolderId],
   );
 
+  // 处理保存流程操作
   const handleSave = () => {
     if (!onFlowPage) return;
     saveFlow().then(() => {

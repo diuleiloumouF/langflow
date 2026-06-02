@@ -16,6 +16,8 @@ from lfx.utils.constants import (
 )
 
 
+# 聊天输入组件，用于从 Playground 获取聊天输入
+# Chat input component for getting chat inputs from the Playground
 class ChatInput(ChatComponent):
     display_name = "Chat Input"
     description = "Get chat inputs from the Playground."
@@ -81,7 +83,9 @@ class ChatInput(ChatComponent):
         Output(display_name="Chat Message", name="message", method="message_response"),
     ]
 
+    # 处理聊天消息响应，创建消息对象并存储到历史记录
     async def message_response(self) -> Message:
+        # 确保 files 是列表并过滤空值/None 值
         # Ensure files is a list and filter out empty/None values
         files = self.files if self.files else []
         if files and not isinstance(files, list):

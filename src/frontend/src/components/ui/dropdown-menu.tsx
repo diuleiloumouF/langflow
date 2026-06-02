@@ -5,18 +5,25 @@ import * as React from "react";
 import { cn } from "../../utils/utils";
 import IconComponent from "../common/genericIconComponent";
 
+// 下拉菜单根组件
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
+// 下拉菜单触发器组件
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
+// 下拉菜单分组组件
 const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 
+// 下拉菜单 Portal 组件
 const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
 
+// 下拉菜单子菜单组件
 const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 
+// 下拉菜单单选按钮组组件
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
+// 下拉菜单子菜单触发器组件
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
@@ -39,6 +46,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
 DropdownMenuSubTrigger.displayName =
   DropdownMenuPrimitive.SubTrigger.displayName;
 
+// 下拉菜单子菜单内容组件
 const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
@@ -56,10 +64,9 @@ DropdownMenuSubContent.displayName =
   DropdownMenuPrimitive.SubContent.displayName;
 
 /**
- * `container` is an optional portal target. When omitted (undefined), the
- * dropdown portals to document.body — identical to the original behaviour.
- * Pass a DOM element to confine the portal to a specific stacking context
- * (e.g. a full-screen overlay panel).
+ * 下拉菜单内容组件
+ * `container` 是可选的 Portal 目标。省略时（undefined），下拉菜单将渲染到 document.body。
+ * 传入 DOM 元素可将 Portal 限制在特定的层叠上下文中（如全屏遮罩面板）。
  */
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
@@ -81,6 +88,7 @@ const DropdownMenuContent = React.forwardRef<
 ));
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
 
+// 下拉菜单选项项组件
 const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
@@ -99,6 +107,7 @@ const DropdownMenuItem = React.forwardRef<
 ));
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
+// 下拉菜单复选框选项组件
 const DropdownMenuCheckboxItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>
@@ -123,6 +132,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
 DropdownMenuCheckboxItem.displayName =
   DropdownMenuPrimitive.CheckboxItem.displayName;
 
+// 下拉菜单单选按钮选项组件
 const DropdownMenuRadioItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem>
@@ -145,6 +155,7 @@ const DropdownMenuRadioItem = React.forwardRef<
 ));
 DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName;
 
+// 下拉菜单标签组件
 const DropdownMenuLabel = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Label>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> & {
@@ -163,6 +174,7 @@ const DropdownMenuLabel = React.forwardRef<
 ));
 DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName;
 
+// 下拉菜单分隔线组件
 const DropdownMenuSeparator = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
@@ -175,6 +187,7 @@ const DropdownMenuSeparator = React.forwardRef<
 ));
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
 
+// 下拉菜单快捷键显示组件
 const DropdownMenuShortcut = ({
   className,
   ...props

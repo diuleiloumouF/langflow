@@ -14,6 +14,8 @@ from lfx.io import (
 from lfx.schema.data import Data
 
 
+# Spider 网页爬虫和抓取工具组件
+# Spider web crawler and scraper tool component
 class SpiderTool(Component):
     display_name: str = "Spider Web Crawler & Scraper"
     description: str = "Spider API for web crawling and scraping."
@@ -95,6 +97,7 @@ class SpiderTool(Component):
         Output(display_name="Markdown", name="content", method="crawl"),
     ]
 
+    # 执行网页爬虫或抓取操作
     def crawl(self) -> list[Data]:
         if self.params:
             parameters = self.params["data"]
@@ -138,5 +141,6 @@ class SpiderTool(Component):
         return records
 
 
+# Spider 工具异常类
 class SpiderToolError(Exception):
     """SpiderTool error."""

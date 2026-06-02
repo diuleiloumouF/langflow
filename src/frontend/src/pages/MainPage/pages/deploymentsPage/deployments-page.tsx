@@ -50,6 +50,10 @@ function EnvironmentPickerRow({
   );
 }
 
+/**
+ * 部署页面组件
+ * 管理流程的部署功能，包括部署列表、提供商配置、部署创建等
+ */
 export default function DeploymentsPage() {
   const { folderId } = useParams();
   const myCollectionId = useFolderStore((state) => state.myCollectionId);

@@ -1,30 +1,59 @@
+# 异步IO模块，用于异步操作
 import asyncio
+
+# HTTP状态码模块
 import http  # Added for HTTPStatus
+
+# JSON序列化/反序列化模块
 import json
 from typing import Any
 
+# 异步HTTP客户端库，用于调用OpenRouter API
 import aiohttp
 
+# 获取聊天结果的工具函数
 from lfx.base.models.chat_result import get_chat_result
+
+# 获取模型名称的工具函数
 from lfx.base.models.model_utils import get_model_name
+
+# 自定义组件基类
 from lfx.custom.custom_component.component import Component
+
+# 输入组件定义：布尔输入、下拉框输入、句柄输入、整数输入、多行文本输入
 from lfx.inputs.inputs import BoolInput, DropdownInput, HandleInput, IntInput, MultilineInput
+
+# 数据模式，用于结构化输出
 from lfx.schema.data import Data
+
+# 消息模式，用于LLM交互的消息格式
 from lfx.schema.message import Message
+
+# Token用量统计工具函数
 from lfx.schema.token_usage import accumulate_usage, extract_usage_from_message
+
+# 输出字段基类
 from lfx.template.field.base import Output
 
 
+# LLM选择器组件：根据OpenRouter模型规格，将输入路由到最合适的LLM模型
 class LLMSelectorComponent(Component):
+    # 组件显示名称
     display_name = "LLM Selector"
+    # 组件描述：基于OpenRouter模型规格将输入路由到最合适的LLM
     description = "Routes the input to the most appropriate LLM based on OpenRouter model specifications"
+    # 组件文档链接
     documentation: str = "https://docs.langflow.org/llm-selector"
+    # 组件图标
     icon = "git-branch"
 
     # Constants for magic values
+    # 模型描述最大长度，超出部分将被截断并添加省略号
     MAX_DESCRIPTION_LENGTH = 500
+    # 查询预览最大长度，超出部分将被截断
     QUERY_PREVIEW_MAX_LENGTH = 1000
 
+    # 组件输入定义
     inputs = [
         HandleInput(
             name="models",
@@ -32,12 +61,14 @@ class LLMSelectorComponent(Component):
             input_types=["LanguageModel"],
             required=True,
             is_list=True,
+            # 可用的LLM模型列表，路由时从中选择最佳模型
             info="List of LLMs to route between",
         ),
         MultilineInput(
             name="input_value",
             display_name="Input",
             required=True,
+            # 需要被路由处理的输入消息
             info="The input message to be routed",
         ),
         HandleInput(
@@ -45,6 +76,7 @@ class LLMSelectorComponent(Component):
             display_name="Judge LLM",
             input_types=["LanguageModel"],
             required=True,
+            # 用于评估和选择最合适模型的裁判LLM
             info="LLM that will evaluate and select the most appropriate model",
         ),
         DropdownInput(
@@ -52,6 +84,7 @@ class LLMSelectorComponent(Component):
             display_name="Optimization",
             options=["quality", "speed", "cost", "balanced"],
             value="balanced",
+            # 模型选择的优化偏好：质量/速度/成本/平衡
             info="Optimization preference for model selection",
         ),
         BoolInput(
@@ -59,6 +92,7 @@ class LLMSelectorComponent(Component):
             display_name="Use OpenRouter Specs",
             value=True,
             info=(
+                # 是否从OpenRouter API获取模型规格以增强路由决策，关闭则仅使用模型名称
                 "Fetch model specifications from OpenRouter API for enhanced routing decisions. "
                 "If false, only model names will be used."
             ),
@@ -68,6 +102,7 @@ class LLMSelectorComponent(Component):
             name="timeout",
             display_name="API Timeout",
             value=10,
+            # API请求超时时间（秒）
             info="Timeout for API requests in seconds",
             advanced=True,
         ),
@@ -75,6 +110,7 @@ class LLMSelectorComponent(Component):
             name="fallback_to_first",
             display_name="Fallback to First Model",
             value=True,
+            # 路由失败时是否回退到第一个模型
             info="Use first model as fallback when routing fails",
             advanced=True,
         ),

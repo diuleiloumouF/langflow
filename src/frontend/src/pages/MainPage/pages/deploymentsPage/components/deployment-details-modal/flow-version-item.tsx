@@ -9,6 +9,10 @@ interface FlowVersionItemProps {
   connectionNames: string[];
 }
 
+/**
+ * 流程版本项组件
+ * 显示单个流程版本的信息，包括流程名称、版本号、工具名称和连接列表
+ */
 export default function FlowVersionItem({
   flowName,
   versionNumber,

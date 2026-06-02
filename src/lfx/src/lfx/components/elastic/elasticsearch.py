@@ -1,10 +1,15 @@
+# 引入类型标注
 from typing import Any
 
+# 引入 Elasticsearch 客户端和 LangChain 文档类
 from elasticsearch import Elasticsearch
 from langchain_core.documents import Document
 from langchain_elasticsearch import ElasticsearchStore
 
+# 引入向量存储基类和文档缓存检查装饰器
 from lfx.base.vectorstores.model import LCVectorStoreComponent, check_cached_vector_store
+
+# 引入各类输入组件类型
 from lfx.io import (
     BoolInput,
     DropdownInput,
@@ -14,17 +19,26 @@ from lfx.io import (
     SecretStrInput,
     StrInput,
 )
+
+# 引入数据模型
 from lfx.schema.data import Data
 
 
 class ElasticsearchVectorStoreComponent(LCVectorStoreComponent):
+    """Elasticsearch 向量存储组件，支持高级可定制的搜索能力。"""
+
     """Elasticsearch Vector Store with with advanced, customizable search capabilities."""
 
+    # 组件在界面上的显示名称
     display_name: str = "Elasticsearch"
+    # 组件的功能描述
     description: str = "Elasticsearch Vector Store with with advanced, customizable search capabilities."
+    # 组件内部名称
     name = "Elasticsearch"
+    # 组件图标
     icon = "ElasticsearchStore"
 
+    # 组件输入参数定义
     inputs = [
         StrInput(
             name="elasticsearch_url",
@@ -110,6 +124,7 @@ class ElasticsearchVectorStoreComponent(LCVectorStoreComponent):
 
     @check_cached_vector_store
     def build_vector_store(self) -> ElasticsearchStore:
+        """构建 Elasticsearch 向量存储对象。"""
         """Builds the Elasticsearch Vector Store object."""
         if self.cloud_id and self.elasticsearch_url:
             msg = (
@@ -133,8 +148,10 @@ class ElasticsearchVectorStoreComponent(LCVectorStoreComponent):
         if self.api_key:
             es_params["api_key"] = self.api_key
 
+        # 检查是否需要验证 SSL 证书
         # Check if we need to verify SSL certificates
         if self.verify_certs is False:
+            # 构建 Elasticsearch 客户端参数
             # Build client parameters for Elasticsearch constructor
             client_params: dict[str, Any] = {}
             client_params["verify_certs"] = False
@@ -154,6 +171,7 @@ class ElasticsearchVectorStoreComponent(LCVectorStoreComponent):
 
         elasticsearch = ElasticsearchStore(**es_params)
 
+        # 如果提供了文档数据，则添加到向量存储中
         # If documents are provided, add them to the store
         if self.ingest_data:
             documents = self._prepare_documents()
@@ -163,6 +181,7 @@ class ElasticsearchVectorStoreComponent(LCVectorStoreComponent):
         return elasticsearch
 
     def _prepare_documents(self) -> list[Document]:
+        """从输入数据中准备要添加到向量存储的文档。"""
         """Prepares documents from the input data to add to the vector store."""
         self.ingest_data = self._prepare_ingest_data()
 
@@ -177,6 +196,7 @@ class ElasticsearchVectorStoreComponent(LCVectorStoreComponent):
         return documents
 
     def _add_documents_to_vector_store(self, vector_store: "ElasticsearchStore") -> None:
+        """向向量存储中添加文档。"""
         """Adds documents to the Vector Store."""
         documents = self._prepare_documents()
         if documents and self.embedding:
@@ -186,6 +206,7 @@ class ElasticsearchVectorStoreComponent(LCVectorStoreComponent):
             self.log("No documents to add to the Vector Store.")
 
     def search(self, query: str | None = None) -> list[dict[str, Any]]:
+        """在向量存储中搜索相似文档，如果未提供查询则检索所有文档。"""
         """Search for similar documents in the vector store or retrieve all documents if no query is provided."""
         vector_store = self.build_vector_store()
         search_kwargs = {
@@ -218,6 +239,7 @@ class ElasticsearchVectorStoreComponent(LCVectorStoreComponent):
         return [{"page_content": doc.page_content, "metadata": doc.metadata, "score": score} for doc, score in results]
 
     def get_all_documents(self, vector_store: ElasticsearchStore, **kwargs) -> list[tuple[Document, float]]:
+        """从向量存储中检索所有文档。"""
         """Retrieve all documents from the vector store."""
         client = vector_store.client
         index_name = self.index_name
@@ -241,6 +263,7 @@ class ElasticsearchVectorStoreComponent(LCVectorStoreComponent):
         return results
 
     def search_documents(self) -> list[Data]:
+        """根据搜索输入在向量存储中搜索文档。如果未提供搜索输入，则检索所有文档。"""
         """Search for documents in the vector store based on the search input.
 
         If no search input is provided, retrieve all documents.
@@ -257,6 +280,7 @@ class ElasticsearchVectorStoreComponent(LCVectorStoreComponent):
         return retrieved_data
 
     def get_retriever_kwargs(self):
+        """获取检索器的关键字参数。"""
         """Get the keyword arguments for the retriever."""
         return {
             "search_type": self.search_type.lower(),

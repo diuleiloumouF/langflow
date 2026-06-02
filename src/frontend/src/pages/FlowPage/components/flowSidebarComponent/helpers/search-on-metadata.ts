@@ -1,5 +1,9 @@
 import { normalizeString } from "./normalize-string";
 
+/**
+ * 在元数据中搜索
+ * 递归搜索组件的元数据对象，检查键或值是否匹配搜索词
+ */
 export function searchInMetadata(metadata: any, searchTerm: string): boolean {
   if (!metadata || typeof metadata !== "object") return false;
 

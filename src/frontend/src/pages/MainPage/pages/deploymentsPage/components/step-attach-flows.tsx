@@ -16,6 +16,11 @@ import { VersionPanel } from "./step-attach-flows-version-panel";
 
 type RightPanelView = "versions" | "connections";
 
+/**
+ * 附加流程步骤组件
+ * 部署向导的第三步，允许用户选择要附加到部署的流程和版本
+ * 支持流程列表、版本选择和连接配置三个面板
+ */
 export default function StepAttachFlows() {
   const {
     isEditMode,

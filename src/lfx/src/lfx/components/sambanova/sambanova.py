@@ -8,13 +8,20 @@ from lfx.field_typing.range_spec import RangeSpec
 from lfx.io import DropdownInput, IntInput, SecretStrInput, SliderInput, StrInput
 
 
+# SambaNova 模型组件，使用 SambaNova 的 LLM 生成文本
 class SambaNovaComponent(LCModelComponent):
+    # 组件显示名称
     display_name = "SambaNova"
+    # 组件描述信息
     description = "Generate text using Sambanova LLMs."
+    # 组件文档链接
     documentation = "https://cloud.sambanova.ai/"
+    # 组件图标
     icon = "SambaNova"
+    # 组件内部名称
     name = "SambaNovaModel"
 
+    # 组件输入参数定义
     inputs = [
         *LCModelComponent.get_base_inputs(),
         StrInput(
@@ -64,6 +71,7 @@ class SambaNovaComponent(LCModelComponent):
         ),
     ]
 
+    # 构建 ChatSambaNovaCloud 模型实例
     def build_model(self) -> LanguageModel:  # type: ignore[type-var]
         sambanova_url = self.base_url
         sambanova_api_key = self.api_key

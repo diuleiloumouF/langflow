@@ -30,6 +30,11 @@ interface HeaderComponentProps {
   selectedFlows: string[];
 }
 
+/**
+ * 页面头部组件
+ * 显示文件夹名称、流程类型切换（流程/组件/MCP/部署）、视图切换、
+ * 搜索框、新建按钮和批量操作按钮
+ */
 const HeaderComponent = ({
   folderName = "",
   flowType,

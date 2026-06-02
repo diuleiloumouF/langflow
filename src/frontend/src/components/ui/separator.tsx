@@ -4,6 +4,7 @@ import * as SeparatorPrimitive from "@radix-ui/react-separator";
 import * as React from "react";
 import { cn } from "../../utils/utils";
 
+// 分隔线组件，支持水平和垂直方向
 const Separator = React.forwardRef<
   React.ElementRef<typeof SeparatorPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>

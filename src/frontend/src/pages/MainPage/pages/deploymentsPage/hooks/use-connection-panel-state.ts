@@ -19,6 +19,10 @@ interface UseConnectionPanelStateParams {
   setRightPanel: (panel: "versions" | "connections") => void;
 }
 
+/**
+ * 连接面板状态 Hook
+ * 管理连接面板的完整状态，包括连接的添加、删除、附件和全局变量操作
+ */
 export function useConnectionPanelState({
   connections,
   setConnections,

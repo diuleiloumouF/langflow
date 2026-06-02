@@ -3,6 +3,8 @@
 This module provides backwards compatibility by forwarding imports
 to flow_controls where the actual logic components are located.
 """
+# 逻辑组件模块 - flow_controls 的向后兼容别名
+# 该模块通过将导入转发到 flow_controls（实际逻辑组件所在位置）来提供向后兼容性
 
 from __future__ import annotations
 
@@ -12,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 from lfx.components._importing import import_mod
 
 if TYPE_CHECKING:
+    # 以下导入仅用于类型检查，不会在运行时执行
     from lfx.components.logic.conditional_router import ConditionalRouterComponent
     from lfx.components.logic.data_conditional_router import DataConditionalRouterComponent
     from lfx.components.logic.flow_tool import FlowToolComponent
@@ -21,6 +24,8 @@ if TYPE_CHECKING:
     from lfx.components.logic.run_flow import RunFlowComponent
     from lfx.components.logic.sub_flow import SubFlowComponent
 
+# 动态导入映射表：组件类名 -> 所属子模块名称
+# 用于在属性访问时延迟加载对应的组件类
 _dynamic_imports = {
     "ConditionalRouterComponent": "conditional_router",
     "DataConditionalRouterComponent": "data_conditional_router",
@@ -32,6 +37,7 @@ _dynamic_imports = {
     "SubFlowComponent": "sub_flow",
 }
 
+# 模块公开导出的组件列表
 __all__ = [
     "ConditionalRouterComponent",
     "DataConditionalRouterComponent",
@@ -45,6 +51,8 @@ __all__ = [
 
 # Register redirected submodules in sys.modules for direct importlib.import_module() calls
 # This allows imports like: import lfx.components.logic.listen
+# 将重定向的子模块注册到 sys.modules 中，以便支持直接使用 importlib.import_module() 进行导入
+# 这样可以允许诸如 import lfx.components.logic.listen 这样的导入语句继续工作
 _redirected_submodules = {
     "lfx.components.logic.listen": "lfx.components.flow_controls.listen",
     "lfx.components.logic.loop": "lfx.components.flow_controls.loop",
@@ -60,7 +68,9 @@ _redirected_submodules = {
 for old_path, new_path in _redirected_submodules.items():
     if old_path not in sys.modules:
         # Use a lazy loader that imports the actual module when accessed
+        # 延迟加载器：仅在首次访问属性时才实际导入目标模块
         class _RedirectedModule:
+            # 重定向模块代理类，将对旧路径的访问透明转发到新路径
             def __init__(self, target_path: str, original_path: str):
                 self._target_path = target_path
                 self._original_path = original_path
@@ -72,6 +82,7 @@ for old_path, new_path in _redirected_submodules.items():
 
                     self._module = import_module(self._target_path)
                     # Also register under the original path for future imports
+                    # 同时将实际模块注册到原始路径下，确保后续导入不再经过重定向
                     sys.modules[self._original_path] = self._module
                 return getattr(self._module, name)
 
@@ -83,7 +94,11 @@ for old_path, new_path in _redirected_submodules.items():
 
 def __getattr__(attr_name: str) -> Any:
     """Lazily import logic components on attribute access."""
+    # 模块级延迟导入函数：当访问模块上不存在的属性时自动触发
+    # 将请求转发到 flow_controls 模块中对应的子模块或组件
+
     # Handle submodule access for backwards compatibility
+    # 处理子模块级别的访问，将旧路径的子模块导入重定向到 flow_controls
     if attr_name == "listen":
         from importlib import import_module
 
@@ -145,6 +160,8 @@ def __getattr__(attr_name: str) -> Any:
 
     # Most logic components were moved to flow_controls
     # Forward them to flow_controls for backwards compatibility
+    # 大部分逻辑组件已迁移到 flow_controls 模块
+    # 此处将对旧路径的组件访问转发到 flow_controls，保持向后兼容
     if attr_name in (
         "ConditionalRouterComponent",
         "DataConditionalRouterComponent",
@@ -161,6 +178,7 @@ def __getattr__(attr_name: str) -> Any:
         return result
 
     # SmartRouterComponent was moved to llm_operations
+    # SmartRouterComponent 已迁移到 llm_operations 模块
     if attr_name == "SmartRouterComponent":
         from lfx.components import llm_operations
 
@@ -178,4 +196,5 @@ def __getattr__(attr_name: str) -> Any:
 
 
 def __dir__() -> list[str]:
+    # 限制 dir() 的输出仅为 __all__ 中声明的组件，避免暴露内部模块路径
     return list(__all__)

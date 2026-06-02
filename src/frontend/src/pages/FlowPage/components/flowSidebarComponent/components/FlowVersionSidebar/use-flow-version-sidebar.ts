@@ -25,6 +25,10 @@ import {
 } from "@/utils/reactflowUtils";
 import { CURRENT_DRAFT_ID } from "./constants";
 
+/**
+ * 流程版本侧边栏 Hook
+ * 管理流程版本的加载、选择、预览、删除、导出等完整生命周期
+ */
 export function useFlowVersionSidebar(flowId: string) {
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
   const setErrorData = useAlertStore((state) => state.setErrorData);

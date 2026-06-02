@@ -1,3 +1,4 @@
+// Coda 图标组件 - 用于 Coda 文档协作平台相关组件的标识
 import React, { forwardRef } from "react";
 import CodaIconSVG from "./coda";
 

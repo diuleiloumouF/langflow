@@ -17,6 +17,7 @@ import { removeCountFromString } from "@/utils/utils";
 import { SearchConfigTrigger } from "./searchConfigTrigger";
 import SidebarDraggableComponent from "./sidebarDraggableComponent";
 
+/** MCP 侧边栏分组组件的属性定义 */
 type McpSidebarGroupProps = {
   mcpComponents?: any[];
   nodeColors: any;

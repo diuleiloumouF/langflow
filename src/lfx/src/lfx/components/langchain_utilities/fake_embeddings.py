@@ -5,6 +5,8 @@ from lfx.field_typing import Embeddings
 from lfx.io import IntInput
 
 
+# 虚拟嵌入组件，用于初始测试和组件连接
+# Fake embeddings component for initial testing and connecting components
 class FakeEmbeddingsComponent(LCEmbeddingsModel):
     display_name = "Fake Embeddings"
     description = "Generate fake embeddings, useful for initial testing and connecting components."
@@ -20,6 +22,7 @@ class FakeEmbeddingsComponent(LCEmbeddingsModel):
         ),
     ]
 
+    # 构建虚拟嵌入模型实例
     def build_embeddings(self) -> Embeddings:
         return FakeEmbeddings(
             size=self.dimensions or 5,

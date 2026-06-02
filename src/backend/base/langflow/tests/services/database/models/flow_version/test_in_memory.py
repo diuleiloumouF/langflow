@@ -51,10 +51,11 @@ from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 _TEST_PASSWORD = "hashed"  # noqa: S105  # pragma: allowlist secret
+# 测试用的哈希密码
 
 
 # ---------------------------------------------------------------------------
-# Fixtures
+# Fixtures（固定装置）
 # ---------------------------------------------------------------------------
 
 
@@ -150,6 +151,7 @@ async def deployment(
 
 
 async def _create_version(db: AsyncSession, flow: Flow, user: User, n: int = 1) -> FlowVersion:
+    """创建流程版本的辅助函数。"""
     fv = FlowVersion(flow_id=flow.id, user_id=user.id, version_number=n, data={"nodes": []})
     db.add(fv)
     await db.commit()
@@ -164,6 +166,7 @@ async def _attach(
     deployment: Deployment,
     snapshot_id: str = "snap-1",
 ) -> FlowVersionDeploymentAttachment:
+    """创建部署附件的辅助函数。"""
     att = FlowVersionDeploymentAttachment(
         user_id=user.id,
         flow_version_id=version.id,
@@ -187,6 +190,8 @@ async def _make_orphan_attachment(
     FK enforcement is temporarily disabled so the row can be written, then
     re-enabled to simulate legacy data from pre-FK-enforcement environments.
     """
+    # 创建指向不存在部署的孤儿附件行
+    # 临时禁用外键约束以便写入行，然后重新启用以模拟外键约束前环境的遗留数据
     fake_deployment_id = uuid4()
     await db.exec(text("PRAGMA foreign_keys=OFF"))
     att = FlowVersionDeploymentAttachment(
@@ -204,11 +209,14 @@ async def _make_orphan_attachment(
 
 # ===========================================================================
 # Guard: check_flow_has_deployed_versions
+# 守卫：检查流程是否有已部署版本
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestGuardOrphanPruning:
+    """守卫孤儿清理测试类。"""
+
     async def test_guard_allows_when_no_attachments(self, db: AsyncSession, flow: Flow, user: User):
         await _create_version(db, flow, user)
         await check_flow_has_deployed_versions(db, flow_id=flow.id)
@@ -248,11 +256,14 @@ class TestGuardOrphanPruning:
 
 # ===========================================================================
 # cascade_delete_flow
+# 级联删除流程
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestCascadeDeleteFlow:
+    """级联删除流程测试类。"""
+
     async def test_deletes_related_rows_under_fk_enforcement(self, db: AsyncSession, flow: Flow, user: User):
         version = await _create_version(db, flow, user)
 
@@ -302,11 +313,14 @@ class TestCascadeDeleteFlow:
 
 # ===========================================================================
 # has_deployment_attachments
+# 检查是否有部署附件
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestHasDeploymentAttachments:
+    """检查部署附件测试类。"""
+
     async def test_returns_true_for_live_attachment(
         self, db: AsyncSession, flow: Flow, user: User, deployment: Deployment
     ):
@@ -331,11 +345,14 @@ class TestHasDeploymentAttachments:
 
 # ===========================================================================
 # count_* CRUD functions exclude orphans
+# count_* CRUD 函数排除孤儿
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestCountFunctionsExcludeOrphans:
+    """计数函数排除孤儿测试类。"""
+
     async def test_count_by_deployment_ids_excludes_orphan_version(
         self, db: AsyncSession, flow: Flow, user: User, deployment: Deployment
     ):
@@ -372,11 +389,14 @@ class TestCountFunctionsExcludeOrphans:
 
 # ===========================================================================
 # delete_orphan_attachments_for_flow_ids
+# 为流程 ID 删除孤儿附件
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestDeleteOrphanAttachmentsForFlowIds:
+    """为流程 ID 删除孤儿附件测试类。"""
+
     async def test_deletes_orphan_leaves_live(self, db: AsyncSession, flow: Flow, user: User, deployment: Deployment):
         version = await _create_version(db, flow, user)
         live = await _attach(db, user, version, deployment)
@@ -442,11 +462,14 @@ class TestDeleteOrphanAttachmentsForFlowIds:
 
 # ===========================================================================
 # delete_orphan_attachments_for_project
+# 为项目删除孤儿附件
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestDeleteOrphanAttachmentsForProject:
+    """为项目删除孤儿附件测试类。"""
+
     async def test_deletes_orphan_scoped_to_project(
         self, db: AsyncSession, flow: Flow, user: User, folder: Folder, deployment: Deployment
     ):
@@ -515,11 +538,14 @@ class TestDeleteOrphanAttachmentsForProject:
 
 # ===========================================================================
 # Version pruning respects live deployments only
+# 版本裁剪仅尊重实时部署
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestVersionPruningRespectsLiveDeployments:
+    """版本裁剪尊重实时部署测试类。"""
+
     async def test_orphan_attachment_does_not_pin_version_during_pruning(
         self, db: AsyncSession, flow: Flow, user: User
     ):
@@ -564,6 +590,7 @@ class TestVersionPruningRespectsLiveDeployments:
 
 # ===========================================================================
 # Pruning cleans attachment children (no doubly-orphan attachments form)
+# 裁剪清理附件子项（不会形成双重孤儿附件）
 # ===========================================================================
 
 
@@ -576,6 +603,10 @@ class TestVersionPruningCleansOrphanAttachments:
     (deployment AND flow_version both missing). No existing cleanup helper
     catches that shape, so the only place to plug it is at the formation site.
     """
+
+    # 裁剪清理的源修复覆盖
+    # 裁剪必须清理其移除版本的附件子项，否则过时的孤儿部署附件将以双重孤儿行的形式存在
+    # （部署和流程版本都缺失）。没有现有的清理助手能捕获这种形状，因此唯一可以插入的地方是形成站点。
 
     @pytest.fixture(autouse=True)
     def _patch_max_entries(self, request):
@@ -792,11 +823,14 @@ class TestVersionPruningCleansOrphanAttachments:
 
 # ===========================================================================
 # list_deployments_page excludes orphan flow-version attachments from counts
+# list_deployments_page 从计数中排除孤儿流程版本附件
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestListDeploymentsPageAttachmentCount:
+    """列出部署分页附件计数测试类。"""
+
     async def test_counts_only_live_flow_version_attachments(
         self, db: AsyncSession, flow: Flow, user: User, deployment: Deployment, provider_account
     ):
@@ -852,11 +886,14 @@ class TestListDeploymentsPageAttachmentCount:
 
 # ===========================================================================
 # Provider-scoped deployment status uses live deployments only
+# 提供商范围的部署状态仅使用实时部署
 # ===========================================================================
 
 
 @pytest.mark.asyncio
 class TestGetFlowVersionsWithProviderStatus:
+    """获取流程版本与提供商状态测试类。"""
+
     async def test_live_attachment_marks_version_as_deployed(
         self,
         db: AsyncSession,

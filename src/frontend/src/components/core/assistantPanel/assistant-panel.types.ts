@@ -4,6 +4,10 @@ import type {
   AgenticStepType,
 } from "@/controllers/API/queries/agentic";
 
+/**
+ * 助手消息类型定义
+ * 包含消息状态、模型、建议、面板属性等类型定义
+ */
 export type AssistantMessageStatus =
   | "pending"
   | "streaming"
@@ -41,7 +45,7 @@ export interface AssistantPanelProps {
   onClose: () => void;
 }
 
-/** AssistantMessage with Date serialized as ISO string and progress stripped. */
+/** 序列化的助手消息，Date 类型转为 ISO 字符串，移除 progress 字段 */
 export type SerializedAssistantMessage = Omit<
   AssistantMessage,
   "timestamp" | "progress"
@@ -49,7 +53,7 @@ export type SerializedAssistantMessage = Omit<
   timestamp: string;
 };
 
-/** A saved session entry stored in localStorage. */
+/** 保存在 localStorage 中的会话记录条目 */
 export interface SessionHistoryEntry {
   sessionId: string;
   firstUserMessage: string;

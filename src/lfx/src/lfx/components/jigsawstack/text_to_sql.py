@@ -3,6 +3,8 @@ from lfx.io import MessageTextInput, Output, QueryInput, SecretStrInput, StrInpu
 from lfx.schema.data import Data
 
 
+# JigsawStack 文本转 SQL 组件，使用 AI 将自然语言转换为 SQL 查询
+# JigsawStack text-to-SQL component for converting natural language to SQL queries using AI
 class JigsawStackTextToSQLComponent(Component):
     display_name = "Text to SQL"
     description = "Convert natural language to SQL queries using JigsawStack AI"
@@ -51,6 +53,7 @@ class JigsawStackTextToSQLComponent(Component):
         Output(display_name="SQL Query", name="sql_query", method="generate_sql"),
     ]
 
+    # 生成 SQL 查询
     def generate_sql(self) -> Data:
         try:
             from jigsawstack import JigsawStack, JigsawStackError

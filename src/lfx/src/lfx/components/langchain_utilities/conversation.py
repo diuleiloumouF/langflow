@@ -3,6 +3,8 @@ from lfx.inputs.inputs import HandleInput, MultilineInput
 from lfx.schema.message import Message
 
 
+# 对话链组件，用于执行对话并从内存加载上下文
+# Conversation chain component for having conversations and loading context from memory
 class ConversationChainComponent(LCChainComponent):
     display_name = "ConversationChain"
     description = "Chain to have a conversation and load context from memory."
@@ -30,6 +32,7 @@ class ConversationChainComponent(LCChainComponent):
         ),
     ]
 
+    # 调用对话链执行对话
     def invoke_chain(self) -> Message:
         try:
             from langchain_classic.chains import ConversationChain

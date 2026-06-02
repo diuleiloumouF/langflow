@@ -13,6 +13,10 @@ interface UseKnowledgeBaseActionsOptions {
   clearSelection: () => void;
 }
 
+/**
+ * 知识库操作 Hook
+ * 封装知识库的删除、取消摄入等操作，包括单个删除和批量删除的确认流程
+ */
 export const useKnowledgeBaseActions = ({
   refetch,
   selectedFiles,

@@ -1,59 +1,84 @@
+# 语义聚合器组件：使用基于 LLM 的语义分析来聚合和汇总输入数据
 """SemanticAggregator component for aggregating and summarizing input data using LLM-based semantic analysis."""
 
+# 延迟注解：允许在类定义中使用尚未导入的类型作为类型提示
 from __future__ import annotations
 
 from typing import ClassVar
 
+# 动态创建 Pydantic 模型：用于根据 schema 字段动态生成目标数据类型
 from pydantic import create_model
 
+# agentics 模块常量：错误信息和转导类型
 from lfx.components.agentics.constants import (
     ERROR_AGENTICS_NOT_INSTALLED,
     ERROR_INPUT_SCHEMA_REQUIRED,
     TRANSDUCTION_AREDUCE,
 )
+
+# agentics 辅助函数：构建 schema 字段、从组件准备 LLM 实例
 from lfx.components.agentics.helpers import (
     build_schema_fields,
     prepare_llm_from_component,
 )
+
+# agentics 输入组件：获取动态生成的字段输入和模型提供者输入配置
 from lfx.components.agentics.inputs import (
     get_generated_fields_input,
     get_model_provider_inputs,
 )
+
+# agentics 基础组件类：所有 agentics 组件的父类
 from lfx.components.agentics.inputs.base_component import BaseAgenticComponent
+
+# Langflow IO 类型：布尔输入、数据表输入、文本输入、输出
 from lfx.io import (
     BoolInput,
     DataFrameInput,
     MessageTextInput,
     Output,
 )
+
+# Langflow DataFrame 数据结构
 from lfx.schema.dataframe import DataFrame
 
 
 class AreduceComponent(BaseAgenticComponent):
+    # aReduce 组件：使用自然语言指令和定义的输出 schema 对整个输入数据进行聚合或摘要
     """Aggregate or summarize entire input data using natural language instructions and a defined output schema.
 
     This component processes all rows of input data collectively to produce aggregated results,
     such as summaries, statistics, or consolidated information based on LLM analysis.
     """
 
+    # 代码继承基类标记，表示该组件在前端代码生成时继承 Component 基类
     code_class_base_inheritance: ClassVar[str] = "Component"
+    # 组件在画布上显示的名称
     display_name = "aReduce"
+    # 组件描述：一次性分析整个输入 DataFrame 并按照指令和 schema 生成新的 DataFrame
     description = (
         "Analyze the entire input dataframe at once and generate a new dataframe "
         "following the instruction and the required schema"
     )
+    # 组件文档链接
     documentation: str = "https://docs.langflow.org/bundles-agentics"
+    # 组件图标标识
     icon = "Agentics"
 
+    # 组件输入定义列表
     inputs = [
+        # 模型提供者输入（LLM 配置，如 API key、模型选择等）
         *get_model_provider_inputs(),
+        # 输入数据表：待聚合的 DataFrame，schema 从列名和类型自动推断
         DataFrameInput(
             name="source",
             display_name="Input Table",
             info="Input DataFrame to aggregate. The schema is automatically inferred from column names and types.",
             required=True,
         ),
+        # 动态生成的字段输入：用户在前端定义输出 schema 的字段
         get_generated_fields_input(),
+        # 是否返回多实例：为 True 时生成目标 schema 的列表（数组）形式
         BoolInput(
             name="return_multiple_instances",
             display_name="As List",
@@ -61,6 +86,7 @@ class AreduceComponent(BaseAgenticComponent):
             advanced=False,
             value=False,
         ),
+        # 聚合指令：用自然语言描述如何将输入数据聚合为输出 schema
         MessageTextInput(
             name="instructions",
             display_name="Instructions",
@@ -71,7 +97,9 @@ class AreduceComponent(BaseAgenticComponent):
         ),
     ]
 
+    # 组件输出定义列表
     outputs = [
+        # 输出端口：返回 LLM 按指定 schema 生成的聚合 DataFrame
         Output(
             name="states",
             method="aReduce",
@@ -82,29 +110,37 @@ class AreduceComponent(BaseAgenticComponent):
     ]
 
     async def aReduce(self) -> DataFrame:  # noqa: N802
+        # 使用基于 LLM 的语义分析聚合输入数据
         """Aggregate input data using LLM-based semantic analysis.
 
         Returns:
             DataFrame containing the aggregated results following the output schema.
         """
+        # 延迟导入 agentics 库，如果未安装则抛出友好错误信息
         try:
             from agentics import AG
             from agentics.core.atype import create_pydantic_model
         except ImportError as e:
             raise ImportError(ERROR_AGENTICS_NOT_INSTALLED) from e
 
+        # 从当前组件配置中准备 LLM 实例（包含模型提供商和参数设置）
         llm = prepare_llm_from_component(self)
 
+        # 确保输入数据和输出 schema 都已提供
         if self.source and self.schema != []:
+            # 将输入 DataFrame 转换为 AG（agentics 通用数据结构）
             source = AG.from_dataframe(DataFrame(self.source))
 
+            # 根据用户定义的 schema 字段构建 Pydantic 模型
             schema_fields = build_schema_fields(self.schema)
             atype = create_pydantic_model(schema_fields, name="Target")
+            # 如果用户选择返回多实例模式，则将目标类型包装为 list
             if self.return_multiple_instances:
                 final_atype = create_model("ListOfTarget", items=(list[atype], ...))  # type: ignore[valid-type]
             else:
                 final_atype = atype
 
+            # 构建 aReduce 转导目标：指定目标类型、转导方式、指令和 LLM
             target = AG(
                 atype=final_atype,
                 transduction_type=TRANSDUCTION_AREDUCE,
@@ -116,10 +152,14 @@ class AreduceComponent(BaseAgenticComponent):
                 areduce_batch_size=100,
             )
 
+            # 执行 aReduce 转导：将源数据通过 LLM 语义分析转换为目标 schema
             output = await (target << source)
+            # 多实例模式下，将所有子状态展平为一个 AG 对象
             if self.return_multiple_instances:
                 appended_states = [item_state for state in output for item_state in state.items]
                 output = AG(atype=atype, states=appended_states)
 
+            # 将 AG 输出转换为 DataFrame 并返回
             return DataFrame(output.to_dataframe().to_dict(orient="records"))
+        # 如果缺少输入数据或 schema，抛出错误
         raise ValueError(ERROR_INPUT_SCHEMA_REQUIRED)

@@ -4,10 +4,11 @@ import type { ShadToolTipType } from "../../../types/components";
 import { cn } from "../../../utils/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 
-// Extract static styles
+// 提取静态样式常量
 const BASE_TOOLTIP_CLASSES =
   "z-[99] max-w-96 bg-tooltip text-xs text-tooltip-foreground";
 
+// 缓存的工具提示内容组件，避免不必要的重新渲染
 // Memoize the tooltip content component
 const MemoizedTooltipContent = memo(
   forwardRef<
@@ -35,6 +36,7 @@ const MemoizedTooltipContent = memo(
 
 MemoizedTooltipContent.displayName = "MemoizedTooltipContent";
 
+// 主工具提示组件，使用 memo 和 forwardRef 优化性能
 // Memoize the main tooltip component
 const ShadTooltip = memo(
   forwardRef<HTMLDivElement, ShadToolTipType>(
@@ -53,17 +55,20 @@ const ShadTooltip = memo(
       },
       ref,
     ) => {
+      // 没有内容时直接返回子元素，不渲染工具提示
       // Early return if no content
       if (!content) {
         return children;
       }
 
+      // 缓存类名拼接结果
       // Memoize className concatenation
       const tooltipClassName = useMemo(
         () => cn(BASE_TOOLTIP_CLASSES, styleClasses),
         [styleClasses],
       );
 
+      // 缓存工具提示属性
       // Memoize tooltip props
       const tooltipProps = useMemo(
         () => ({

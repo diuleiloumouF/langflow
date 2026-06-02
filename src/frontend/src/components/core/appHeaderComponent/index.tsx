@@ -15,6 +15,11 @@ import useTheme from "@/customization/hooks/use-custom-theme";
 import useAlertStore from "@/stores/alertStore";
 import FlowMenu from "./components/FlowMenu";
 
+/**
+ * 应用头部组件
+ * 包含应用 Logo、流程菜单、通知中心和用户菜单。
+ * 支持点击外部关闭通知下拉菜单。
+ */
 export default function AppHeader(): JSX.Element {
   const { t } = useTranslation();
   const notificationCenter = useAlertStore((state) => state.notificationCenter);

@@ -1,6 +1,10 @@
+# 数据库迁移工具函数模块
+# 提供检查数据库表、列、外键和约束是否存在的工具函数，
+# 用于 Alembic 数据库迁移脚本中
 import sqlalchemy as sa
 
 
+# 检查数据库表是否存在
 def table_exists(name, conn):
     """Check if a table exists.
 
@@ -15,6 +19,7 @@ def table_exists(name, conn):
     return name in inspector.get_table_names()
 
 
+# 检查表中是否存在指定列
 def column_exists(table_name, column_name, conn):
     """Check if a column exists in a table.
 
@@ -30,6 +35,7 @@ def column_exists(table_name, column_name, conn):
     return column_name in [column["name"] for column in inspector.get_columns(table_name)]
 
 
+# 检查表中是否存在指定外键
 def foreign_key_exists(table_name, fk_name, conn):
     """Check if a foreign key exists in a table.
 
@@ -45,6 +51,7 @@ def foreign_key_exists(table_name, fk_name, conn):
     return fk_name in [fk["name"] for fk in inspector.get_foreign_keys(table_name)]
 
 
+# 检查表中是否存在指定唯一约束
 def constraint_exists(table_name, constraint_name, conn):
     """Check if a constraint exists in a table.
 

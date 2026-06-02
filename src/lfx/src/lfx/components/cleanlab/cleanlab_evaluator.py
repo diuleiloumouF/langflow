@@ -1,5 +1,7 @@
+# Cleanlab TLM（Trustworthy Language Model）SDK
 from cleanlab_tlm import TLM
 
+# 组件基类、输入/输出定义、消息模型
 from lfx.custom import Component
 from lfx.io import (
     DropdownInput,
@@ -10,6 +12,7 @@ from lfx.io import (
 from lfx.schema.message import Message
 
 
+# Cleanlab 评估器组件，使用 Cleanlab 评估 LLM 响应的可信度
 class CleanlabEvaluator(Component):
     """A component that evaluates the trustworthiness of LLM responses using Cleanlab.
 
@@ -43,31 +46,37 @@ class CleanlabEvaluator(Component):
     icon = "Cleanlab"
     name = "CleanlabEvaluator"
 
+    # 输入参数定义
     inputs = [
+        # 系统提示词（可选，前置到用户查询前）
         MessageTextInput(
             name="system_prompt",
             display_name="System Message",
             info="System-level instructions prepended to the user query.",
             value="",
         ),
+        # 用户提示词/查询
         MessageTextInput(
             name="prompt",
             display_name="Prompt",
             info="The user's query to the model.",
             required=True,
         ),
+        # LLM 生成的待评估响应
         MessageTextInput(
             name="response",
             display_name="Response",
             info="The response to the user's query.",
             required=True,
         ),
+        # Cleanlab API 密钥
         SecretStrInput(
             name="api_key",
             display_name="Cleanlab API Key",
             info="Your Cleanlab API key.",
             required=True,
         ),
+        # Cleanlab 评估使用的模型（可与生成模型不同）
         DropdownInput(
             name="model",
             display_name="Cleanlab Evaluation Model",
@@ -100,6 +109,7 @@ class CleanlabEvaluator(Component):
             required=True,
             advanced=True,
         ),
+        # 质量预设：base/low/medium/high/best，越高越准但越慢
         DropdownInput(
             name="quality_preset",
             display_name="Quality Preset",
@@ -112,6 +122,7 @@ class CleanlabEvaluator(Component):
         ),
     ]
 
+    # 输出参数：透传响应、可信度分数、解释说明
     outputs = [
         Output(
             display_name="Response",
@@ -128,6 +139,7 @@ class CleanlabEvaluator(Component):
         ),
     ]
 
+    # 执行一次评估并缓存结果，避免重复调用
     def _evaluate_once(self):
         if not hasattr(self, "_cached_result"):
             full_prompt = f"{self.system_prompt}\n\n{self.prompt}" if self.system_prompt else self.prompt
@@ -139,17 +151,20 @@ class CleanlabEvaluator(Component):
             self._cached_result = tlm.get_trustworthiness_score(full_prompt, self.response)
         return self._cached_result
 
+    # 获取可信度分数（0-1 之间）
     def get_score(self) -> float:
         result = self._evaluate_once()
         score = result.get("trustworthiness_score", 0.0)
         self.status = f"Trust score: {score:.2f}"
         return score
 
+    # 获取评估解释说明
     def get_explanation(self) -> Message:
         result = self._evaluate_once()
         explanation = result.get("log", {}).get("explanation", "No explanation returned.")
         return Message(text=explanation)
 
+    # 透传原始响应到下游组件
     def pass_response(self) -> Message:
         self.status = "Passing through response."
         return Message(text=self.response)

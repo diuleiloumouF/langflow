@@ -3,6 +3,8 @@ from lfx.io import IntInput, MessageTextInput, Output, SecretStrInput, StrInput
 from lfx.schema.data import Data
 
 
+# JigsawStack VOCR 组件，使用微调的 vLLM 从文档中提取结构化数据
+# JigsawStack VOCR component for extracting structured data from documents using fine-tuned vLLMs
 class JigsawStackVOCRComponent(Component):
     display_name = "VOCR"
     description = "Extract data from any document type in a consistent structure with fine-tuned \
@@ -58,6 +60,7 @@ class JigsawStackVOCRComponent(Component):
         Output(display_name="VOCR results", name="vocr_results", method="vocr"),
     ]
 
+    # 执行 VOCR（视觉光学字符识别）操作
     def vocr(self) -> Data:
         try:
             from jigsawstack import JigsawStack, JigsawStackError

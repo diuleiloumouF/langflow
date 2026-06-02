@@ -3,6 +3,10 @@ import GlobalVariableModal from "@/components/core/GlobalVariableModal/GlobalVar
 import { CommandItem } from "@/components/ui/command";
 import { cn } from "@/utils/utils";
 
+/**
+ * 通用全局变量弹窗组件
+ * 提供一个命令面板中的选项，用于打开添加新变量的弹窗
+ */
 const GeneralGlobalVariableModal = () => {
   return (
     <>

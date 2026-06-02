@@ -1,3 +1,4 @@
+# Vertex AI 组件包，提供 Google Vertex AI 的聊天模型和嵌入模型组件
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -8,6 +9,7 @@ if TYPE_CHECKING:
     from .vertexai import ChatVertexAIComponent
     from .vertexai_embeddings import VertexAIEmbeddingsComponent
 
+# 动态导入映射表：组件名称 -> 模块名称，用于延迟加载
 _dynamic_imports = {
     "ChatVertexAIComponent": "vertexai",
     "VertexAIEmbeddingsComponent": "vertexai_embeddings",
@@ -20,7 +22,10 @@ __all__ = [
 
 
 def __getattr__(attr_name: str) -> Any:
-    """Lazily import vertexai components on attribute access."""
+    """延迟导入 vertexai 组件，在属性访问时才真正导入。
+
+    Lazily import vertexai components on attribute access.
+    """
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)
@@ -34,4 +39,5 @@ def __getattr__(attr_name: str) -> Any:
 
 
 def __dir__() -> list[str]:
+    """返回模块的公开导出列表"""
     return list(__all__)

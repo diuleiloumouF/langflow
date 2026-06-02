@@ -1,3 +1,4 @@
+// Heygen 图标组件 - 用于 Heygen AI 视频生成服务相关组件的标识
 import React, { forwardRef } from "react";
 import HeygenIconSVG from "./heygen";
 

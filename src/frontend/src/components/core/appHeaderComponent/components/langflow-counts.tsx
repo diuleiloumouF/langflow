@@ -6,6 +6,10 @@ import { Case } from "@/shared/components/caseComponent";
 import { useDarkStore } from "@/stores/darkStore";
 import { formatNumber } from "@/utils/utils";
 
+/**
+ * Langflow 社区数据展示组件
+ * 显示 GitHub 星标数和 Discord 社区成员数，点击可跳转到对应页面。
+ */
 export const LangflowCounts = () => {
   const stars: number | undefined = useDarkStore((state) => state.stars);
   const discordCount: number = useDarkStore((state) => state.discordCount);

@@ -2,6 +2,7 @@ import { CellClickedEvent } from "ag-grid-community";
 import { TraceListItem } from "@/controllers/API/queries/traces/types";
 import { createFlowTracesColumns } from "./config/flowTraceColumns";
 
+/** Span 类型枚举 */
 export type SpanType =
   | "chain"
   | "llm"
@@ -12,8 +13,10 @@ export type SpanType =
   | "agent"
   | "none";
 
+/** Span 状态枚举 */
 export type SpanStatus = "unset" | "ok" | "error";
 
+/** Token 用量信息 */
 export interface TokenUsage {
   promptTokens: number;
   completionTokens: number;
@@ -21,6 +24,7 @@ export interface TokenUsage {
   cost: number;
 }
 
+/** Span 数据结构，表示追踪树中的单个执行节点 */
 export interface Span {
   id: string;
   name: string;
@@ -37,6 +41,7 @@ export interface Span {
   children: Span[];
 }
 
+/** 追踪数据结构，包含完整的执行追踪信息 */
 export interface Trace {
   id: string;
   name: string;
@@ -53,6 +58,7 @@ export interface Trace {
   spans: Span[];
 }
 
+/** Span 树节点组件的属性定义 */
 export interface SpanNodeProps {
   span: Span;
   depth: number;
@@ -62,21 +68,25 @@ export interface SpanNodeProps {
   onSelect: () => void;
 }
 
+/** Span 详情面板组件的属性定义 */
 export interface SpanDetailProps {
   span: Span | null;
 }
 
+/** 追踪视图组件的属性定义 */
 export interface TraceViewProps {
   flowId?: string | null;
   initialTraceId?: string | null;
   onTraceClick?: (traceId: string) => void;
 }
 
+/** 追踪详情视图组件的属性定义 */
 export interface TraceDetailViewProps {
   traceId: string | null;
   flowName?: string | null;
 }
 
+/** 追踪手风琴项组件的属性定义 */
 export interface TraceAccordionItemProps {
   traceId: string;
   traceName: string;
@@ -92,12 +102,14 @@ export interface TraceAccordionItemProps {
   onTraceClick?: (traceId: string) => void;
 }
 
+/** 状态图标属性类型 */
 export type StatusIconProps = {
   colorClass: string;
   iconName: "Loader2" | "CircleCheck" | "CircleX";
   shouldSpin: boolean;
 };
 
+/** 分组会话渲染属性类型 */
 export type RenderGroupedSessionType = {
   isLoading: boolean;
   groupedRows: Array<[string, TraceListItem[]]>;
@@ -106,6 +118,7 @@ export type RenderGroupedSessionType = {
   handleCellClicked: (event: CellClickedEvent) => void;
 };
 
+/** 日期范围选择器组件的属性定义 */
 export type DateRangePopoverProps = {
   startDate: string;
   endDate: string;

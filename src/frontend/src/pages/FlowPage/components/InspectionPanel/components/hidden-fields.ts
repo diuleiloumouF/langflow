@@ -1,4 +1,6 @@
+// 在检查面板中需要隐藏的字段（按组件类型分组）
 // Fields to hide per component type in the InspectionPanel.
+// 在此添加条目以隐藏字段，无需移除后端功能
 // Add entries here to hide fields without removing backend functionality.
 export const HIDDEN_FIELDS: Record<string, string[]> = {
   ChatInput: ["should_store_message", "sender"],
@@ -34,6 +36,7 @@ export const HIDDEN_FIELDS: Record<string, string[]> = {
   ],
 };
 
+// 仅在检查面板中显示、但在高级设置编辑模式中隐藏的字段
 // Fields to show in the InspectionPanel but hide from the advanced settings edit mode.
 // These fields are intentionally surfaced only in the InspectionPanel for a streamlined UX.
 export const INSPECTION_PANEL_ONLY_FIELDS: Record<string, string[]> = {

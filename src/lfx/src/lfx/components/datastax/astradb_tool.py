@@ -1,18 +1,38 @@
+# 时间处理
 from datetime import datetime, timezone
+
+# 类型注解
 from typing import Any
 
+# Astrapy 客户端库
 from astrapy import Collection, DataAPIClient, Database
+
+# LangChain 工具类
 from langchain_core.tools import StructuredTool, Tool
+
+# Pydantic 数据模型
 from pydantic import BaseModel, Field, create_model
 
+# AstraDB 基础组件
 from lfx.base.datastax.astradb_base import AstraDBBaseComponent
+
+# 工具组件基类
 from lfx.base.langchain_utilities.model import LCToolComponent
+
+# 输入组件类型
 from lfx.io import BoolInput, DictInput, IntInput, StrInput, TableInput
+
+# 日志记录器
 from lfx.log.logger import logger
+
+# 数据模型
 from lfx.schema.data import Data
+
+# 表格编辑模式
 from lfx.schema.table import EditMode
 
 
+# AstraDB 工具组件，在 Astra DB 集合上执行混合向量和元数据搜索
 class AstraDBToolComponent(AstraDBBaseComponent, LCToolComponent):
     display_name: str = "Astra DB Tool"
     description: str = "Tool to run hybrid vector and metadata search on DataStax Astra DB Collection"

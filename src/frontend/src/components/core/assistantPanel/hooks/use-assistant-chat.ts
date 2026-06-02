@@ -29,6 +29,11 @@ interface UseAssistantChatReturn {
   loadSession: (id: string, msgs: AssistantMessage[]) => void;
 }
 
+/**
+ * 助手聊天 Hook
+ * 管理助手聊天的状态和操作，包括消息发送、流式响应、
+ * 组件验证、历史记录清除和会话切换等功能。
+ */
 export function useAssistantChat(): UseAssistantChatReturn {
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);

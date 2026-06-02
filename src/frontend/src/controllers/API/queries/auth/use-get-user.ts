@@ -4,6 +4,11 @@ import type { Users, useMutationFunctionType } from "../../../../types/api";
 import { api } from "../../api";
 import { getURL } from "../../helpers/constants";
 import { UseRequestProcessor } from "../../services/request-processor";
+/**
+ * 获取当前用户数据的自定义 Hook
+ * 从后端获取用户信息并更新到全局状态
+ * @returns 获取用户数据的 mutation 函数
+ */
 export const useGetUserData: useMutationFunctionType<undefined, any> = (
   options?,
 ) => {

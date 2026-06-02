@@ -1,9 +1,12 @@
+# 已注册邮箱工具模块
+# 提供从注册信息中获取和缓存已注册邮箱地址的功能
 from lfx.log.logger import logger
 
 from langflow.api.v2.registration import load_registration
 from langflow.services.telemetry.schema import EmailPayload
 
 
+# 已注册邮箱的内存缓存类
 class _RegisteredEmailCache:
     """An in-memory cache for the registered email address."""
 
@@ -32,6 +35,7 @@ class _RegisteredEmailCache:
         return cls._resolved
 
 
+# 获取已注册的邮箱地址模型（带缓存）
 def get_email_model() -> EmailPayload | None:
     """Retrieves the registered email address model."""
     # Use cached email address from a previous invocation (if applicable)
@@ -62,6 +66,7 @@ def get_email_model() -> EmailPayload | None:
     return email_model
 
 
+# 从注册信息中解析邮箱地址
 def _parse_email_registration(registration) -> EmailPayload | None:
     """Parses the email address from the registration."""
     # Verify registration is defined
@@ -83,6 +88,7 @@ def _parse_email_registration(registration) -> EmailPayload | None:
     return email_model
 
 
+# 创建邮箱地址模型，验证格式有效性
 def _create_email_model(email) -> EmailPayload | None:
     """Creates the model for the registered email."""
     # Verify email address is a valid non-zero length string

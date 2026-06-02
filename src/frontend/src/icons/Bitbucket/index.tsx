@@ -1,3 +1,4 @@
+// Bitbucket 图标组件 - 用于 Bitbucket 代码仓库服务相关组件的标识
 import React, { forwardRef } from "react";
 import BitbucketIconSVG from "./bitbucket";
 

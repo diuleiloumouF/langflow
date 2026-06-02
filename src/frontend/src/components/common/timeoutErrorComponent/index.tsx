@@ -2,6 +2,10 @@ import BaseModal from "../../../modals/baseModal";
 import type { fetchErrorComponentType } from "../../../types/components";
 import Loading from "../../ui/loading";
 
+/**
+ * 超时错误组件
+ * 当请求超时时显示的弹窗，提供加载动画和重试按钮。
+ */
 export default function TimeoutErrorComponent({
   message,
   description,

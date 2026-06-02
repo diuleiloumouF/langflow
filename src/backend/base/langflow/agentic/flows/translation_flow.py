@@ -8,11 +8,15 @@ Usage:
     graph = await get_graph(provider="OpenAI", model_name="gpt-4o-mini")
 """
 
+# 语言检测、翻译和意图分类流程模块
+# 该模块将用户输入翻译为英文，并将意图分类为 'generate_component' 或 'question'
+
 from lfx.base.models.model_metadata import get_provider_param_mapping
 from lfx.components.input_output import ChatInput, ChatOutput
 from lfx.components.models import LanguageModelComponent
 from lfx.graph import Graph
 
+# 翻译提示词常量，用于指导语言模型进行语言检测、翻译和意图分类
 TRANSLATION_PROMPT = """You are a Language Detection, Translation, and Intent Classification \
 Agent for Langflow Assistant.
 

@@ -25,6 +25,10 @@ const EMPTY_CREDENTIALS: ProviderCredentials = {
   api_key: "",
 };
 
+/**
+ * 添加提供商模态框
+ * 提供表单界面用于添加新的部署提供商账户，包含凭据验证和保存功能
+ */
 export default function AddProviderModal({
   open,
   setOpen,

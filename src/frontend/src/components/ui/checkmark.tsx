@@ -1,4 +1,9 @@
 import { AnimatePresence, motion } from "framer-motion";
+/**
+ * 对勾动画组件
+ * 使用 framer-motion 实现 SVG 对勾路径的绘制动画。
+ * 支持初始动画和显示/隐藏过渡效果。
+ */
 export default function Checkmark({ initial = true, isVisible, className }) {
   return (
     <AnimatePresence initial={initial}>

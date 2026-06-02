@@ -1,3 +1,5 @@
+# 流程版本部署附件 CRUD 操作测试模块
+# 测试附件的创建、查询、删除、快照冲突检测和级联删除等功能
 from __future__ import annotations
 
 from uuid import uuid4
@@ -44,9 +46,11 @@ from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 _TEST_PASSWORD = "hashed"  # noqa: S105  # pragma: allowlist secret
+# 测试用的哈希密码
 
 
 def _default_snapshot_id(*, flow_version_id, deployment_id) -> str:
+    """生成默认的快照 ID。"""
     return f"snap-{deployment_id}-{flow_version_id}"
 
 
@@ -59,6 +63,7 @@ async def create_deployment_attachment(
     provider_snapshot_id: str | None = None,
 ):
     """Test-only wrapper that auto-generates provider_snapshot_id when omitted."""
+    # 仅测试用的包装器，当省略时自动生成 provider_snapshot_id
     return await _create_deployment_attachment(
         db,
         user_id=user_id,

@@ -3,6 +3,8 @@ from lfx.io import Output, SecretStrInput, StrInput
 from lfx.schema.data import Data
 
 
+# JigsawStack NSFW 检测组件，检测图像/视频是否包含 NSFW 内容
+# JigsawStack NSFW detection component for detecting NSFW content in images/videos
 class JigsawStackNSFWComponent(Component):
     display_name = "NSFW Detection"
     description = "Detect if image/video contains NSFW content"
@@ -29,6 +31,7 @@ class JigsawStackNSFWComponent(Component):
         Output(display_name="NSFW Analysis", name="nsfw_result", method="detect_nsfw"),
     ]
 
+    # 执行 NSFW 内容检测
     def detect_nsfw(self) -> Data:
         try:
             from jigsawstack import JigsawStack, JigsawStackError

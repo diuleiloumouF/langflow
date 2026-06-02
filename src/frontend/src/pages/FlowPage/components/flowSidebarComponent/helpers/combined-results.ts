@@ -1,6 +1,10 @@
 import type { FuseResult } from "fuse.js";
 import type { APIDataType } from "@/types/api";
 
+/**
+ * 合并搜索结果函数
+ * 将 Fuse.js 的模糊搜索结果按分类整理为与原始数据格式一致的对象
+ */
 export const combinedResultsFn = (
   fuseResults: FuseResult<any>[],
   data: APIDataType,

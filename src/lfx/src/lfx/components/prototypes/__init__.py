@@ -9,6 +9,7 @@ from lfx.components._importing import import_mod
 #     "KnowledgeRetrievalComponent": "retrieval",
 
 # }
+# 原型组件的动态导入映射表
 _dynamic_imports = {
     "PythonFunctionComponent": "python_function",
 }
@@ -19,6 +20,7 @@ __all__ = ["PythonFunctionComponent"]
 
 def __getattr__(attr_name: str) -> Any:
     """Lazily import input/output components on attribute access."""
+    # 在访问属性时延迟导入原型组件
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)

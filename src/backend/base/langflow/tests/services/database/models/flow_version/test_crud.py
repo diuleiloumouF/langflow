@@ -1,3 +1,5 @@
+# 流程版本 CRUD 操作测试模块
+# 测试流程版本的创建、部署附件检查、版本裁剪等功能
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -13,22 +15,30 @@ from langflow.services.database.models.flow_version.crud import (
 
 
 class _OneResult:
+    """模拟数据库单行查询结果的辅助类。"""
+
     def __init__(self, value):
         self._value = value
 
     def one(self):
+        """返回单行结果。"""
         return self._value
 
 
 class _AllResult:
+    """模拟数据库多行查询结果的辅助类。"""
+
     def __init__(self, rows):
         self._rows = rows
 
     def all(self):
+        """返回所有结果行。"""
         return self._rows
 
 
 class _AsyncNoopSavepoint:
+    """异步空保存点上下文管理器。"""
+
     async def __aenter__(self):
         return None
 
@@ -38,6 +48,7 @@ class _AsyncNoopSavepoint:
 
 @pytest.mark.asyncio
 async def test_has_deployment_attachments_checks_live_deployment_join():
+    """测试检查是否有部署附件时，会检查实时部署联接。"""
     db = AsyncMock()
     db.exec = AsyncMock(side_effect=[_OneResult(1)])
 
@@ -50,12 +61,14 @@ async def test_has_deployment_attachments_checks_live_deployment_join():
     assert result is True
     # String-match on compiled SQL because these tests use mocked sessions
     # without a real database engine.
+    # 由于这些测试使用模拟会话而没有真实数据库引擎，因此对编译后的 SQL 进行字符串匹配
     statement_text = str(db.exec.await_args_list[0].args[0]).lower()
     assert "join deployment" in statement_text
 
 
 @pytest.mark.asyncio
 async def test_has_deployment_attachments_prunes_orphan_rows_when_no_live_attachment():
+    """测试当没有实时附件时，检查是否有部署附件会清理孤儿行。"""
     db = AsyncMock()
     stale_attachment_id = uuid4()
     db.exec = AsyncMock(
@@ -80,6 +93,7 @@ async def test_has_deployment_attachments_prunes_orphan_rows_when_no_live_attach
 
 @pytest.mark.asyncio
 async def test_get_flow_versions_with_provider_status_marks_live_deployment_status():
+    """测试获取流程版本与提供商状态时，标记实时部署状态。"""
     db = AsyncMock()
     db.exec = AsyncMock(return_value=_AllResult([(SimpleNamespace(id=uuid4()), True)]))
 
@@ -98,6 +112,7 @@ async def test_get_flow_versions_with_provider_status_marks_live_deployment_stat
 
 @pytest.mark.asyncio
 async def test_create_flow_version_entry_pruning_uses_live_deployment_join(monkeypatch):
+    """测试创建流程版本条目时，裁剪使用实时部署联接。"""
     flow_id = uuid4()
     user_id = uuid4()
 
@@ -134,6 +149,7 @@ async def test_create_flow_version_entry_pruning_uses_live_deployment_join(monke
 @pytest.mark.asyncio
 async def test_create_flow_version_entry_pruning_deletes_attachments_then_versions(monkeypatch):
     """When versions are pruned, attachment children are deleted first, then the versions."""
+    # 测试当版本被裁剪时，附件子项先删除，然后删除版本
     flow_id = uuid4()
     user_id = uuid4()
     pruned_version_id = uuid4()
@@ -171,6 +187,7 @@ async def test_create_flow_version_entry_pruning_deletes_attachments_then_versio
     assert "delete from flow_version" in version_delete_text
     # Attachment delete must precede version delete so SQLite-with-FKs-off does
     # not leave doubly-orphan attachment rows behind.
+    # 附件删除必须在版本删除之前，这样关闭外键的 SQLite 不会留下双重孤儿附件行
     assert "flow_version_deployment_attachment" not in version_delete_text.split("where", 1)[0]
 
 
@@ -179,6 +196,7 @@ async def test_create_flow_version_entry_pruning_skips_attachment_delete_when_no
     monkeypatch,
 ):
     """Empty prune set issues no DELETE statements at all."""
+    # 测试当没有需要裁剪的内容时，空裁剪集不发出任何 DELETE 语句
     flow_id = uuid4()
     user_id = uuid4()
 

@@ -8,13 +8,18 @@ from lfx.field_typing import LanguageModel
 from lfx.field_typing.range_spec import RangeSpec
 from lfx.io import DictInput, DropdownInput, FloatInput, IntInput, SecretStrInput, SliderInput, StrInput
 
+# TODO: langchain_community.llms.huggingface_endpoint 已弃用。
+# 需要更新到 langchain_huggingface，但与 langchain_core 0.3.0 存在依赖关系
 # TODO: langchain_community.llms.huggingface_endpoint is depreciated.
 #  Need to update to langchain_huggingface, but have dependency with langchain_core 0.3.0
 
+# 默认模型常量
 # Constants
 DEFAULT_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
 
+# Hugging Face 端点组件，使用 Hugging Face Inference API 生成文本
+# Hugging Face endpoints component for generating text using Hugging Face Inference APIs
 class HuggingFaceEndpointsComponent(LCModelComponent):
     display_name: str = "Hugging Face"
     description: str = "Generate text using Hugging Face Inference APIs."
@@ -111,6 +116,7 @@ class HuggingFaceEndpointsComponent(LCModelComponent):
         IntInput(name="retry_attempts", display_name="Retry Attempts", value=1, advanced=True),
     ]
 
+    # 获取 API URL，根据模型 ID 和端点构建完整的 API 地址
     def get_api_url(self) -> str:
         if "huggingface" in self.inference_endpoint.lower():
             if self.model_id == "custom":
@@ -123,6 +129,7 @@ class HuggingFaceEndpointsComponent(LCModelComponent):
 
     async def update_build_config(self, build_config: dict, field_value: Any, field_name: str | None = None) -> dict:
         """Update build configuration based on field updates."""
+        # 根据字段更新动态更新构建配置
         try:
             if field_name is None or field_name == "model_id":
                 # If model_id is custom, show custom model field
@@ -137,6 +144,7 @@ class HuggingFaceEndpointsComponent(LCModelComponent):
             self.log(f"Error updating build config: {e!s}")
         return build_config
 
+    # 创建 HuggingFace 端点实例，支持重试机制
     def create_huggingface_endpoint(
         self,
         task: str | None,
@@ -169,6 +177,7 @@ class HuggingFaceEndpointsComponent(LCModelComponent):
 
         return _attempt_create()
 
+    # 构建 Hugging Face 语言模型实例
     def build_model(self) -> LanguageModel:
         task = self.task or None
         huggingfacehub_api_token = self.huggingfacehub_api_token

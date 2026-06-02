@@ -1,11 +1,16 @@
+# 组件构建配置工具函数模块
+# 提供对组件 build_config 的字段增删改查、显示/隐藏控制、
+# 高级模式设置以及构建配置合并等功能
 from collections.abc import Callable
 from typing import Any
 
 from langflow.schema.dotdict import dotdict
 
+# 默认始终显示的字段列表
 DEFAULT_FIELDS = ["code", "_type"]
 
 
+# 更新 build_config 中指定字段的值
 def update_fields(build_config: dotdict, fields: dict[str, Any]) -> dotdict:
     """Update specified fields in build_config with new values."""
     for key, value in fields.items():
@@ -14,12 +19,14 @@ def update_fields(build_config: dotdict, fields: dict[str, Any]) -> dotdict:
     return build_config
 
 
+# 向 build_config 中添加新字段
 def add_fields(build_config: dotdict, fields: dict[str, Any]) -> dotdict:
     """Add new fields to build_config."""
     build_config.update(fields)
     return build_config
 
 
+# 从 build_config 中删除指定字段
 def delete_fields(build_config: dotdict, fields: dict[str, Any] | list[str]) -> dotdict:
     """Delete specified fields from build_config."""
     if isinstance(fields, dict):
@@ -30,6 +37,7 @@ def delete_fields(build_config: dotdict, fields: dict[str, Any] | list[str]) -> 
     return build_config
 
 
+# 从 build_config 中获取指定字段，fields 为 None 时返回全部字段
 def get_fields(build_config: dotdict, fields: list[str] | None = None) -> dict[str, Any]:
     """Get fields from build_config.If fields is None, return all fields."""
     if fields is None:
@@ -42,6 +50,7 @@ def get_fields(build_config: dotdict, fields: list[str] | None = None) -> dict[s
     return result
 
 
+# 更新 build_config 中所有字段的 input_types 属性
 def update_input_types(build_config: dotdict) -> dotdict:
     """Update input types for all fields in build_config.
 
@@ -63,6 +72,7 @@ def update_input_types(build_config: dotdict) -> dotdict:
     return build_config
 
 
+# 设置字段在 UI 中的显示/隐藏状态
 def set_field_display(build_config: dotdict, field: str, value: bool | None = None) -> dotdict:  # noqa: FBT001
     """Set whether a field should be displayed in the UI."""
     if field in build_config and isinstance(build_config[field], dict) and "show" in build_config[field]:
@@ -70,6 +80,7 @@ def set_field_display(build_config: dotdict, field: str, value: bool | None = No
     return build_config
 
 
+# 批量设置多个字段的显示/隐藏状态
 def set_multiple_field_display(
     build_config: dotdict,
     fields: dict[str, bool] | None = None,
@@ -87,6 +98,7 @@ def set_multiple_field_display(
     return build_config
 
 
+# 设置字段是否为"高级"模式（在 UI 中折叠显示）
 def set_field_advanced(build_config: dotdict, field: str, value: bool | None = None) -> dotdict:  # noqa: FBT001
     """Set whether a field is considered 'advanced' in the UI."""
     if value is None:
@@ -96,6 +108,7 @@ def set_field_advanced(build_config: dotdict, field: str, value: bool | None = N
     return build_config
 
 
+# 批量设置多个字段的高级模式状态
 def set_multiple_field_advanced(
     build_config: dotdict,
     fields: dict[str, bool] | None = None,
@@ -113,6 +126,7 @@ def set_multiple_field_advanced(
     return build_config
 
 
+# 合并两个构建配置，override_config 中的值优先覆盖 base_config
 def merge_build_configs(base_config: dotdict, override_config: dotdict) -> dotdict:
     """Merge two build configurations, with override_config taking precedence."""
     result = dotdict(base_config.copy())
@@ -126,6 +140,7 @@ def merge_build_configs(base_config: dotdict, override_config: dotdict) -> dotdi
     return result
 
 
+# 根据选中的操作设置当前显示的字段（用于操作切换时的字段可见性控制）
 def set_current_fields(
     build_config: dotdict,
     action_fields: dict[str, list[str]],

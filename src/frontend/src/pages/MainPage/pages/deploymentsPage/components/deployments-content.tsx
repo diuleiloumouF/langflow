@@ -22,6 +22,11 @@ interface DeploymentsContentProps {
   setStepperOpen: (open: boolean) => void;
 }
 
+/**
+ * 部署内容组件
+ * 管理部署列表的完整视图，包括部署表格、空状态、加载状态
+ * 以及部署详情模态框、测试模态框和删除确认对话框
+ */
 export default function DeploymentsContent({
   providers,
   deployments,

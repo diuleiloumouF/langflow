@@ -5,6 +5,8 @@ from lfx.io import BoolInput, MultilineInput, Output
 from lfx.schema.message import Message
 
 
+# 文本输入组件，用于获取用户文本输入
+# Text input component for getting user text inputs
 class TextInputComponent(TextComponent):
     display_name = "Text Input"
     description = "Get user text inputs."
@@ -31,6 +33,7 @@ class TextInputComponent(TextComponent):
         Output(display_name="Output Text", name="text", method="text_response"),
     ]
 
+    # 根据字段更新动态更新构建配置
     def update_build_config(self, build_config: dict, field_value: Any, field_name: str | None = None) -> dict:
         if field_name == "use_global_variable":
             if field_value:
@@ -43,6 +46,7 @@ class TextInputComponent(TextComponent):
                 build_config["input_value"]["password"] = False
         return build_config
 
+    # 文本响应方法，将输入值包装为 Message 对象返回
     def text_response(self) -> Message:
         return Message(
             text=self.input_value,

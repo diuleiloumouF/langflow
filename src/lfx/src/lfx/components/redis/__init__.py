@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .redis import RedisVectorStoreComponent
     from .redis_chat import RedisIndexChatMemory
 
+# Redis 组件的动态导入映射表
 _dynamic_imports = {
     "RedisVectorStoreComponent": "redis",
     "RedisIndexChatMemory": "redis_chat",
@@ -21,6 +22,7 @@ __all__ = [
 
 def __getattr__(attr_name: str) -> Any:
     """Lazily import Redis components on attribute access."""
+    # 在访问属性时延迟导入 Redis 组件
     if attr_name not in _dynamic_imports:
         msg = f"module '{__name__}' has no attribute '{attr_name}'"
         raise AttributeError(msg)

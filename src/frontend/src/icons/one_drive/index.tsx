@@ -1,3 +1,4 @@
+// OneDrive 图标组件 (备选样式) - 用于 Microsoft OneDrive 云存储服务相关组件的标识
 import React, { forwardRef } from "react";
 import One_DriveIconSVG from "./one_drive";
 

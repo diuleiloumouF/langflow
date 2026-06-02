@@ -1,3 +1,4 @@
+// Airtable 图标组件 - 用于 Airtable 在线数据库平台相关组件的标识
 import React, { forwardRef } from "react";
 import AirtableIconSVG from "./airtable";
 

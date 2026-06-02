@@ -2,6 +2,11 @@ import BaseModal from "../../../modals/baseModal";
 import type { fetchErrorComponentType } from "../../../types/components";
 import IconComponent from "../genericIconComponent";
 
+/**
+ * 网络请求错误组件
+ * 当数据获取失败时显示的错误弹窗。
+ * 提供错误信息展示和重试功能。
+ */
 export default function FetchErrorComponent({
   message,
   description,

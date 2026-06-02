@@ -10,10 +10,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/utils/utils";
 
+// 头部菜单容器组件
 export const HeaderMenu = ({ children }) => (
   <DropdownMenu>{children}</DropdownMenu>
 );
 
+// 头部菜单触发器组件，显示用户头像和展开/折叠图标
 export const HeaderMenuToggle = ({ children }) => (
   <DropdownMenuTrigger
     className="inline-flex w-full items-center justify-center rounded-md pl-1 pr-1"
@@ -29,6 +31,7 @@ export const HeaderMenuToggle = ({ children }) => (
   </DropdownMenuTrigger>
 );
 
+// 头部菜单链接项组件
 export const HeaderMenuItemLink = ({
   href = "#",
   children,
@@ -52,6 +55,7 @@ export const HeaderMenuItemLink = ({
   </DropdownMenuItem>
 );
 
+// 头部菜单按钮项组件
 export const HeaderMenuItemButton = ({ icon = "", onClick, children }) => (
   <DropdownMenuItem
     className="group flex cursor-pointer items-center justify-between p-3 px-4"
@@ -67,6 +71,7 @@ export const HeaderMenuItemButton = ({ icon = "", onClick, children }) => (
   </DropdownMenuItem>
 );
 
+// 头部菜单内容组件，支持左对齐和右对齐
 export const HeaderMenuItems = ({
   position = "left",
   children,
@@ -83,6 +88,7 @@ export const HeaderMenuItems = ({
   );
 };
 
+// 头部菜单分组组件，自动添加分隔线
 export const HeaderMenuItemsSection = ({ children }) => (
   <>
     {children}
@@ -90,6 +96,7 @@ export const HeaderMenuItemsSection = ({ children }) => (
   </>
 );
 
+// 头部菜单标题组件
 export const HeaderMenuItemsTitle = ({
   subTitle,
   children,

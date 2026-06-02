@@ -1,5 +1,7 @@
+/** 部署提供商类型枚举 */
 export type DeploymentProviderType = "watsonx" | "kubernetes";
 
+/** 环境变量条目 */
 export interface EnvVarEntry {
   id: string;
   key: string;
@@ -7,6 +9,7 @@ export interface EnvVarEntry {
   globalVar?: boolean;
 }
 
+/** 连接项数据结构 */
 export interface ConnectionItem {
   id: string;
   connectionId: string;
@@ -18,6 +21,7 @@ export interface ConnectionItem {
   globalVarKeys?: Set<string>;
 }
 
+/** 部署提供商配置 */
 export interface DeploymentProvider {
   id: string;
   type: DeploymentProviderType;
@@ -25,6 +29,7 @@ export interface DeploymentProvider {
   icon: string;
 }
 
+/** 提供商账户数据结构 */
 export interface ProviderAccount {
   id: string;
   name: string;
@@ -34,6 +39,7 @@ export interface ProviderAccount {
   updated_at: string | null;
 }
 
+/** 提供商凭据数据结构 */
 export interface ProviderCredentials {
   name: string;
   provider_key: string;

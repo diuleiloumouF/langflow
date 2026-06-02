@@ -1,6 +1,10 @@
 import { useEffect } from "react";
 import type { storeComponent } from "../../../../types/store";
 
+/**
+ * 数据效果 Hook
+ * 当商店组件数据变化时，同步更新点赞状态、点赞数和下载数。
+ */
 const useDataEffect = (
   data: storeComponent,
   setLikedByUser: (value: any) => void,

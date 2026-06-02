@@ -12,6 +12,10 @@ type DropdownComponentProps = {
   handleEdit: () => void;
 };
 
+/**
+ * 流程卡片下拉菜单组件
+ * 提供流程的复制、移动、删除、导出、编辑等操作选项
+ */
 const DropdownComponent = ({
   flowData,
   setOpenDelete,

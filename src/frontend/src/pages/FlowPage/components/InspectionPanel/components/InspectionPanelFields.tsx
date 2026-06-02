@@ -12,15 +12,22 @@ import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import useFlowStore from "@/stores/flowStore";
 import type { NodeDataType, targetHandleType } from "@/types/flow";
 import { scapeJSONParse } from "@/utils/reactflowUtils";
+import { HIDDEN_FIELDS, INSPECTION_PANEL_ONLY_FIELDS } from "./hidden-fields";
 import InspectionPanelEditField from "./InspectionPanelEditField";
 import InspectionPanelField from "./InspectionPanelField";
-import { HIDDEN_FIELDS, INSPECTION_PANEL_ONLY_FIELDS } from "./hidden-fields";
 
+/** 检查面板字段列表的属性定义 */
 interface InspectionPanelFieldsProps {
   data: NodeDataType;
   isEditingFields?: boolean;
 }
 
+/**
+ * 检查面板字段列表组件
+ * 根据编辑模式显示不同的字段列表：
+ * - 编辑模式：显示所有可编辑字段的简化 UI（名称和可见性切换）
+ * - 普通模式：仅显示高级字段的完整输入 UI
+ */
 export default function InspectionPanelFields({
   data,
   isEditingFields = false,
@@ -45,6 +52,7 @@ export default function InspectionPanelFields({
     [connectedFieldNames],
   );
 
+  // 获取所有可编辑字段（用于编辑模式）
   // Get all editable fields (for edit mode)
   const allEditableFields = useMemo(() => {
     return Object.keys(data.node?.template || {})
@@ -82,6 +90,7 @@ export default function InspectionPanelFields({
     connectedFields,
   ]);
 
+  // 仅获取高级字段（用于普通模式）
   // Get only advanced fields (for normal mode)
   const advancedFields = useMemo(() => {
     return Object.keys(data.node?.template || {})
@@ -111,6 +120,7 @@ export default function InspectionPanelFields({
       );
   }, [data.node?.template, data.node?.field_order, isToolMode]);
 
+  // 编辑模式 - 显示所有字段的简化编辑 UI
   // Edit mode - show all fields with simplified edit UI
   if (isEditingFields) {
     if (allEditableFields.length === 0) {
@@ -142,6 +152,7 @@ export default function InspectionPanelFields({
     );
   }
 
+  // 普通模式 - 仅显示高级字段的完整输入 UI
   // Normal mode - show only advanced fields with full input UI
   if (advancedFields.length === 0) {
     return (

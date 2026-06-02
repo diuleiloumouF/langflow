@@ -10,6 +10,11 @@ import {
 import { ENABLE_DATASTAX_LANGFLOW } from "@/customization/feature-flags";
 import useFlowStore from "@/stores/flowStore";
 
+/**
+ * 帮助下拉菜单组件
+ * 提供帮助功能入口，包括辅助线切换、检查面板切换、
+ * 文档链接、Bug 报告和桌面应用下载。
+ */
 const HelpDropdown = () => {
   const navigate = useNavigate();
   const [isHelpMenuOpen, setIsHelpMenuOpen] = useState(false);

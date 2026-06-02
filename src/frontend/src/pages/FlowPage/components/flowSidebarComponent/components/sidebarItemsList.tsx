@@ -8,6 +8,10 @@ import { getDisabledTooltip } from "../helpers/get-disabled-tooltip";
 import type { UniqueInputsComponents } from "../types";
 import SidebarDraggableComponent from "./sidebarDraggableComponent";
 
+/**
+ * 侧边栏组件项列表
+ * 显示指定分类下的所有可拖拽组件项
+ */
 const SidebarItemsList = ({
   item,
   dataFilter,

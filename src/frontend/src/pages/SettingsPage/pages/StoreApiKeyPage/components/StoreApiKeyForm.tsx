@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "../../../../../components/ui/card";
 
+/** 商店 API 密钥表单组件的属性定义 */
 type StoreApiKeyFormComponentProps = {
   apikey: string;
   handleInput: (event: any) => void;
