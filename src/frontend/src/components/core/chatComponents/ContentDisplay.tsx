@@ -1,12 +1,26 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import Markdown from "react-markdown";
 import rehypeMathjax from "rehype-mathjax/browser";
 import remarkGfm from "remark-gfm";
 import type { ContentType, JSONValue } from "@/types/chat";
 import { extractLanguage, isCodeBlock } from "@/utils/codeBlockUtils";
 import ForwardedIconComponent from "../../common/genericIconComponent";
+import { Dialog, DialogContent, DialogTitle } from "../../ui/dialog";
 import SimplifiedCodeTabComponent from "../codeTabsComponent";
 import DurationDisplay from "./DurationDisplay";
+
+const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".m4v", ".ogg"];
+
+function isVideoUrl(url: string): boolean {
+  if (url.startsWith("data:video/")) {
+    return true;
+  }
+
+  const normalizedUrl = url.split("?")[0]?.split("#")[0]?.toLowerCase() ?? "";
+  return VIDEO_EXTENSIONS.some((extension) =>
+    normalizedUrl.endsWith(extension),
+  );
+}
 
 export default function ContentDisplay({
   content,
@@ -17,6 +31,24 @@ export default function ContentDisplay({
   chatId: string;
   playgroundPage?: boolean;
 }) {
+  const [copiedMediaUrl, setCopiedMediaUrl] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
+  const copyMediaUrl = (url: string) => {
+    if (!navigator.clipboard?.writeText) {
+      return;
+    }
+
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedMediaUrl(url);
+      setTimeout(() => {
+        setCopiedMediaUrl((currentUrl) =>
+          currentUrl === url ? null : currentUrl,
+        );
+      }, 1500);
+    });
+  };
+
   const renderDuration = content.duration !== undefined && !playgroundPage && (
     <div className="absolute right-2 top-4">
       <DurationDisplay duration={content.duration} chatId={chatId} />
@@ -230,15 +262,59 @@ export default function ContentDisplay({
 
     case "media":
       contentData = (
-        <div>
+        <div className="flex flex-col gap-3">
           {content.urls.map((url, index) => (
-            <img
-              key={index}
-              src={url}
-              alt={content.caption || `Media ${index}`}
-            />
+            <div
+              key={`${url}-${index}`}
+              className="group relative overflow-hidden rounded-md border"
+            >
+              <button
+                type="button"
+                aria-label="Copy media URL"
+                className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background/90 text-muted-foreground opacity-100 shadow-sm backdrop-blur transition hover:bg-muted hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
+                data-testid={`copy-media-url-${index}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  copyMediaUrl(url);
+                }}
+              >
+                <ForwardedIconComponent
+                  name={copiedMediaUrl === url ? "Check" : "Copy"}
+                  className="h-4 w-4"
+                />
+              </button>
+              {isVideoUrl(url) ? (
+                <video
+                  src={url}
+                  controls
+                  className="max-h-[480px] w-full bg-black"
+                  data-testid={`media-video-${index}`}
+                >
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    Open video
+                  </a>
+                </video>
+              ) : (
+                <button
+                  type="button"
+                  className="relative flex w-full cursor-zoom-in items-center justify-center bg-muted/30"
+                  aria-label="Preview image"
+                  data-testid={`preview-media-image-${index}`}
+                  onClick={() => setPreviewImageUrl(url)}
+                >
+                  <img
+                    src={url}
+                    alt={content.caption || `Media ${index}`}
+                    className="max-h-[480px] w-full object-contain"
+                    data-testid={`media-image-${index}`}
+                  />
+                  <span className="pointer-events-none absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background/90 text-muted-foreground opacity-100 shadow-sm backdrop-blur transition group-hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100">
+                    <ForwardedIconComponent name="ZoomIn" className="h-4 w-4" />
+                  </span>
+                </button>
+              )}
+            </div>
           ))}
-          {content.caption && <div>{content.caption}</div>}
         </div>
       );
       break;
@@ -248,6 +324,31 @@ export default function ContentDisplay({
     <div className="relative p-[16px]">
       {renderDuration}
       {contentData}
+      <Dialog
+        open={previewImageUrl !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreviewImageUrl(null);
+          }
+        }}
+      >
+        <DialogContent
+          className="max-h-[92vh] w-[min(96vw,1200px)] max-w-none border-border bg-background/95 p-3 shadow-2xl backdrop-blur"
+          closeButtonClassName="right-3 top-3 bg-background/90 shadow-sm"
+        >
+          <DialogTitle className="sr-only">Image preview</DialogTitle>
+          {previewImageUrl && (
+            <div className="flex max-h-[86vh] items-center justify-center overflow-hidden rounded-lg bg-black/5">
+              <img
+                src={previewImageUrl}
+                alt="Preview"
+                className="max-h-[86vh] max-w-full object-contain"
+                data-testid="media-image-preview"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

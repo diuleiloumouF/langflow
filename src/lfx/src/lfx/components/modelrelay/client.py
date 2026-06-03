@@ -60,6 +60,35 @@ def get_task_query(api_key: str, task_uid: str, *, timeout: float = 30.0) -> dic
     return data
 
 
+def extract_text(value: Any) -> str | None:
+    """Extract plain text from strings, Messages, or Data-like payloads."""
+    if isinstance(value, str):
+        return value.strip() or None
+
+    text = getattr(value, "text", None)
+    if isinstance(text, str) and text.strip():
+        return text.strip()
+
+    data = getattr(value, "data", value)
+    if not isinstance(data, dict):
+        return None
+
+    candidates = [
+        data.get("text"),
+        data.get("message"),
+        data.get("prompt"),
+        data.get("response"),
+        data.get("data", {}).get("text") if isinstance(data.get("data"), dict) else None,
+        data.get("data", {}).get("message") if isinstance(data.get("data"), dict) else None,
+        data.get("data", {}).get("prompt") if isinstance(data.get("data"), dict) else None,
+        data.get("data", {}).get("response") if isinstance(data.get("data"), dict) else None,
+    ]
+    for candidate in candidates:
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate.strip()
+    return None
+
+
 def extract_task_uid(value: Any) -> str | None:
     if isinstance(value, str):
         return value.strip() or None

@@ -1,14 +1,14 @@
 "use client";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BorderTrail } from "@/components/core/border-trail";
 import { useToolDurations } from "@/components/core/playgroundComponent/chat-view/chat-messages/hooks/use-tool-durations";
 import {
   formatTime,
   formatToolTitle,
 } from "@/components/core/playgroundComponent/chat-view/chat-messages/utils/format";
-import type { ContentBlock } from "@/types/chat";
+import type { ContentBlock, ContentType } from "@/types/chat";
 import { cn } from "@/utils/utils";
 import ForwardedIconComponent from "../../common/genericIconComponent";
 import {
@@ -19,6 +19,14 @@ import {
 } from "../../ui/accordion";
 import ContentDisplay from "./ContentDisplay";
 import DurationDisplay from "./DurationDisplay";
+
+interface ContentItem {
+  content: ContentType;
+  contentKey: string;
+  blockIndex: number;
+  contentIndex: number;
+  blockTitle: string;
+}
 
 interface ContentBlockDisplayProps {
   contentBlocks: ContentBlock[];
@@ -39,26 +47,33 @@ export function ContentBlockDisplay({
 }: ContentBlockDisplayProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Use shared hook for tool duration tracking
-  const { toolElapsedTimes, toolItems } = useToolDurations(
+  const { toolElapsedTimes } = useToolDurations(
     contentBlocks,
     isLoading ?? false,
   );
 
-  if (!toolItems.length) {
+  const contentItems = useMemo<ContentItem[]>(() => {
+    return (contentBlocks ?? []).flatMap((block, blockIndex) =>
+      block.contents.map((content, contentIndex) => ({
+        content,
+        contentKey: `${blockIndex}-${contentIndex}`,
+        blockIndex,
+        contentIndex,
+        blockTitle: block.title,
+      })),
+    );
+  }, [contentBlocks]);
+
+  if (!contentBlocks?.length || !contentItems.length) {
     return null;
   }
 
   const totalDuration = isLoading
     ? undefined
-    : toolItems.reduce((acc, { content, toolKey }) => {
-        const toolDuration = toolElapsedTimes[toolKey] ?? content.duration ?? 0;
-        return acc + toolDuration;
+    : contentItems.reduce((acc, { content, contentKey }) => {
+        const duration = toolElapsedTimes[contentKey] ?? content.duration ?? 0;
+        return acc + duration;
       }, 0);
-
-  if (!contentBlocks?.length) {
-    return null;
-  }
 
   const headerIcon = state === "partial" ? "Bot" : "Check";
   const headerTitle = state === "partial" ? "Steps" : "Finished";
@@ -125,23 +140,42 @@ export function ContentBlockDisplay({
               type="multiple"
               className="w-full bg-transparent flex flex-col gap-2"
             >
-              {toolItems.map(
-                ({ content, toolKey, blockIndex, contentIndex }, flatIdx) => {
+              {contentItems.map(
+                (
+                  { content, contentKey, blockIndex, contentIndex, blockTitle },
+                  flatIdx,
+                ) => {
+                  if (content.type !== "tool_use") {
+                    return (
+                      <div
+                        key={contentKey}
+                        className="overflow-hidden rounded-lg border border-border bg-background"
+                      >
+                        <ContentDisplay
+                          playgroundPage={playgroundPage}
+                          content={content}
+                          chatId={`${chatId}-${blockIndex}-${contentIndex}`}
+                        />
+                      </div>
+                    );
+                  }
+
                   const rawTitle =
                     content.header?.title ||
                     content.name ||
+                    blockTitle ||
                     `Tool ${flatIdx + 1}`;
                   const toolTitle =
                     typeof rawTitle === "string"
                       ? formatToolTitle(rawTitle)
                       : rawTitle;
                   const toolDuration =
-                    toolElapsedTimes[toolKey] ?? content.duration ?? 0;
+                    toolElapsedTimes[contentKey] ?? content.duration ?? 0;
 
                   return (
                     <AccordionItem
-                      key={toolKey}
-                      value={toolKey}
+                      key={contentKey}
+                      value={contentKey}
                       className="border border-border rounded-lg overflow-hidden bg-background"
                     >
                       <AccordionTrigger className="hover:bg-muted hover:no-underline px-3 py-2.5">

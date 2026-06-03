@@ -90530,7 +90530,8 @@
       {
         "ModelRelayTaskQuery": {
           "base_classes": [
-            "JSON"
+            "JSON",
+            "Message"
           ],
           "beta": false,
           "conditional_paths": [],
@@ -90542,13 +90543,16 @@
           "field_order": [
             "api_key",
             "task_uid",
-            "task"
+            "task",
+            "poll_until_complete",
+            "max_attempts",
+            "poll_interval_seconds"
           ],
           "frozen": false,
           "icon": "Network",
           "legacy": false,
           "metadata": {
-            "code_hash": "d1b0f3afaa45",
+            "code_hash": "ec9c87e616a8",
             "dependencies": {
               "dependencies": [
                 {
@@ -90574,6 +90578,20 @@
               "tool_mode": true,
               "types": [
                 "JSON"
+              ],
+              "value": "__UNDEFINED__"
+            },
+            {
+              "allows_loop": false,
+              "cache": true,
+              "display_name": "Task Media",
+              "group_outputs": false,
+              "method": "query_task_media",
+              "name": "task_media",
+              "selected": "Message",
+              "tool_mode": true,
+              "types": [
+                "Message"
               ],
               "value": "__UNDEFINED__"
             }
@@ -90616,7 +90634,67 @@
               "show": true,
               "title_case": false,
               "type": "code",
-              "value": "from __future__ import annotations\n\nfrom typing import Any\n\nfrom lfx.custom.custom_component.component import Component\nfrom lfx.io import DataInput, MessageTextInput, Output, SecretStrInput\nfrom lfx.log.logger import logger\nfrom lfx.schema.data import Data\n\nfrom lfx.components.modelrelay.client import (\n    MODEL_RELAY_API_KEY_VARIABLE,\n    extract_task_uid,\n    get_task_query,\n    resolve_api_key,\n)\n\n\nclass ModelRelayTaskQueryComponent(Component):\n    display_name = \"Model Relay Query Task\"\n    description = \"Query a Model Relay image or video task by task UID.\"\n    documentation = \"https://model-relay-api.zzengine.net\"\n    icon = \"Network\"\n    name = \"ModelRelayTaskQuery\"\n\n    inputs = [\n        SecretStrInput(\n            name=\"api_key\",\n            display_name=\"Model Relay API Key\",\n            value=MODEL_RELAY_API_KEY_VARIABLE,\n            required=True,\n            info=\"Falls back to MODEL_RELAY_API_KEY from Model providers or environment variables.\",\n        ),\n        MessageTextInput(name=\"task_uid\", display_name=\"Task UID\", tool_mode=True),\n        DataInput(\n            name=\"task\",\n            display_name=\"Task Data\",\n            info=\"Optional output from Model Relay Submit Task. Used when Task UID is empty.\",\n            advanced=True,\n        ),\n    ]\n\n    outputs = [Output(display_name=\"Task Result\", name=\"task_result\", method=\"query_task\")]\n\n    def query_task(self) -> Data:\n        api_key = resolve_api_key(self.api_key, self.user_id)\n        task_uid = extract_task_uid(getattr(self, \"task_uid\", None)) or extract_task_uid(getattr(self, \"task\", None))\n        if not task_uid:\n            msg = \"Task UID is required, either directly or from Task Data.\"\n            raise ValueError(msg)\n\n        try:\n            response = get_task_query(api_key, task_uid)\n        except Exception as exc:  # noqa: BLE001\n            logger.debug(\"Error querying Model Relay task\", exc_info=True)\n            self.status = f\"Model Relay task query failed: {exc}\"\n            return Data(data={\"error\": str(exc), \"task_uid\": task_uid})\n\n        output = self._flatten_query_response(response)\n        result = Data(data=output)\n        self.status = result\n        return result\n\n    @staticmethod\n    def _flatten_query_response(response: dict[str, Any]) -> dict[str, Any]:\n        data = response.get(\"data\") if isinstance(response.get(\"data\"), dict) else {}\n        task = data.get(\"task\") if isinstance(data.get(\"task\"), dict) else {}\n        detail = task.get(\"detail\") if isinstance(task.get(\"detail\"), dict) else {}\n        result = detail.get(\"result\")\n        return {\n            \"response\": response,\n            \"task\": task,\n            \"result\": result,\n        }\n"
+              "value": "from __future__ import annotations\n\nimport time\nfrom typing import Any\n\nfrom lfx.components.modelrelay.client import (\n    MODEL_RELAY_API_KEY_VARIABLE,\n    extract_task_uid,\n    get_task_query,\n    resolve_api_key,\n)\nfrom lfx.custom.custom_component.component import Component\nfrom lfx.io import BoolInput, DataInput, FloatInput, IntInput, MessageTextInput, Output, SecretStrInput\nfrom lfx.log.logger import logger\nfrom lfx.schema.content_block import ContentBlock\nfrom lfx.schema.content_types import MediaContent\nfrom lfx.schema.data import Data\nfrom lfx.schema.message import Message\n\nMODEL_RELAY_TASK_SUCCESS_STATUS = 2\nMODEL_RELAY_TASK_FAILURE_STATUS = 3\n\n\nclass ModelRelayTaskQueryComponent(Component):\n    display_name = \"Model Relay Query Task\"\n    description = \"Query a Model Relay image or video task by task UID.\"\n    documentation = \"https://model-relay-api.zzengine.net\"\n    icon = \"Network\"\n    name = \"ModelRelayTaskQuery\"\n\n    inputs = [\n        SecretStrInput(\n            name=\"api_key\",\n            display_name=\"Model Relay API Key\",\n            value=MODEL_RELAY_API_KEY_VARIABLE,\n            required=True,\n            info=\"Falls back to MODEL_RELAY_API_KEY from Model providers or environment variables.\",\n        ),\n        MessageTextInput(name=\"task_uid\", display_name=\"Task UID\", tool_mode=True),\n        DataInput(\n            name=\"task\",\n            display_name=\"Task Data\",\n            info=\"Optional output from Model Relay Submit Task. Used when Task UID is empty.\",\n            advanced=True,\n        ),\n        BoolInput(\n            name=\"poll_until_complete\",\n            display_name=\"Poll Until Complete\",\n            value=False,\n            advanced=True,\n            info=\"Poll until status is 2 (success), 3 (failure), or the max attempts limit is reached.\",\n        ),\n        IntInput(\n            name=\"max_attempts\",\n            display_name=\"Max Poll Attempts\",\n            value=10,\n            advanced=True,\n            info=\"Maximum query attempts when polling is enabled.\",\n        ),\n        FloatInput(\n            name=\"poll_interval_seconds\",\n            display_name=\"Poll Interval Seconds\",\n            value=3.0,\n            advanced=True,\n            info=\"Seconds to wait between polling attempts.\",\n        ),\n    ]\n\n    outputs = [\n        Output(display_name=\"Task Result\", name=\"task_result\", method=\"query_task\"),\n        Output(display_name=\"Task Media\", name=\"task_media\", method=\"query_task_media\"),\n    ]\n\n    def query_task(self) -> Data:\n        result = self._query_task_data()\n        self.status = result\n        return result\n\n    def query_task_media(self) -> Message:\n        result = self._query_task_data()\n        if \"error\" in result.data:\n            return Message(text=str(result.data[\"error\"]), error=True)\n\n        task = result.data.get(\"task\") if isinstance(result.data.get(\"task\"), dict) else {}\n        media_urls = self._extract_media_urls(result.data.get(\"result\"), task.get(\"task_type\"))\n        if not media_urls:\n            status = task.get(\"status\")\n            return Message(text=f\"No media result is available yet. Task status: {status}\")\n\n        task_uid = task.get(\"task_uid\") or result.data.get(\"task_uid\") or \"\"\n        caption = f\"Model Relay task result {task_uid}\".strip()\n        message = Message(\n            text=\"\",\n            content_blocks=[\n                ContentBlock(\n                    title=\"Model Relay Media\",\n                    contents=[MediaContent(type=\"media\", urls=media_urls, caption=caption)],\n                )\n            ],\n        )\n        self.status = message\n        return message\n\n    def _query_task_data(self) -> Data:\n        if hasattr(self, \"_query_result\"):\n            return self._query_result\n\n        api_key = resolve_api_key(self.api_key, self.user_id)\n        task_uid = extract_task_uid(getattr(self, \"task_uid\", None)) or extract_task_uid(getattr(self, \"task\", None))\n        if not task_uid:\n            msg = \"Task UID is required, either directly or from Task Data.\"\n            raise ValueError(msg)\n\n        try:\n            response, attempts = self._query_with_optional_polling(api_key, task_uid)\n        except Exception as exc:  # noqa: BLE001\n            logger.debug(\"Error querying Model Relay task\", exc_info=True)\n            self.status = f\"Model Relay task query failed: {exc}\"\n            result = Data(data={\"error\": str(exc), \"task_uid\": task_uid})\n            self._query_result = result\n            return result\n\n        output = self._flatten_query_response(response)\n        output[\"attempts\"] = attempts\n        output[\"completed\"] = self._is_terminal_status(output.get(\"task\", {}).get(\"status\"))\n        result = Data(data=output)\n        self._query_result = result\n        return result\n\n    def _query_with_optional_polling(self, api_key: str, task_uid: str) -> tuple[dict[str, Any], int]:\n        max_attempts = max(1, int(getattr(self, \"max_attempts\", 1) or 1))\n        poll_interval_seconds = max(0.0, float(getattr(self, \"poll_interval_seconds\", 0.0) or 0.0))\n        should_poll = bool(getattr(self, \"poll_until_complete\", False))\n        attempts_limit = max_attempts if should_poll else 1\n\n        response: dict[str, Any] | None = None\n        for attempt in range(1, attempts_limit + 1):\n            response = get_task_query(api_key, task_uid)\n            task = self._extract_task(response)\n            if self._is_terminal_status(task.get(\"status\")):\n                return response, attempt\n            if attempt < attempts_limit and poll_interval_seconds:\n                time.sleep(poll_interval_seconds)\n\n        if response is None:\n            msg = \"Model Relay task query returned no response.\"\n            raise ValueError(msg)\n        return response, attempts_limit\n\n    @staticmethod\n    def _flatten_query_response(response: dict[str, Any]) -> dict[str, Any]:\n        task = ModelRelayTaskQueryComponent._extract_task(response)\n        detail = task.get(\"detail\") if isinstance(task.get(\"detail\"), dict) else {}\n        result = detail.get(\"result\")\n        return {\n            \"response\": response,\n            \"task\": task,\n            \"result\": result,\n        }\n\n    @staticmethod\n    def _extract_task(response: dict[str, Any]) -> dict[str, Any]:\n        data = response.get(\"data\") if isinstance(response.get(\"data\"), dict) else {}\n        return data.get(\"task\") if isinstance(data.get(\"task\"), dict) else {}\n\n    @staticmethod\n    def _is_terminal_status(status: Any) -> bool:\n        return status in {MODEL_RELAY_TASK_SUCCESS_STATUS, MODEL_RELAY_TASK_FAILURE_STATUS}\n\n    @classmethod\n    def _extract_media_urls(cls, value: Any, task_type: Any = None) -> list[str]:\n        urls: list[str] = []\n\n        def add_url(candidate: Any, *, key: str | None = None) -> None:\n            if not isinstance(candidate, str) or not candidate.strip():\n                return\n            text = candidate.strip()\n            if cls._is_media_url(text):\n                urls.append(text)\n            elif key == \"b64_json\" and task_type == \"image\":\n                urls.append(f\"data:image/png;base64,{text}\")\n\n        def walk(candidate: Any, *, key: str | None = None) -> None:\n            if isinstance(candidate, dict):\n                preferred_keys = (\n                    \"video\",\n                    \"videos\",\n                    \"video_url\",\n                    \"video_urls\",\n                    \"image\",\n                    \"images\",\n                    \"image_url\",\n                    \"image_urls\",\n                    \"url\",\n                    \"urls\",\n                    \"b64_json\",\n                )\n                for preferred_key in preferred_keys:\n                    if preferred_key in candidate:\n                        walk(candidate[preferred_key], key=preferred_key)\n                return\n            if isinstance(candidate, list):\n                for item in candidate:\n                    walk(item, key=key)\n                return\n            add_url(candidate, key=key)\n\n        walk(value)\n        return list(dict.fromkeys(urls))\n\n    @staticmethod\n    def _is_media_url(value: str) -> bool:\n        return value.startswith((\"http://\", \"https://\", \"data:image/\", \"data:video/\"))\n"
+            },
+            "max_attempts": {
+              "_input_type": "IntInput",
+              "advanced": true,
+              "display_name": "Max Poll Attempts",
+              "dynamic": false,
+              "info": "Maximum query attempts when polling is enabled.",
+              "list": false,
+              "list_add_label": "Add More",
+              "name": "max_attempts",
+              "override_skip": false,
+              "placeholder": "",
+              "required": false,
+              "show": true,
+              "title_case": false,
+              "tool_mode": false,
+              "trace_as_metadata": true,
+              "track_in_telemetry": true,
+              "type": "int",
+              "value": 10
+            },
+            "poll_interval_seconds": {
+              "_input_type": "FloatInput",
+              "advanced": true,
+              "display_name": "Poll Interval Seconds",
+              "dynamic": false,
+              "info": "Seconds to wait between polling attempts.",
+              "list": false,
+              "list_add_label": "Add More",
+              "name": "poll_interval_seconds",
+              "override_skip": false,
+              "placeholder": "",
+              "required": false,
+              "show": true,
+              "title_case": false,
+              "tool_mode": false,
+              "trace_as_metadata": true,
+              "track_in_telemetry": true,
+              "type": "float",
+              "value": 3.0
+            },
+            "poll_until_complete": {
+              "_input_type": "BoolInput",
+              "advanced": true,
+              "display_name": "Poll Until Complete",
+              "dynamic": false,
+              "info": "Poll until status is 2 (success), 3 (failure), or the max attempts limit is reached.",
+              "list": false,
+              "list_add_label": "Add More",
+              "name": "poll_until_complete",
+              "override_skip": false,
+              "placeholder": "",
+              "required": false,
+              "show": true,
+              "title_case": false,
+              "tool_mode": false,
+              "trace_as_metadata": true,
+              "track_in_telemetry": true,
+              "type": "bool",
+              "value": false
             },
             "task": {
               "_input_type": "JSONInput",
@@ -90700,7 +90778,7 @@
           "icon": "Network",
           "legacy": false,
           "metadata": {
-            "code_hash": "b40d02417c3f",
+            "code_hash": "c8876cade0d0",
             "dependencies": {
               "dependencies": [
                 {
@@ -90807,7 +90885,7 @@
               "show": true,
               "title_case": false,
               "type": "code",
-              "value": "from __future__ import annotations\n\nfrom typing import Any\n\nfrom lfx.custom.custom_component.component import Component\nfrom lfx.io import DictInput, DropdownInput, IntInput, MessageTextInput, Output, SecretStrInput\nfrom lfx.log.logger import logger\nfrom lfx.schema.data import Data\nfrom lfx.schema.message import Message\n\nfrom lfx.components.modelrelay.client import MODEL_RELAY_API_KEY_VARIABLE, post_task_submit, resolve_api_key\n\n\nclass ModelRelayTaskSubmitComponent(Component):\n    display_name = \"Model Relay Submit Task\"\n    description = \"Submit image or video generation tasks to Model Relay and return the task UID.\"\n    documentation = \"https://model-relay-api.zzengine.net\"\n    icon = \"Network\"\n    name = \"ModelRelayTaskSubmit\"\n\n    inputs = [\n        SecretStrInput(\n            name=\"api_key\",\n            display_name=\"Model Relay API Key\",\n            value=MODEL_RELAY_API_KEY_VARIABLE,\n            required=True,\n            info=\"Falls back to MODEL_RELAY_API_KEY from Model providers or environment variables.\",\n        ),\n        DropdownInput(\n            name=\"task_type\",\n            display_name=\"Task Type\",\n            options=[\"image\", \"video\"],\n            value=\"image\",\n            required=True,\n            real_time_refresh=True,\n        ),\n        MessageTextInput(name=\"model_code\", display_name=\"Model Code\", required=True),\n        MessageTextInput(name=\"prompt\", display_name=\"Prompt\", required=True, tool_mode=True),\n        MessageTextInput(name=\"callback_url\", display_name=\"Callback URL\", advanced=True),\n        IntInput(name=\"image_width\", display_name=\"Image Width\", advanced=True),\n        IntInput(name=\"image_height\", display_name=\"Image Height\", advanced=True),\n        IntInput(name=\"video_duration\", display_name=\"Video Duration\", advanced=True),\n        MessageTextInput(name=\"video_resolution\", display_name=\"Video Resolution\", advanced=True),\n        MessageTextInput(name=\"video_ratio\", display_name=\"Video Ratio\", advanced=True),\n        DictInput(\n            name=\"parameters\",\n            display_name=\"Parameters\",\n            advanced=True,\n            info=\"Additional task parameters passed through to Model Relay.\",\n        ),\n    ]\n\n    outputs = [\n        Output(display_name=\"Task UID\", name=\"task_uid\", method=\"submit_task_uid\"),\n        Output(display_name=\"Task Data\", name=\"task\", method=\"submit_task\"),\n    ]\n\n    def submit_task(self) -> Data:\n        return self._submit_task()\n\n    def submit_task_uid(self) -> Message:\n        result = self._submit_task()\n        return Message(text=str(result.data.get(\"task_uid\") or \"\"))\n\n    def _submit_task(self) -> Data:\n        if hasattr(self, \"_submission_result\"):\n            return self._submission_result\n\n        api_key = resolve_api_key(self.api_key, self.user_id)\n        payload = self._build_payload()\n\n        try:\n            response = post_task_submit(api_key, payload)\n        except Exception as exc:  # noqa: BLE001\n            logger.debug(\"Error submitting Model Relay task\", exc_info=True)\n            self.status = f\"Model Relay task submission failed: {exc}\"\n            result = Data(data={\"error\": str(exc), \"request\": payload})\n            self._submission_result = result\n            return result\n\n        output = self._flatten_submit_response(response)\n        result = Data(data=output)\n        self.status = result\n        self._submission_result = result\n        return result\n\n    def _build_payload(self) -> dict[str, Any]:\n        if self.task_type not in {\"image\", \"video\"}:\n            msg = \"Task Type must be image or video.\"\n            raise ValueError(msg)\n        if not self.model_code:\n            msg = \"Model Code is required.\"\n            raise ValueError(msg)\n        if not self.prompt:\n            msg = \"Prompt is required.\"\n            raise ValueError(msg)\n\n        payload: dict[str, Any] = {\n            \"task_type\": self.task_type,\n            \"model_code\": str(self.model_code).strip(),\n            \"prompt\": str(self.prompt).strip(),\n        }\n        if getattr(self, \"callback_url\", None):\n            payload[\"callback_url\"] = str(self.callback_url).strip()\n        if getattr(self, \"image_width\", None):\n            payload[\"image_width\"] = self.image_width\n        if getattr(self, \"image_height\", None):\n            payload[\"image_height\"] = self.image_height\n        if getattr(self, \"video_duration\", None):\n            payload[\"video_duration\"] = self.video_duration\n        if getattr(self, \"video_resolution\", None):\n            payload[\"video_resolution\"] = str(self.video_resolution).strip()\n        if getattr(self, \"video_ratio\", None):\n            payload[\"video_ratio\"] = str(self.video_ratio).strip()\n        if getattr(self, \"parameters\", None):\n            payload[\"parameters\"] = self.parameters\n        return payload\n\n    @staticmethod\n    def _flatten_submit_response(response: dict[str, Any]) -> dict[str, Any]:\n        data = response.get(\"data\") if isinstance(response.get(\"data\"), dict) else {}\n        return {\n            \"response\": response,\n            \"task_uid\": data.get(\"task_uid\"),\n            \"estimated_amount\": data.get(\"estimated_amount\"),\n            \"account_uid\": data.get(\"account_uid\"),\n            \"key_uid\": data.get(\"key_uid\"),\n        }\n\n    def update_build_config(self, build_config: dict, field_value: Any, field_name: str | None = None) -> dict:\n        if field_name == \"task_type\":\n            is_image = field_value == \"image\"\n            for field in (\"image_width\", \"image_height\"):\n                if field in build_config:\n                    build_config[field][\"show\"] = is_image\n            for field in (\"video_duration\", \"video_resolution\", \"video_ratio\"):\n                if field in build_config:\n                    build_config[field][\"show\"] = not is_image\n        return build_config\n"
+              "value": "from __future__ import annotations\n\nfrom typing import Any\n\nfrom lfx.components.modelrelay.client import MODEL_RELAY_API_KEY_VARIABLE, extract_text, post_task_submit, resolve_api_key\nfrom lfx.custom.custom_component.component import Component\nfrom lfx.io import DictInput, DropdownInput, IntInput, MessageTextInput, Output, SecretStrInput\nfrom lfx.log.logger import logger\nfrom lfx.schema.data import Data\nfrom lfx.schema.message import Message\n\n\nclass ModelRelayTaskSubmitComponent(Component):\n    display_name = \"Model Relay Submit Task\"\n    description = \"Submit image or video generation tasks to Model Relay and return the task UID.\"\n    documentation = \"https://model-relay-api.zzengine.net\"\n    icon = \"Network\"\n    name = \"ModelRelayTaskSubmit\"\n\n    inputs = [\n        SecretStrInput(\n            name=\"api_key\",\n            display_name=\"Model Relay API Key\",\n            value=MODEL_RELAY_API_KEY_VARIABLE,\n            required=True,\n            info=\"Falls back to MODEL_RELAY_API_KEY from Model providers or environment variables.\",\n        ),\n        DropdownInput(\n            name=\"task_type\",\n            display_name=\"Task Type\",\n            options=[\"image\", \"video\"],\n            value=\"image\",\n            required=True,\n            real_time_refresh=True,\n        ),\n        MessageTextInput(name=\"model_code\", display_name=\"Model Code\", required=True),\n        MessageTextInput(name=\"prompt\", display_name=\"Prompt\", required=True, tool_mode=True),\n        MessageTextInput(name=\"callback_url\", display_name=\"Callback URL\", advanced=True),\n        IntInput(name=\"image_width\", display_name=\"Image Width\", advanced=True),\n        IntInput(name=\"image_height\", display_name=\"Image Height\", advanced=True),\n        IntInput(name=\"video_duration\", display_name=\"Video Duration\", advanced=True),\n        MessageTextInput(name=\"video_resolution\", display_name=\"Video Resolution\", advanced=True),\n        MessageTextInput(name=\"video_ratio\", display_name=\"Video Ratio\", advanced=True),\n        DictInput(\n            name=\"parameters\",\n            display_name=\"Parameters\",\n            advanced=True,\n            info=\"Additional task parameters passed through to Model Relay.\",\n        ),\n    ]\n\n    outputs = [\n        Output(display_name=\"Task UID\", name=\"task_uid\", method=\"submit_task_uid\"),\n        Output(display_name=\"Task Data\", name=\"task\", method=\"submit_task\"),\n    ]\n\n    def submit_task(self) -> Data:\n        return self._submit_task()\n\n    def submit_task_uid(self) -> Message:\n        result = self._submit_task()\n        return Message(text=str(result.data.get(\"task_uid\") or \"\"))\n\n    def _submit_task(self) -> Data:\n        if hasattr(self, \"_submission_result\"):\n            return self._submission_result\n\n        api_key = resolve_api_key(self.api_key, self.user_id)\n        payload = self._build_payload()\n\n        try:\n            response = post_task_submit(api_key, payload)\n        except Exception as exc:  # noqa: BLE001\n            logger.debug(\"Error submitting Model Relay task\", exc_info=True)\n            self.status = f\"Model Relay task submission failed: {exc}\"\n            result = Data(data={\"error\": str(exc), \"request\": payload})\n            self._submission_result = result\n            return result\n\n        output = self._flatten_submit_response(response)\n        result = Data(data=output)\n        self.status = result\n        self._submission_result = result\n        return result\n\n    def _build_payload(self) -> dict[str, Any]:\n        if self.task_type not in {\"image\", \"video\"}:\n            msg = \"Task Type must be image or video.\"\n            raise ValueError(msg)\n        model_code = extract_text(getattr(self, \"model_code\", None))\n        prompt = extract_text(getattr(self, \"prompt\", None))\n\n        if not model_code:\n            msg = \"Model Code is required.\"\n            raise ValueError(msg)\n        if not prompt:\n            msg = \"Prompt is required.\"\n            raise ValueError(msg)\n\n        payload: dict[str, Any] = {\n            \"task_type\": self.task_type,\n            \"model_code\": model_code,\n            \"prompt\": prompt,\n        }\n        callback_url = extract_text(getattr(self, \"callback_url\", None))\n        if callback_url:\n            payload[\"callback_url\"] = callback_url\n        if getattr(self, \"image_width\", None):\n            payload[\"image_width\"] = self.image_width\n        if getattr(self, \"image_height\", None):\n            payload[\"image_height\"] = self.image_height\n        if getattr(self, \"video_duration\", None):\n            payload[\"video_duration\"] = self.video_duration\n        video_resolution = extract_text(getattr(self, \"video_resolution\", None))\n        if video_resolution:\n            payload[\"video_resolution\"] = video_resolution\n        video_ratio = extract_text(getattr(self, \"video_ratio\", None))\n        if video_ratio:\n            payload[\"video_ratio\"] = video_ratio\n        if getattr(self, \"parameters\", None):\n            payload[\"parameters\"] = self.parameters\n        return payload\n\n    @staticmethod\n    def _flatten_submit_response(response: dict[str, Any]) -> dict[str, Any]:\n        data = response.get(\"data\") if isinstance(response.get(\"data\"), dict) else {}\n        return {\n            \"response\": response,\n            \"task_uid\": data.get(\"task_uid\"),\n            \"estimated_amount\": data.get(\"estimated_amount\"),\n            \"account_uid\": data.get(\"account_uid\"),\n            \"key_uid\": data.get(\"key_uid\"),\n        }\n\n    def update_build_config(self, build_config: dict, field_value: Any, field_name: str | None = None) -> dict:\n        if field_name == \"task_type\":\n            is_image = field_value == \"image\"\n            for field in (\"image_width\", \"image_height\"):\n                if field in build_config:\n                    build_config[field][\"show\"] = is_image\n            for field in (\"video_duration\", \"video_resolution\", \"video_ratio\"):\n                if field in build_config:\n                    build_config[field][\"show\"] = not is_image\n        return build_config\n"
             },
             "image_height": {
               "_input_type": "IntInput",
@@ -118339,6 +118417,6 @@
     "num_components": 356,
     "num_modules": 98
   },
-  "sha256": "2ed1972ca7dbda32eea87b69aff5f7da42c709885725989dbb25a92f68f09275",
+  "sha256": "d516e2e950264b07a80793d61c755c3678c1dba1b90cf772a0a123acd6d3dd07",
   "version": "0.4.4"
 }

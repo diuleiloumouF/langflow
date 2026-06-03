@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from lfx.components.modelrelay.client import MODEL_RELAY_API_KEY_VARIABLE, post_task_submit, resolve_api_key
+from lfx.components.modelrelay.client import (
+    MODEL_RELAY_API_KEY_VARIABLE,
+    extract_text,
+    post_task_submit,
+    resolve_api_key,
+)
 from lfx.custom.custom_component.component import Component
 from lfx.io import DictInput, DropdownInput, IntInput, MessageTextInput, Output, SecretStrInput
 from lfx.log.logger import logger
@@ -87,30 +92,36 @@ class ModelRelayTaskSubmitComponent(Component):
         if self.task_type not in {"image", "video"}:
             msg = "Task Type must be image or video."
             raise ValueError(msg)
-        if not self.model_code:
+        model_code = extract_text(getattr(self, "model_code", None))
+        prompt = extract_text(getattr(self, "prompt", None))
+
+        if not model_code:
             msg = "Model Code is required."
             raise ValueError(msg)
-        if not self.prompt:
+        if not prompt:
             msg = "Prompt is required."
             raise ValueError(msg)
 
         payload: dict[str, Any] = {
             "task_type": self.task_type,
-            "model_code": str(self.model_code).strip(),
-            "prompt": str(self.prompt).strip(),
+            "model_code": model_code,
+            "prompt": prompt,
         }
-        if getattr(self, "callback_url", None):
-            payload["callback_url"] = str(self.callback_url).strip()
+        callback_url = extract_text(getattr(self, "callback_url", None))
+        if callback_url:
+            payload["callback_url"] = callback_url
         if getattr(self, "image_width", None):
             payload["image_width"] = self.image_width
         if getattr(self, "image_height", None):
             payload["image_height"] = self.image_height
         if getattr(self, "video_duration", None):
             payload["video_duration"] = self.video_duration
-        if getattr(self, "video_resolution", None):
-            payload["video_resolution"] = str(self.video_resolution).strip()
-        if getattr(self, "video_ratio", None):
-            payload["video_ratio"] = str(self.video_ratio).strip()
+        video_resolution = extract_text(getattr(self, "video_resolution", None))
+        if video_resolution:
+            payload["video_resolution"] = video_resolution
+        video_ratio = extract_text(getattr(self, "video_ratio", None))
+        if video_ratio:
+            payload["video_ratio"] = video_ratio
         if getattr(self, "parameters", None):
             payload["parameters"] = self.parameters
         return payload
