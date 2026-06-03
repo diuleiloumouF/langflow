@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ForwardedIconComponent } from "@/components/common/genericIconComponent";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,7 +49,8 @@ export default function GlobalVariableModal({
   const [type, setType] = useState<TAB_TYPES>(
     initialData?.type ?? "Credential",
   );
-  const [fields, setFields] = useState<string[]>([]); // 应用变量的字段列表
+  const [fields, setFields] = useState<string[]>(
+    // 应用变量的字段列表
     initialData?.default_fields ?? [],
   );
   const [open, setOpen] =

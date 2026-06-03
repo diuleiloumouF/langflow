@@ -9,8 +9,6 @@ const Tabs = TabsPrimitive.Root;
 
 // 标签页列表组件
 const TabsList = React.forwardRef<
-
-const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
 >(({ className, ...props }, ref) => (

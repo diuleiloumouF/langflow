@@ -15,12 +15,6 @@ const PopoverAnchor = PopoverPrimitive.Anchor;
 
 // 弹出框内容组件（使用 Portal 渲染）
 const PopoverContent = React.forwardRef<
-
-const PopoverTrigger = PopoverPrimitive.Trigger;
-
-const PopoverAnchor = PopoverPrimitive.Anchor;
-
-const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
 >(({ className, align = "center", sideOffset = 4, ...props }, ref) => (

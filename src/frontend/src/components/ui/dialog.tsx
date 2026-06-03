@@ -14,10 +14,6 @@ const DialogTrigger = DialogPrimitive.Trigger;
 
 // 对话框 Portal 组件，将内容渲染到 DOM 树外层
 const DialogPortal = ({
-
-const DialogTrigger = DialogPrimitive.Trigger;
-
-const DialogPortal = ({
   children,
   ...props
 }: DialogPrimitive.DialogPortalProps) => (

@@ -15,12 +15,6 @@ const TooltipTrigger = TooltipPrimitive.Trigger;
 
 // 工具提示内容组件（使用 Portal 渲染）
 const TooltipContent = React.forwardRef<
-
-const Tooltip = TooltipPrimitive.Root;
-
-const TooltipTrigger = TooltipPrimitive.Trigger;
-
-const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
 >(({ className, sideOffset = 4, ...props }, ref) => (

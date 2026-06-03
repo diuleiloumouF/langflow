@@ -16,12 +16,6 @@ const SelectValue = SelectPrimitive.Value;
 
 // 下拉选择触发器组件，支持向上/向下展开方向
 const SelectTrigger = React.forwardRef<
-
-const SelectGroup = SelectPrimitive.Group;
-
-const SelectValue = SelectPrimitive.Value;
-
-const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
     direction?: "up" | "down";

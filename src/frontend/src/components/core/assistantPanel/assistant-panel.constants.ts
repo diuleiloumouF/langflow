@@ -5,8 +5,6 @@ export const ASSISTANT_TITLE = "Langflow Assistant";
 
 // 会话存储键前缀
 export const ASSISTANT_SESSION_STORAGE_KEY_PREFIX =
-
-export const ASSISTANT_SESSION_STORAGE_KEY_PREFIX =
   "langflow-assistant-session-";
 
 // 助手输入框占位符文本列表
@@ -36,8 +34,6 @@ export const ASSISTANT_SESSION_PREVIEW_LENGTH = 80;
 export const ASSISTANT_WELCOME_TEXT = "Here's how I can help";
 
 // 助手建议操作列表
-export const ASSISTANT_SUGGESTIONS: AssistantSuggestion[] = [
-
 export const ASSISTANT_SUGGESTIONS: AssistantSuggestion[] = [
   {
     id: "build-agents",
