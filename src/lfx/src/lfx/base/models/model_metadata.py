@@ -289,6 +289,34 @@ MODEL_PROVIDER_METADATA: dict[str, Any] = {
             "model_param": "model_id",
         },
     },
+    "Model Relay": {
+        "icon": "Network",
+        "max_tokens_field_name": "max_tokens",
+        "default_base_url": "https://model-relay-api.zzengine.net/v1",
+        "variables": [
+            {
+                "variable_name": "Model Relay API Key",
+                "variable_key": "MODEL_RELAY_API_KEY",
+                "required": True,
+                "is_secret": True,
+                "is_list": False,
+                "options": [],
+                "langchain_param": "api_key",
+                "component_metadata": {
+                    "mapping_field": "api_key",
+                    "required": False,
+                    "advanced": True,
+                    "info": "Falls back to MODEL_RELAY_API_KEY environment variable",
+                },
+            }
+        ],
+        "api_docs_url": "https://model-relay-api.zzengine.net",
+        "mapping": {
+            "model_class": "ChatOpenAI",
+            "model_param": "model",
+            "base_url_param": "base_url",
+        },
+    },
 }
 
 

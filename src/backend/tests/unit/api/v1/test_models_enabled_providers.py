@@ -59,6 +59,17 @@ def google_credential():
     }
 
 
+@pytest.fixture
+def model_relay_credential():
+    """Model Relay credential fixture."""
+    return {
+        "name": "API Key",
+        "provider": "Model Relay",
+        "value": "sk-test-model-relay-key-123456789",
+        "description": "Model Relay API key for relay models",
+    }
+
+
 @pytest.mark.usefixtures("active_user")
 async def test_enabled_providers_empty_initially(client: AsyncClient, logged_in_headers):
     """Test that enabled_providers returns empty status when no credentials exist."""
@@ -417,6 +428,7 @@ async def test_provider_variable_mapping_returns_full_variable_info(client: Asyn
     assert "Google Generative AI" in result
     assert "Ollama" in result
     assert "IBM WatsonX" in result
+    assert "Model Relay" in result
 
     # Check structure of variables for OpenAI (single variable provider)
     openai_vars = result["OpenAI"]
@@ -437,6 +449,64 @@ async def test_provider_variable_mapping_returns_full_variable_info(client: Asyn
     assert openai_api_key_var is not None
     assert openai_api_key_var["required"] is True
     assert openai_api_key_var["is_secret"] is True
+
+    model_relay_vars = result["Model Relay"]
+    model_relay_api_key_var = next((v for v in model_relay_vars if v["variable_key"] == "MODEL_RELAY_API_KEY"), None)
+    assert model_relay_api_key_var is not None
+    assert model_relay_api_key_var["required"] is True
+    assert model_relay_api_key_var["is_secret"] is True
+
+
+@pytest.mark.usefixtures("active_user")
+async def test_models_endpoint_includes_model_relay_provider(client: AsyncClient, logged_in_headers):
+    """Test that Model Relay is available from the model catalog endpoint."""
+    response = await client.get("api/v1/models?provider=Model%20Relay", headers=logged_in_headers)
+    result = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(result) == 1
+    assert result[0]["provider"] == "Model Relay"
+    assert {model["model_name"] for model in result[0]["models"]} == {
+        "gpt-5.4",
+        "gemini-3.1-pro-preview",
+        "claude-sonnet-4-6",
+    }
+
+
+@pytest.mark.usefixtures("active_user")
+async def test_model_relay_provider_configured_after_credential_creation(
+    client: AsyncClient, model_relay_credential, logged_in_headers
+):
+    """Test Model Relay status changes after credential creation."""
+    all_vars = await client.get("api/v1/variables/", headers=logged_in_headers)
+    model_relay_var_name = _provider_variable_mapping.get("Model Relay")
+    for var in all_vars.json():
+        if var.get("name") == model_relay_var_name:
+            await client.delete(f"api/v1/variables/{var['id']}", headers=logged_in_headers)
+
+    variable_payload = _create_variable_payload(model_relay_credential["provider"], model_relay_credential["value"])
+    with mock.patch("langflow.api.v1.variable.validate_model_provider_key") as mock_validate:
+        mock_validate.return_value = None
+        create_response = await client.post("api/v1/variables/", json=variable_payload, headers=logged_in_headers)
+    assert create_response.status_code == status.HTTP_201_CREATED
+
+    response = await client.get("api/v1/models/enabled_providers?providers=Model%20Relay", headers=logged_in_headers)
+    result = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert "Model Relay" in result["enabled_providers"]
+    assert result["provider_status"]["Model Relay"] is True
+
+    credential_id = create_response.json()["id"]
+    delete_response = await client.delete(f"api/v1/variables/{credential_id}", headers=logged_in_headers)
+    assert delete_response.status_code == status.HTTP_204_NO_CONTENT
+
+    disabled_response = await client.get(
+        "api/v1/models/enabled_providers?providers=Model%20Relay", headers=logged_in_headers
+    )
+    disabled_result = disabled_response.json()
+    assert "Model Relay" not in disabled_result["enabled_providers"]
+    assert disabled_result["provider_status"].get("Model Relay", False) is False
 
 
 @pytest.mark.usefixtures("active_user")

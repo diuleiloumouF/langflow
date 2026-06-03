@@ -401,6 +401,20 @@ def validate_model_provider_key(provider: str, variables: dict[str, str], model_
             )
             llm.invoke("test")
 
+        elif provider == "Model Relay":
+            from langchain_openai import ChatOpenAI  # type: ignore  # noqa: PGH003
+
+            api_key = variables.get("MODEL_RELAY_API_KEY")
+            if not api_key:
+                return
+            llm = ChatOpenAI(
+                api_key=api_key,
+                base_url="https://model-relay-api.zzengine.net/v1",
+                model=first_model or "text-general-pro",
+                max_tokens=1,
+            )
+            llm.invoke("test")
+
         elif provider == "Ollama":
             import requests
 

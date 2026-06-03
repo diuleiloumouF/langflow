@@ -143,6 +143,16 @@ def get_llm(
     if custom_base_url:
         kwargs["base_url"] = custom_base_url
 
+    provider_meta = model_provider_metadata.get(provider, {}) if provider else {}
+    default_base_url = provider_meta.get("default_base_url")
+    base_url_param = metadata.get("base_url_param")
+    if not base_url_param and provider:
+        from lfx.base.models.model_metadata import get_provider_param_mapping
+
+        base_url_param = get_provider_param_mapping(provider).get("base_url_param")
+    if default_base_url and base_url_param and not custom_base_url:
+        kwargs[base_url_param] = default_base_url
+
     # Add provider-specific parameters
     if provider in {"IBM WatsonX", "IBM watsonx.ai"}:
         # For watsonx, url and project_id are required parameters

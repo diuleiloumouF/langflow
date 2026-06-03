@@ -40,6 +40,7 @@ export const PROVIDER_VARIABLE_MAPPING: Record<string, string> = {
   Bedrock: "AWS_ACCESS_KEY_ID",
   AzureOpenAI: "AZURE_OPENAI_API_KEY",
   VertexAI: "VERTEXAI_API_KEY",
+  "Model Relay": "MODEL_RELAY_API_KEY",
 };
 
 /**

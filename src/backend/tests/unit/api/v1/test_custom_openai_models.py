@@ -104,3 +104,43 @@ def test_custom_openai_instantiation_uses_runtime_credentials():
     assert captured_kwargs["model"] == "gpt-4o-mini"
     assert captured_kwargs["api_key"] == "sk-custom-runtime"  # pragma: allowlist secret
     assert captured_kwargs["base_url"] == "https://proxy.example/v1"
+
+
+def test_model_relay_instantiation_uses_default_base_url():
+    from lfx.base.models.unified_models.instantiation import get_llm
+
+    captured_kwargs = {}
+
+    class FakeChatOpenAI:
+        def __init__(self, **kwargs):
+            captured_kwargs.update(kwargs)
+
+    with (
+        mock.patch(
+            "lfx.base.models.unified_models.get_model_class",
+            return_value=FakeChatOpenAI,
+        ),
+        mock.patch(
+            "lfx.base.models.unified_models.get_api_key_for_provider",
+            return_value="sk-model-relay-runtime",  # pragma: allowlist secret
+        ),
+    ):
+        result = get_llm(
+            model=[
+                {
+                    "name": "text-general-pro",
+                    "provider": "Model Relay",
+                    "metadata": {
+                        "model_class": "ChatOpenAI",
+                        "model_name_param": "model",
+                        "api_key_param": "api_key",  # pragma: allowlist secret
+                    },
+                }
+            ],
+            user_id=None,
+        )
+
+    assert isinstance(result, FakeChatOpenAI)
+    assert captured_kwargs["model"] == "text-general-pro"
+    assert captured_kwargs["api_key"] == "sk-model-relay-runtime"  # pragma: allowlist secret
+    assert captured_kwargs["base_url"] == "https://model-relay-api.zzengine.net/v1"
